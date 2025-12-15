@@ -201,7 +201,7 @@ function hasMinDistance(point: Point, placed: Point[], minDistance: number): boo
 /**
  * Feature types for tracking placed features
  */
-type FeatureCategory = "stairs" | "treasure" | "trap" | "water";
+type FeatureCategory = "stairs" | "treasure" | "trap" | "water" | "furniture";
 
 /**
  * Place dungeon features (stairs, treasures, traps, water) on a grid
@@ -240,6 +240,7 @@ export function placeFeatures(
     treasure: [],
     trap: [],
     water: [],
+    furniture: [],
   };
 
   // Get all placed features as a flat array
@@ -248,6 +249,7 @@ export function placeFeatures(
     ...placedByCategory.treasure,
     ...placedByCategory.trap,
     ...placedByCategory.water,
+    ...placedByCategory.furniture,
   ];
 
   let treasuresPlaced = 0;
@@ -373,4 +375,276 @@ export function placePit(grid: Grid, room: Rect): boolean {
     return true;
   }
   return false;
+}
+
+export interface FurniturePlacementOptions {
+  /** Chance to place furniture in a room (0-1, default: 0.4) */
+  furnitureChance?: number;
+  /** Density of furniture (0-1, default: 0.15) - higher means more items per room */
+  furnitureDensity?: number;
+  /** Max furniture items per dungeon (default: 20) */
+  maxFurniture?: number;
+  /** Minimum distance between furniture pieces (default: 2) */
+  minFurnitureDistance?: number;
+  /** Types of furniture to place (default: all types) */
+  allowedTypes?: TileType[];
+  /** Carpet coverage chance when placing carpets (0-1, default: 0.3) */
+  carpetChance?: number;
+}
+
+/** Furniture types that go against walls */
+const WALL_FURNITURE = [
+  TileType.BOOKSHELF,
+  TileType.FIREPLACE,
+  TileType.BED,
+];
+
+/** Furniture types that go in corners */
+const CORNER_FURNITURE = [
+  TileType.BARREL,
+  TileType.CRATE,
+  TileType.STATUE,
+];
+
+/** Furniture types that go in center/open areas */
+const CENTER_FURNITURE = [
+  TileType.TABLE,
+  TileType.ALTAR,
+  TileType.CARPET,
+];
+
+/** All furniture types */
+const ALL_FURNITURE = [
+  TileType.CRATE,
+  TileType.BARREL,
+  TileType.BED,
+  TileType.TABLE,
+  TileType.CHAIR,
+  TileType.BOOKSHELF,
+  TileType.CARPET,
+  TileType.FIREPLACE,
+  TileType.STATUE,
+  TileType.ALTAR,
+];
+
+/**
+ * Find floor tiles adjacent to exactly one wall (good for wall furniture)
+ */
+export function findWallAdjacentFloors(grid: Grid): Point[] {
+  const tiles: Point[] = [];
+  for (let y = 1; y < grid.length - 1; y++) {
+    for (let x = 1; x < grid[0].length - 1; x++) {
+      if (grid[y][x] !== TileType.FLOOR) continue;
+
+      const wallCount = [
+        grid[y - 1][x] === TileType.WALL,
+        grid[y + 1][x] === TileType.WALL,
+        grid[y][x - 1] === TileType.WALL,
+        grid[y][x + 1] === TileType.WALL,
+      ].filter(Boolean).length;
+
+      // Exactly one adjacent wall
+      if (wallCount === 1) {
+        tiles.push({ x, y });
+      }
+    }
+  }
+  return tiles;
+}
+
+/**
+ * Find floor tiles suitable for placing tables/chairs (open area with 2+ adjacent floors)
+ */
+export function findOpenFloors(grid: Grid): Point[] {
+  const tiles: Point[] = [];
+  for (let y = 1; y < grid.length - 1; y++) {
+    for (let x = 1; x < grid[0].length - 1; x++) {
+      if (grid[y][x] !== TileType.FLOOR) continue;
+
+      const floorCount = [
+        grid[y - 1][x] === TileType.FLOOR,
+        grid[y + 1][x] === TileType.FLOOR,
+        grid[y][x - 1] === TileType.FLOOR,
+        grid[y][x + 1] === TileType.FLOOR,
+      ].filter(Boolean).length;
+
+      // At least 3 adjacent floors (open area)
+      if (floorCount >= 3) {
+        tiles.push({ x, y });
+      }
+    }
+  }
+  return tiles;
+}
+
+/**
+ * Place furniture items on a grid to make spaces feel lived-in
+ *
+ * Note: This function creates a copy of the grid and does not mutate the original.
+ */
+export function placeFurniture(
+  inputGrid: Grid,
+  options: FurniturePlacementOptions = {}
+): Grid {
+  const {
+    furnitureChance = 0.4,
+    furnitureDensity = 0.15,
+    maxFurniture = 20,
+    minFurnitureDistance = 2,
+    allowedTypes = ALL_FURNITURE,
+    carpetChance = 0.3,
+  } = options;
+
+  // Clone the grid to avoid mutating the original
+  const grid = cloneGrid(inputGrid);
+
+  // Find suitable locations
+  const corners = shuffleArray([...findCornerTiles(grid)]);
+  const wallAdjacent = shuffleArray([...findWallAdjacentFloors(grid)]);
+  const openFloors = shuffleArray([...findOpenFloors(grid)]);
+  const interiors = shuffleArray([...findInteriorFloors(grid)]);
+
+  // Track placed furniture
+  const placedFurniture: Point[] = [];
+  let furnitureCount = 0;
+
+  // Filter allowed types by category
+  const allowedCorner = CORNER_FURNITURE.filter(t => allowedTypes.includes(t));
+  const allowedWall = WALL_FURNITURE.filter(t => allowedTypes.includes(t));
+  const allowedCenter = CENTER_FURNITURE.filter(t => allowedTypes.includes(t));
+  const allowedChair = allowedTypes.includes(TileType.CHAIR);
+
+  // Place corner furniture (crates, barrels, statues)
+  if (allowedCorner.length > 0) {
+    for (const loc of corners) {
+      if (furnitureCount >= maxFurniture) break;
+      if (grid[loc.y][loc.x] !== TileType.FLOOR) continue;
+      if (!hasMinDistance(loc, placedFurniture, minFurnitureDistance)) continue;
+
+      if (Math.random() < furnitureChance * furnitureDensity) {
+        const furnitureType = allowedCorner[Math.floor(Math.random() * allowedCorner.length)];
+        grid[loc.y][loc.x] = furnitureType;
+        placedFurniture.push(loc);
+        furnitureCount++;
+      }
+    }
+  }
+
+  // Place wall furniture (bookshelves, fireplaces, beds)
+  if (allowedWall.length > 0) {
+    for (const loc of wallAdjacent) {
+      if (furnitureCount >= maxFurniture) break;
+      if (grid[loc.y][loc.x] !== TileType.FLOOR) continue;
+      if (!hasMinDistance(loc, placedFurniture, minFurnitureDistance)) continue;
+
+      if (Math.random() < furnitureChance * furnitureDensity) {
+        const furnitureType = allowedWall[Math.floor(Math.random() * allowedWall.length)];
+        grid[loc.y][loc.x] = furnitureType;
+        placedFurniture.push(loc);
+        furnitureCount++;
+      }
+    }
+  }
+
+  // Place center furniture (tables, altars)
+  if (allowedCenter.length > 0) {
+    for (const loc of openFloors) {
+      if (furnitureCount >= maxFurniture) break;
+      if (grid[loc.y][loc.x] !== TileType.FLOOR) continue;
+      if (!hasMinDistance(loc, placedFurniture, minFurnitureDistance)) continue;
+
+      if (Math.random() < furnitureChance * furnitureDensity * 0.5) {
+        // Lower chance for center items
+        const furnitureType = allowedCenter[Math.floor(Math.random() * allowedCenter.length)];
+
+        if (furnitureType === TileType.CARPET) {
+          // Carpets expand to adjacent floors
+          if (Math.random() < carpetChance) {
+            grid[loc.y][loc.x] = TileType.CARPET;
+            placedFurniture.push(loc);
+            furnitureCount++;
+
+            // Expand carpet to adjacent floors
+            const neighbors = [
+              { x: loc.x, y: loc.y - 1 },
+              { x: loc.x, y: loc.y + 1 },
+              { x: loc.x - 1, y: loc.y },
+              { x: loc.x + 1, y: loc.y },
+            ];
+
+            for (const n of neighbors) {
+              if (
+                n.y >= 0 &&
+                n.y < grid.length &&
+                n.x >= 0 &&
+                n.x < grid[0].length &&
+                grid[n.y][n.x] === TileType.FLOOR &&
+                Math.random() < 0.6
+              ) {
+                grid[n.y][n.x] = TileType.CARPET;
+                placedFurniture.push(n);
+                furnitureCount++;
+              }
+            }
+          }
+        } else if (furnitureType === TileType.TABLE) {
+          // Place table and potentially chairs around it
+          grid[loc.y][loc.x] = TileType.TABLE;
+          placedFurniture.push(loc);
+          furnitureCount++;
+
+          // Try to place chairs around the table
+          if (allowedChair) {
+            const chairPositions = [
+              { x: loc.x, y: loc.y - 1 },
+              { x: loc.x, y: loc.y + 1 },
+              { x: loc.x - 1, y: loc.y },
+              { x: loc.x + 1, y: loc.y },
+            ];
+
+            for (const cp of chairPositions) {
+              if (
+                furnitureCount < maxFurniture &&
+                cp.y >= 0 &&
+                cp.y < grid.length &&
+                cp.x >= 0 &&
+                cp.x < grid[0].length &&
+                grid[cp.y][cp.x] === TileType.FLOOR &&
+                Math.random() < 0.4
+              ) {
+                grid[cp.y][cp.x] = TileType.CHAIR;
+                placedFurniture.push(cp);
+                furnitureCount++;
+              }
+            }
+          }
+        } else {
+          grid[loc.y][loc.x] = furnitureType;
+          placedFurniture.push(loc);
+          furnitureCount++;
+        }
+      }
+    }
+  }
+
+  // Fill remaining spaces with random small furniture
+  const smallFurniture = [TileType.CRATE, TileType.BARREL].filter(t =>
+    allowedTypes.includes(t)
+  );
+  if (smallFurniture.length > 0) {
+    for (const loc of interiors) {
+      if (furnitureCount >= maxFurniture) break;
+      if (grid[loc.y][loc.x] !== TileType.FLOOR) continue;
+      if (!hasMinDistance(loc, placedFurniture, minFurnitureDistance + 1)) continue;
+
+      if (Math.random() < furnitureDensity * 0.3) {
+        const furnitureType = smallFurniture[Math.floor(Math.random() * smallFurniture.length)];
+        grid[loc.y][loc.x] = furnitureType;
+        placedFurniture.push(loc);
+        furnitureCount++;
+      }
+    }
+  }
+
+  return grid;
 }

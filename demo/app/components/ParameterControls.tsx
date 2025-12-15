@@ -88,15 +88,19 @@ const PARAM_CONFIGS: Record<string, ParamConfig> = {
   },
   blendWidth: { label: "Blend Width", type: "range", min: 0, max: 12, step: 1 },
   connectRegions: { label: "Connect Regions", type: "boolean" },
+
+  // Furniture
+  addFurniture: { label: "Add Furniture (crates, beds, tables)", type: "boolean" },
+  furnitureDensity: { label: "Furniture Density", type: "range", min: 0.05, max: 0.4, step: 0.05 },
 };
 
 const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
-  bsp: ["minPartitionSize", "maxDepth", "minRoomSize", "padding", "addDoors", "addFeatures"],
-  cave: ["iterations", "initialFillProbability", "addFeatures"],
-  dla: ["fillPercentage", "stickiness", "spawnMode", "addFeatures"],
+  bsp: ["minPartitionSize", "maxDepth", "minRoomSize", "padding", "addDoors", "addFeatures", "addFurniture", "furnitureDensity"],
+  cave: ["iterations", "initialFillProbability", "addFeatures", "addFurniture", "furnitureDensity"],
+  dla: ["fillPercentage", "stickiness", "spawnMode", "addFeatures", "addFurniture", "furnitureDensity"],
   wfc: ["seedRadius"],
-  hybrid: ["splitDirection", "blendMode", "blendWidth", "connectRegions", "addFeatures"],
-  "hybrid-radial": ["blendMode", "blendWidth", "connectRegions", "addFeatures"],
+  hybrid: ["splitDirection", "blendMode", "blendWidth", "connectRegions", "addFeatures", "addFurniture", "furnitureDensity"],
+  "hybrid-radial": ["blendMode", "blendWidth", "connectRegions", "addFeatures", "addFurniture", "furnitureDensity"],
   drunkard: ["fillPercentage"],
   "drunkard-weighted": ["fillPercentage"],
   "drunkard-multi": ["fillPercentage", "numWalkers"],
@@ -105,7 +109,7 @@ const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
   "maze-division": ["addStartEnd", "loopChance", "openness"],
   perlin: ["scale", "octaves", "persistence", "lacunarity", "waterLevel", "sandLevel", "grassLevel", "forestLevel", "islandMode", "islandFalloff", "erosionIterations"],
   "perlin-continent": ["scale", "octaves", "persistence", "lacunarity", "waterLevel", "sandLevel", "grassLevel", "forestLevel", "islandMode", "islandFalloff", "erosionIterations"],
-  voronoi: ["numRooms", "minRoomDistance", "relaxation", "addDoors", "addFeatures"],
+  voronoi: ["numRooms", "minRoomDistance", "relaxation", "addDoors", "addFeatures", "addFurniture", "furnitureDensity"],
 };
 
 interface Props {

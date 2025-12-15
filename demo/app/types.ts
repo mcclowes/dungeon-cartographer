@@ -79,6 +79,10 @@ export interface GeneratorParams {
   blendMode?: "hard" | "soft" | "scattered";
   blendWidth?: number;
   connectRegions?: boolean;
+
+  // Furniture
+  addFurniture?: boolean;
+  furnitureDensity?: number;
 }
 
 export interface RenderParams {
@@ -110,17 +114,23 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     padding: 1,
     addDoors: true,
     addFeatures: true,
+    addFurniture: false,
+    furnitureDensity: 0.15,
   },
   cave: {
     iterations: 3,
     initialFillProbability: 0.5,
     addFeatures: true,
+    addFurniture: false,
+    furnitureDensity: 0.15,
   },
   dla: {
     fillPercentage: 0.35,
     stickiness: 0.8,
     spawnMode: "edge",
     addFeatures: false,
+    addFurniture: false,
+    furnitureDensity: 0.15,
   },
   wfc: {
     seedRadius: 5,
@@ -182,6 +192,8 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     relaxation: 2,
     addDoors: true,
     addFeatures: false,
+    addFurniture: false,
+    furnitureDensity: 0.15,
   },
   hybrid: {
     splitDirection: "diagonal",
@@ -189,6 +201,8 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     blendWidth: 4,
     connectRegions: true,
     addFeatures: false,
+    addFurniture: false,
+    furnitureDensity: 0.15,
   },
   "hybrid-radial": {
     splitDirection: "radial",
@@ -196,6 +210,8 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     blendWidth: 6,
     connectRegions: true,
     addFeatures: false,
+    addFurniture: false,
+    furnitureDensity: 0.15,
   },
 };
 
@@ -215,6 +231,13 @@ export const PRESETS: Preset[] = [
     generator: "bsp",
     size: 48,
     params: { minPartitionSize: 8, maxDepth: 4, addDoors: true, addFeatures: true },
+  },
+  {
+    name: "Furnished Dungeon",
+    description: "Lived-in dungeon with furniture",
+    generator: "bsp",
+    size: 48,
+    params: { minPartitionSize: 8, maxDepth: 4, addDoors: true, addFeatures: true, addFurniture: true, furnitureDensity: 0.2 },
   },
   {
     name: "Cavern System",

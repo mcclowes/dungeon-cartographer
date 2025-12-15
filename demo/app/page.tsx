@@ -11,6 +11,7 @@ import {
   generatePerlin,
   generateVoronoi,
   generateWFC,
+  placeFurniture,
   type Grid,
 } from "dungeon-cartographer";
 import { drawGrid, type RenderStyle } from "dungeon-cartographer/render";
@@ -400,7 +401,15 @@ export default function Home() {
     try {
       const config = GENERATORS[generatorType];
       const startTime = performance.now();
-      const grid = config.generate(size, params);
+      let grid = config.generate(size, params);
+
+      // Add furniture if enabled
+      if (params.addFurniture) {
+        grid = placeFurniture(grid, {
+          furnitureDensity: params.furnitureDensity ?? 0.15,
+        });
+      }
+
       const endTime = performance.now();
       setGenerationTime(endTime - startTime);
       setCurrentGrid(grid);

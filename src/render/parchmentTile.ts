@@ -45,7 +45,17 @@ function isFloorLike(tile: number): boolean {
     tile === TileType.TRAP_PIT ||
     tile === TileType.WATER ||
     tile === TileType.DEEP_WATER ||
-    tile === TileType.LAVA
+    tile === TileType.LAVA ||
+    tile === TileType.CRATE ||
+    tile === TileType.BARREL ||
+    tile === TileType.BED ||
+    tile === TileType.TABLE ||
+    tile === TileType.CHAIR ||
+    tile === TileType.BOOKSHELF ||
+    tile === TileType.CARPET ||
+    tile === TileType.FIREPLACE ||
+    tile === TileType.STATUE ||
+    tile === TileType.ALTAR
   );
 }
 
@@ -672,6 +682,209 @@ function drawTileIcon(
       ctx.beginPath();
       ctx.arc(cx - size * 0.15, cy, size * 0.08, 0, Math.PI * 2);
       ctx.arc(cx + size * 0.2, cy - size * 0.1, size * 0.06, 0, Math.PI * 2);
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.CRATE: {
+      // Wooden crate - square with cross bracing
+      const crateSize = size * 0.35;
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(cx - crateSize, cy - crateSize, crateSize * 2, crateSize * 2);
+      // Cross bracing
+      ctx.beginPath();
+      ctx.moveTo(cx - crateSize, cy - crateSize);
+      ctx.lineTo(cx + crateSize, cy + crateSize);
+      ctx.moveTo(cx + crateSize, cy - crateSize);
+      ctx.lineTo(cx - crateSize, cy + crateSize);
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.BARREL: {
+      // Barrel - oval with horizontal bands
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1.5;
+      // Main barrel shape (vertical oval)
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, size * 0.25, size * 0.35, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      // Horizontal bands
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.25, cy - size * 0.15);
+      ctx.lineTo(cx + size * 0.25, cy - size * 0.15);
+      ctx.moveTo(cx - size * 0.25, cy + size * 0.15);
+      ctx.lineTo(cx + size * 0.25, cy + size * 0.15);
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.BED: {
+      // Bed - rectangle with pillow
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1.5;
+      // Bed frame
+      ctx.strokeRect(cx - size * 0.35, cy - size * 0.25, size * 0.7, size * 0.5);
+      // Pillow (smaller rect at top)
+      ctx.fillStyle = "rgba(232, 217, 181, 0.8)";
+      ctx.fillRect(cx - size * 0.3, cy - size * 0.2, size * 0.25, size * 0.15);
+      ctx.strokeRect(cx - size * 0.3, cy - size * 0.2, size * 0.25, size * 0.15);
+      // Blanket line
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.35, cy);
+      ctx.lineTo(cx + size * 0.35, cy);
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.TABLE: {
+      // Table - rectangle with legs at corners
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1.5;
+      // Table top
+      ctx.strokeRect(cx - size * 0.3, cy - size * 0.2, size * 0.6, size * 0.4);
+      // Table legs (small circles at corners)
+      const legSize = size * 0.05;
+      ctx.fillStyle = colors.border;
+      ctx.beginPath();
+      ctx.arc(cx - size * 0.25, cy - size * 0.15, legSize, 0, Math.PI * 2);
+      ctx.arc(cx + size * 0.25, cy - size * 0.15, legSize, 0, Math.PI * 2);
+      ctx.arc(cx - size * 0.25, cy + size * 0.15, legSize, 0, Math.PI * 2);
+      ctx.arc(cx + size * 0.25, cy + size * 0.15, legSize, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+
+    case TileType.CHAIR: {
+      // Chair - small square with back
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1.5;
+      // Seat
+      ctx.strokeRect(cx - size * 0.15, cy - size * 0.1, size * 0.3, size * 0.25);
+      // Back (thick line at top)
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.15, cy - size * 0.1);
+      ctx.lineTo(cx - size * 0.15, cy - size * 0.25);
+      ctx.lineTo(cx + size * 0.15, cy - size * 0.25);
+      ctx.lineTo(cx + size * 0.15, cy - size * 0.1);
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.BOOKSHELF: {
+      // Bookshelf - tall rectangle with horizontal shelves
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1.5;
+      // Outer frame
+      ctx.strokeRect(cx - size * 0.3, cy - size * 0.35, size * 0.6, size * 0.7);
+      // Shelves
+      ctx.beginPath();
+      for (let i = 1; i < 4; i++) {
+        const shelfY = cy - size * 0.35 + (i * size * 0.7) / 4;
+        ctx.moveTo(cx - size * 0.3, shelfY);
+        ctx.lineTo(cx + size * 0.3, shelfY);
+      }
+      ctx.stroke();
+      // Books (vertical lines on shelves)
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let shelf = 0; shelf < 3; shelf++) {
+        const shelfY = cy - size * 0.35 + (shelf * size * 0.7) / 4 + size * 0.02;
+        for (let book = 0; book < 4; book++) {
+          const bookX = cx - size * 0.25 + book * size * 0.13;
+          ctx.moveTo(bookX, shelfY);
+          ctx.lineTo(bookX, shelfY + size * 0.14);
+        }
+      }
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.CARPET: {
+      // Carpet - decorative rug pattern
+      ctx.fillStyle = "rgba(139, 69, 19, 0.3)";
+      ctx.fillRect(xCo + 2, yCo + 2, width - 4, height - 4);
+      ctx.strokeStyle = "rgba(139, 69, 19, 0.5)";
+      ctx.lineWidth = 1;
+      // Border pattern
+      ctx.strokeRect(xCo + 4, yCo + 4, width - 8, height - 8);
+      // Inner decorative lines
+      ctx.setLineDash([2, 2]);
+      ctx.strokeRect(xCo + 7, yCo + 7, width - 14, height - 14);
+      ctx.setLineDash([]);
+      break;
+    }
+
+    case TileType.FIREPLACE: {
+      // Fireplace - arch shape with flames
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1.5;
+      // Fireplace arch
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.3, cy + size * 0.3);
+      ctx.lineTo(cx - size * 0.3, cy - size * 0.1);
+      ctx.quadraticCurveTo(cx - size * 0.3, cy - size * 0.3, cx, cy - size * 0.3);
+      ctx.quadraticCurveTo(cx + size * 0.3, cy - size * 0.3, cx + size * 0.3, cy - size * 0.1);
+      ctx.lineTo(cx + size * 0.3, cy + size * 0.3);
+      ctx.stroke();
+      // Flames
+      ctx.fillStyle = "rgba(200, 100, 30, 0.6)";
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.15, cy + size * 0.2);
+      ctx.quadraticCurveTo(cx - size * 0.1, cy - size * 0.05, cx - size * 0.05, cy + size * 0.1);
+      ctx.quadraticCurveTo(cx, cy - size * 0.15, cx + size * 0.05, cy + size * 0.1);
+      ctx.quadraticCurveTo(cx + size * 0.1, cy - size * 0.05, cx + size * 0.15, cy + size * 0.2);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    }
+
+    case TileType.STATUE: {
+      // Statue - pedestal with figure
+      ctx.strokeStyle = colors.border;
+      ctx.fillStyle = colors.border;
+      ctx.lineWidth = 1.5;
+      // Pedestal base
+      ctx.strokeRect(cx - size * 0.2, cy + size * 0.1, size * 0.4, size * 0.15);
+      // Figure (simplified humanoid)
+      ctx.beginPath();
+      // Head
+      ctx.arc(cx, cy - size * 0.2, size * 0.1, 0, Math.PI * 2);
+      ctx.stroke();
+      // Body
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - size * 0.1);
+      ctx.lineTo(cx, cy + size * 0.1);
+      // Arms
+      ctx.moveTo(cx - size * 0.15, cy - size * 0.02);
+      ctx.lineTo(cx + size * 0.15, cy - size * 0.02);
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.ALTAR: {
+      // Altar - ornate table with symbol
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1.5;
+      // Altar base (wider at bottom)
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.35, cy + size * 0.2);
+      ctx.lineTo(cx - size * 0.25, cy - size * 0.15);
+      ctx.lineTo(cx + size * 0.25, cy - size * 0.15);
+      ctx.lineTo(cx + size * 0.35, cy + size * 0.2);
+      ctx.closePath();
+      ctx.stroke();
+      // Top surface
+      ctx.strokeRect(cx - size * 0.3, cy - size * 0.25, size * 0.6, size * 0.1);
+      // Sacred symbol (star/cross)
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - size * 0.35);
+      ctx.lineTo(cx, cy - size * 0.15);
+      ctx.moveTo(cx - size * 0.1, cy - size * 0.25);
+      ctx.lineTo(cx + size * 0.1, cy - size * 0.25);
       ctx.stroke();
       break;
     }
