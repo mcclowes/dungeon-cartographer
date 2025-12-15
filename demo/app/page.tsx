@@ -352,6 +352,7 @@ export default function Home() {
   });
   const animationRef = useRef<number | null>(null);
   const [generationTime, setGenerationTime] = useState<number | undefined>();
+  const [showControls, setShowControls] = useState(false);
 
   const currentConfig = GENERATORS[generatorType];
 
@@ -546,7 +547,24 @@ export default function Home() {
       <ErrorBoundary>
         <MapCanvas canvasRef={canvasRef} width={size * 44} height={size * 44} />
 
-        <div className={styles.controls}>
+        {/* Mobile toggle button */}
+        <button
+          className={styles.mobileToggle}
+          onClick={() => setShowControls(!showControls)}
+          aria-label={showControls ? "Hide controls" : "Show controls"}
+        >
+          {showControls ? "×" : "☰"}
+        </button>
+
+        {/* Mobile overlay backdrop */}
+        {showControls && (
+          <div
+            className={styles.backdrop}
+            onClick={() => setShowControls(false)}
+          />
+        )}
+
+        <div className={`${styles.controls} ${showControls ? styles.controlsOpen : ""}`}>
           <h1 className={styles.title}>Dungeon Cartographer</h1>
 
           <div className={styles.panel}>

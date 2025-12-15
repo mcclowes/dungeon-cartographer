@@ -98,3 +98,42 @@
     color: #fff;
   }
 }
+
+// Mobile styles
+@media (max-width: 768px) {
+  .container {
+    gap: 8px;
+  }
+
+  .control {
+    font-size: 13px;
+  }
+
+  .select {
+    padding: 8px 10px;
+    font-size: 14px;
+    min-height: 40px;
+  }
+
+  .checkbox {
+    font-size: 13px;
+    padding: 4px 0;
+
+    input {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .buttons {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    padding: 12px 16px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+}
