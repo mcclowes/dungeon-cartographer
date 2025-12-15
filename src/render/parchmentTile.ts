@@ -45,8 +45,7 @@ function isFloorLike(tile: number): boolean {
     tile === TileType.TRAP_PIT ||
     tile === TileType.WATER ||
     tile === TileType.DEEP_WATER ||
-    tile === TileType.LAVA ||
-    tile === TileType.PILLAR
+    tile === TileType.LAVA
   );
 }
 
@@ -636,33 +635,6 @@ function drawTileIcon(
       ctx.beginPath();
       ctx.arc(cx - size * 0.15, cy, size * 0.08, 0, Math.PI * 2);
       ctx.arc(cx + size * 0.2, cy - size * 0.1, size * 0.06, 0, Math.PI * 2);
-      ctx.stroke();
-      break;
-    }
-
-    case TileType.PILLAR: {
-      // Stone pillar - circular with crosshatch for texture
-      const radius = size * 0.32;
-
-      // Outer circle
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Inner circle for depth
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius * 0.6, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Cross lines for stone texture
-      ctx.lineWidth = 0.8;
-      ctx.beginPath();
-      ctx.moveTo(cx - radius * 0.4, cy - radius * 0.4);
-      ctx.lineTo(cx + radius * 0.4, cy + radius * 0.4);
-      ctx.moveTo(cx + radius * 0.4, cy - radius * 0.4);
-      ctx.lineTo(cx - radius * 0.4, cy + radius * 0.4);
       ctx.stroke();
       break;
     }
