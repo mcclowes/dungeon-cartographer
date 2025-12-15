@@ -1,5 +1,6 @@
 import type { Grid, Point, Rect } from "../types";
 import { TileType } from "../types";
+import { cloneGrid } from "./grid";
 
 export interface FeaturePlacementOptions {
   /** Chance to place stairs (0-1, default: 0.3) */
@@ -205,9 +206,11 @@ type FeatureCategory = "stairs" | "treasure" | "trap" | "water";
 /**
  * Place dungeon features (stairs, treasures, traps, water) on a grid
  * with improved spacing to prevent clustering
+ *
+ * Note: This function creates a copy of the grid and does not mutate the original.
  */
 export function placeFeatures(
-  grid: Grid,
+  inputGrid: Grid,
   options: FeaturePlacementOptions = {}
 ): Grid {
   const {
@@ -221,6 +224,9 @@ export function placeFeatures(
     minFeatureDistance = 3,
     minAnyFeatureDistance = 2,
   } = options;
+
+  // Clone the grid to avoid mutating the original
+  const grid = cloneGrid(inputGrid);
 
   // Find suitable locations
   const floors = shuffleArray([...findFloorTiles(grid)]);
