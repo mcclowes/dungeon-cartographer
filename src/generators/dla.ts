@@ -153,7 +153,7 @@ export function generateDLA(size: number, options: DLAOptions = {}): Grid {
   }
 
   if (addFeaturesEnabled) {
-    placeFeatures(grid, featureOptions);
+    return placeFeatures(grid, featureOptions);
   }
 
   return grid;
