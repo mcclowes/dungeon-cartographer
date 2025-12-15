@@ -65,6 +65,29 @@ const PARAM_CONFIGS: Record<string, ParamConfig> = {
       { value: "random", label: "Random" },
     ],
   },
+
+  // Hybrid
+  splitDirection: {
+    label: "Split",
+    type: "select",
+    options: [
+      { value: "diagonal", label: "Diagonal" },
+      { value: "horizontal", label: "Horizontal" },
+      { value: "vertical", label: "Vertical" },
+      { value: "radial", label: "Radial" },
+    ],
+  },
+  blendMode: {
+    label: "Blend",
+    type: "select",
+    options: [
+      { value: "soft", label: "Soft" },
+      { value: "hard", label: "Hard" },
+      { value: "scattered", label: "Scattered" },
+    ],
+  },
+  blendWidth: { label: "Blend Width", type: "range", min: 0, max: 12, step: 1 },
+  connectRegions: { label: "Connect Regions", type: "boolean" },
 };
 
 const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
@@ -72,6 +95,8 @@ const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
   cave: ["iterations", "initialFillProbability", "addFeatures"],
   dla: ["fillPercentage", "stickiness", "spawnMode", "addFeatures"],
   wfc: ["seedRadius"],
+  hybrid: ["splitDirection", "blendMode", "blendWidth", "connectRegions", "addFeatures"],
+  "hybrid-radial": ["blendMode", "blendWidth", "connectRegions", "addFeatures"],
   drunkard: ["fillPercentage"],
   "drunkard-weighted": ["fillPercentage"],
   "drunkard-multi": ["fillPercentage", "numWalkers"],

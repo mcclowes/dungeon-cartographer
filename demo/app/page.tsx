@@ -6,6 +6,7 @@ import {
   generateCave,
   generateDLA,
   generateDrunkardWalk,
+  generateHybrid,
   generateMaze,
   generatePerlin,
   generateVoronoi,
@@ -100,6 +101,37 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
     generate: (size, params) =>
       generateWFC(size, {
         seedRadius: params.seedRadius,
+      }),
+  },
+  hybrid: {
+    name: "Hybrid (Diagonal)",
+    description: "BSP dungeon meets organic cave",
+    category: "Hybrid",
+    defaultStyle: "parchment",
+    availableStyles: ["parchment", "classic", "dungeon", "simple"],
+    generate: (size, params) =>
+      generateHybrid(size, {
+        splitDirection: params.splitDirection ?? "diagonal",
+        blendMode: params.blendMode ?? "soft",
+        blendWidth: params.blendWidth ?? 4,
+        connectRegions: params.connectRegions ?? true,
+        addFeatures: params.addFeatures,
+      }),
+  },
+  "hybrid-radial": {
+    name: "Hybrid (Radial)",
+    description: "Dungeon core with cave perimeter",
+    category: "Hybrid",
+    defaultStyle: "parchment",
+    availableStyles: ["parchment", "classic", "dungeon", "simple"],
+    generate: (size, params) =>
+      generateHybrid(size, {
+        splitDirection: "radial",
+        splitPosition: 0.4,
+        blendMode: params.blendMode ?? "soft",
+        blendWidth: params.blendWidth ?? 6,
+        connectRegions: params.connectRegions ?? true,
+        addFeatures: params.addFeatures,
       }),
   },
   drunkard: {
@@ -225,7 +257,7 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
   },
 };
 
-const CATEGORIES = ["Dungeon", "Random Walk", "Maze", "Terrain"];
+const CATEGORIES = ["Dungeon", "Hybrid", "Random Walk", "Maze", "Terrain"];
 
 function parseUrlState(): {
   generator?: GeneratorType;

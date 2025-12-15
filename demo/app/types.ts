@@ -8,6 +8,8 @@ export type GeneratorType =
   | "drunkard"
   | "drunkard-weighted"
   | "drunkard-multi"
+  | "hybrid"
+  | "hybrid-radial"
   | "maze"
   | "maze-prims"
   | "maze-division"
@@ -71,6 +73,12 @@ export interface GeneratorParams {
   // DLA
   stickiness?: number;
   spawnMode?: "edge" | "random";
+
+  // Hybrid
+  splitDirection?: "horizontal" | "vertical" | "diagonal" | "radial";
+  blendMode?: "hard" | "soft" | "scattered";
+  blendWidth?: number;
+  connectRegions?: boolean;
 }
 
 export interface RenderParams {
@@ -173,6 +181,20 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     addDoors: true,
     addFeatures: false,
   },
+  hybrid: {
+    splitDirection: "diagonal",
+    blendMode: "soft",
+    blendWidth: 4,
+    connectRegions: true,
+    addFeatures: false,
+  },
+  "hybrid-radial": {
+    splitDirection: "radial",
+    blendMode: "soft",
+    blendWidth: 6,
+    connectRegions: true,
+    addFeatures: false,
+  },
 };
 
 // Preset configurations for quick selection
@@ -233,6 +255,13 @@ export const PRESETS: Preset[] = [
     generator: "perlin",
     size: 64,
     params: { scale: 0.06, islandMode: true, islandFalloff: 2.0, erosionIterations: 3 },
+  },
+  {
+    name: "Mine Entrance",
+    description: "Dungeon meets cavern",
+    generator: "hybrid",
+    size: 48,
+    params: { splitDirection: "diagonal", blendMode: "soft", blendWidth: 5 },
   },
   {
     name: "Continental",
