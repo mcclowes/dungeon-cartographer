@@ -396,43 +396,53 @@ export default function Home() {
   };
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Dungeon Cartographer</h1>
-
+    <div className={styles.fullscreen}>
       <ErrorBoundary>
-        <GeneratorSelector
-          generators={GENERATORS}
-          categories={CATEGORIES}
-          selectedGenerator={generatorType}
-          onSelect={handleGeneratorChange}
-        />
+        <MapCanvas canvasRef={canvasRef} width={size * 44} height={size * 44} />
 
-        <SeedControl
-          seed={seed}
-          onSeedChange={setSeed}
-          onRandomize={handleRegenerate}
-          onCopyUrl={handleCopyUrl}
-        />
+        <div className={styles.controls}>
+          <h1 className={styles.title}>Dungeon Cartographer</h1>
 
-        <ParameterControls
-          generatorType={generatorType}
-          params={params}
-          onChange={setParams}
-        />
+          <div className={styles.panel}>
+            <GeneratorSelector
+              generators={GENERATORS}
+              categories={CATEGORIES}
+              selectedGenerator={generatorType}
+              onSelect={handleGeneratorChange}
+            />
+          </div>
 
-        <RenderControls
-          config={currentConfig}
-          size={size}
-          style={style}
-          renderParams={renderParams}
-          onSizeChange={setSize}
-          onStyleChange={setStyle}
-          onRenderParamsChange={setRenderParams}
-          onRegenerate={handleRegenerate}
-          onExport={handleExport}
-        />
+          <div className={styles.panel}>
+            <SeedControl
+              seed={seed}
+              onSeedChange={setSeed}
+              onRandomize={handleRegenerate}
+              onCopyUrl={handleCopyUrl}
+            />
+          </div>
 
-        <MapCanvas canvasRef={canvasRef} width={700} height={700} />
+          <div className={styles.panel}>
+            <ParameterControls
+              generatorType={generatorType}
+              params={params}
+              onChange={setParams}
+            />
+          </div>
+
+          <div className={styles.panel}>
+            <RenderControls
+              config={currentConfig}
+              size={size}
+              style={style}
+              renderParams={renderParams}
+              onSizeChange={setSize}
+              onStyleChange={setStyle}
+              onRenderParamsChange={setRenderParams}
+              onRegenerate={handleRegenerate}
+              onExport={handleExport}
+            />
+          </div>
+        </div>
       </ErrorBoundary>
     </div>
   );

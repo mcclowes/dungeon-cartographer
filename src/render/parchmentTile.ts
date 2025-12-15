@@ -368,15 +368,69 @@ export function drawParchmentTile(
     return;
   }
 
-  // Floor-like tiles get parchment background
+  // Get edges for border drawing
+  const edges = findEdges(grid, x, y);
+
+  // Check for corners (where two adjacent edges meet)
+  const topLeft = edges[0] && edges[3];
+  const topRight = edges[0] && edges[1];
+  const bottomRight = edges[2] && edges[1];
+  const bottomLeft = edges[2] && edges[3];
+  const r = Math.min(width, height) * 0.2; // corner radius
+
+  // Floor-like tiles get parchment background with rounded corners
   ctx.fillStyle = colors.parchment;
-  ctx.fillRect(xCo, yCo, width, height);
+
+  // If we have corners, draw a rounded rect path; otherwise just fill the rect
+  if (topLeft || topRight || bottomRight || bottomLeft) {
+    ctx.beginPath();
+    // Start from top-left, going clockwise
+    if (topLeft) {
+      ctx.moveTo(xCo + r, yCo);
+    } else {
+      ctx.moveTo(xCo, yCo);
+    }
+
+    // Top edge to top-right
+    if (topRight) {
+      ctx.lineTo(xCo + width - r, yCo);
+      ctx.arcTo(xCo + width, yCo, xCo + width, yCo + r, r);
+    } else {
+      ctx.lineTo(xCo + width, yCo);
+    }
+
+    // Right edge to bottom-right
+    if (bottomRight) {
+      ctx.lineTo(xCo + width, yCo + height - r);
+      ctx.arcTo(xCo + width, yCo + height, xCo + width - r, yCo + height, r);
+    } else {
+      ctx.lineTo(xCo + width, yCo + height);
+    }
+
+    // Bottom edge to bottom-left
+    if (bottomLeft) {
+      ctx.lineTo(xCo + r, yCo + height);
+      ctx.arcTo(xCo, yCo + height, xCo, yCo + height - r, r);
+    } else {
+      ctx.lineTo(xCo, yCo + height);
+    }
+
+    // Left edge back to top-left
+    if (topLeft) {
+      ctx.lineTo(xCo, yCo + r);
+      ctx.arcTo(xCo, yCo, xCo + r, yCo, r);
+    } else {
+      ctx.lineTo(xCo, yCo);
+    }
+
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    ctx.fillRect(xCo, yCo, width, height);
+  }
 
   // Draw grid lines
   drawGridLines(ctx, xCo, yCo, width, height, colors.gridLine);
-
-  // Get edges for border drawing
-  const edges = findEdges(grid, x, y);
 
   // Draw sketchy border where tile meets walls
   drawSketchyBorder(ctx, xCo, yCo, width, height, edges, colors.border);

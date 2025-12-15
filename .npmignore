@@ -1,0 +1,25 @@
+# Development
+demo/
+src/
+*.ts
+!*.d.ts
+tsconfig.json
+tsup.config.ts
+vitest.config.ts
+
+# IDE
+.vscode/
+.idea/
+
+# Tests
+__tests__/
+*.test.ts
+coverage/
+
+# Misc
+.git/
+.github/
+.DS_Store
+*.log
+IMPROVEMENTS.md
+CLAUDE.md

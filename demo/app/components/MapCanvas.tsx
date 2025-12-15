@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, useState } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import styles from "./MapCanvas.module.scss";
 
 interface Props {
@@ -16,10 +16,16 @@ export function MapCanvas({ canvasRef, width, height }: Props) {
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
 
+  // Reset view when canvas size changes
+  useEffect(() => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }, [width, height]);
+
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    setZoom((z) => Math.min(Math.max(0.5, z * delta), 4));
+    setZoom((z) => Math.min(Math.max(0.25, z * delta), 4));
   }, []);
 
   const handleMouseDown = useCallback(
@@ -51,28 +57,7 @@ export function MapCanvas({ canvasRef, width, height }: Props) {
   }, []);
 
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.zoomControls}>
-        <button
-          onClick={() => setZoom((z) => Math.min(4, z * 1.2))}
-          className={styles.zoomButton}
-        >
-          + Zoom In
-        </button>
-        <button
-          onClick={() => setZoom((z) => Math.max(0.5, z / 1.2))}
-          className={styles.zoomButton}
-        >
-          - Zoom Out
-        </button>
-        <button onClick={resetView} className={styles.zoomButton}>
-          Reset View
-        </button>
-        <span className={styles.zoomInfo}>
-          {Math.round(zoom * 100)}% — Scroll to zoom, drag to pan
-        </span>
-      </div>
-
+    <>
       <div
         ref={containerRef}
         onWheel={handleWheel}
@@ -80,7 +65,7 @@ export function MapCanvas({ canvasRef, width, height }: Props) {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        className={`${styles.container} ${isPanning ? styles.grabbing : ""}`}
+        className={`${styles.fullscreenCanvas} ${isPanning ? styles.grabbing : ""}`}
       >
         <canvas
           ref={canvasRef}
@@ -88,10 +73,29 @@ export function MapCanvas({ canvasRef, width, height }: Props) {
           height={height}
           className={styles.canvas}
           style={{
-            transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+            transform: `translate(-50%, -50%) scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
           }}
         />
       </div>
-    </div>
+
+      <div className={styles.zoomControls}>
+        <button
+          onClick={() => setZoom((z) => Math.min(4, z * 1.2))}
+          className={styles.zoomButton}
+        >
+          +
+        </button>
+        <button
+          onClick={() => setZoom((z) => Math.max(0.25, z / 1.2))}
+          className={styles.zoomButton}
+        >
+          −
+        </button>
+        <button onClick={resetView} className={styles.zoomButton}>
+          Reset
+        </button>
+        <span className={styles.zoomInfo}>{Math.round(zoom * 100)}%</span>
+      </div>
+    </>
   );
 }

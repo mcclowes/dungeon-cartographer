@@ -242,22 +242,91 @@ function drawAllRooms(grid: Grid, node: BSPNode): void {
   if (node.right) drawAllRooms(grid, node.right);
 }
 
+function isPassable(tile: number): boolean {
+  return tile === TileType.FLOOR || tile === TileType.CORRIDOR || tile === TileType.DOOR;
+}
+
 function addDoors(grid: Grid): void {
-  for (let y = 1; y < grid.length - 1; y++) {
-    for (let x = 1; x < grid[0].length - 1; x++) {
-      if (grid[y][x] === TileType.CORRIDOR) {
-        const neighbors = [
-          grid[y - 1][x],
-          grid[y + 1][x],
-          grid[y][x - 1],
-          grid[y][x + 1],
-        ];
+  const height = grid.length;
+  const width = grid[0].length;
 
-        const hasFloor = neighbors.includes(TileType.FLOOR);
-        const hasWall = neighbors.includes(TileType.WALL);
+  // Track which doorways we've already processed
+  const processed = new Set<string>();
 
-        if (hasFloor && hasWall && Math.random() < 0.3) {
-          grid[y][x] = TileType.DOOR;
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      if (grid[y][x] !== TileType.CORRIDOR) continue;
+      if (processed.has(`${x},${y}`)) continue;
+
+      // Check if this corridor tile is at a room entrance (adjacent to floor)
+      const hasFloorAbove = grid[y - 1][x] === TileType.FLOOR;
+      const hasFloorBelow = grid[y + 1][x] === TileType.FLOOR;
+      const hasFloorLeft = grid[y][x - 1] === TileType.FLOOR;
+      const hasFloorRight = grid[y][x + 1] === TileType.FLOOR;
+
+      if (!hasFloorAbove && !hasFloorBelow && !hasFloorLeft && !hasFloorRight) {
+        continue; // Not at a room entrance
+      }
+
+      // Determine doorway orientation and find the full span wall-to-wall
+      let doorTiles: Point[] = [];
+
+      if (hasFloorAbove || hasFloorBelow) {
+        // Horizontal doorway (door tiles run left-right between walls)
+        // Find leftmost wall
+        let leftX = x;
+        while (leftX > 0 && isPassable(grid[y][leftX - 1])) {
+          leftX--;
+        }
+        // Find rightmost wall
+        let rightX = x;
+        while (rightX < width - 1 && isPassable(grid[y][rightX + 1])) {
+          rightX++;
+        }
+
+        // Collect all corridor tiles in this span (max 2 for a door)
+        const span = rightX - leftX + 1;
+        if (span <= 2) {
+          for (let dx = leftX; dx <= rightX; dx++) {
+            if (grid[y][dx] === TileType.CORRIDOR) {
+              doorTiles.push({ x: dx, y });
+            }
+          }
+        }
+      } else if (hasFloorLeft || hasFloorRight) {
+        // Vertical doorway (door tiles run top-bottom between walls)
+        // Find topmost wall
+        let topY = y;
+        while (topY > 0 && isPassable(grid[topY - 1][x])) {
+          topY--;
+        }
+        // Find bottommost wall
+        let bottomY = y;
+        while (bottomY < height - 1 && isPassable(grid[bottomY + 1][x])) {
+          bottomY++;
+        }
+
+        // Collect all corridor tiles in this span (max 2 for a door)
+        const span = bottomY - topY + 1;
+        if (span <= 2) {
+          for (let dy = topY; dy <= bottomY; dy++) {
+            if (grid[dy][x] === TileType.CORRIDOR) {
+              doorTiles.push({ x, y: dy });
+            }
+          }
+        }
+      }
+
+      // Place doors with some randomness (but always place full doorway)
+      if (doorTiles.length > 0 && Math.random() < 0.4) {
+        for (const tile of doorTiles) {
+          grid[tile.y][tile.x] = TileType.DOOR;
+          processed.add(`${tile.x},${tile.y}`);
+        }
+      } else {
+        // Mark as processed even if we didn't place a door
+        for (const tile of doorTiles) {
+          processed.add(`${tile.x},${tile.y}`);
         }
       }
     }
