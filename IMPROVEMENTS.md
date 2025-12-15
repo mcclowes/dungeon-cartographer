@@ -16,7 +16,7 @@ Potential enhancements for the parchment/treasure map render style.
 - [x] **Compass rose** - Classic N/S/E/W decoration *(added via `compassRose` option)*
 - [ ] **Scale bar** - "10 feet" style indicator
 - [ ] **Legend** - Key explaining tile symbols
-- [ ] **Title cartouche** - Decorative frame for map title
+- [x] **Title cartouche** - Decorative frame for map title *(added via `titleCartouche` option)*
 
 ## Tile Rendering
 
