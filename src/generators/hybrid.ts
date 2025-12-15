@@ -226,7 +226,7 @@ export function generateHybrid(size: number, options: HybridOptions = {}): Grid 
   }
 
   if (addFeaturesEnabled) {
-    placeFeatures(grid, featureOptions);
+    return placeFeatures(grid, featureOptions);
   }
 
   return grid;

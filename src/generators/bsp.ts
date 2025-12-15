@@ -375,7 +375,7 @@ export function generateBSP(size: number, options: BSPOptions = {}): Grid {
   }
 
   if (addFeaturesEnabled) {
-    placeFeatures(grid, featureOptions);
+    return placeFeatures(grid, featureOptions);
   }
 
   return grid;
