@@ -1,0 +1,52 @@
+{
+  "name": "dungeon-cartographer",
+  "version": "0.1.0",
+  "description": "Procedural map generation library - dungeons, caves, mazes, terrain and more",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./render": {
+      "types": "./dist/render/index.d.ts",
+      "import": "./dist/render/index.mjs",
+      "require": "./dist/render/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts,.tsx",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "procedural-generation",
+    "dungeon",
+    "map-generator",
+    "roguelike",
+    "bsp",
+    "wave-function-collapse",
+    "perlin-noise",
+    "maze",
+    "cellular-automata",
+    "game-development"
+  ],
+  "author": "mcclowes",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.0",
+    "vitest": "^1.1.0"
+  }
+}
