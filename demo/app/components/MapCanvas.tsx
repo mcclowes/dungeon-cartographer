@@ -113,9 +113,10 @@ export function MapCanvas({ canvasRef, width, height }: Props) {
 
         // Also pan while pinching
         if (lastTouchCenter.current !== null) {
+          const prevCenter = lastTouchCenter.current;
           setPan((p) => ({
-            x: p.x + (newCenter.x - lastTouchCenter.current!.x),
-            y: p.y + (newCenter.y - lastTouchCenter.current!.y),
+            x: p.x + (newCenter.x - prevCenter.x),
+            y: p.y + (newCenter.y - prevCenter.y),
           }));
         }
 
