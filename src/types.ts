@@ -8,6 +8,20 @@ export enum TileType {
   DOOR = 2,
   SECRET_DOOR = 3,
   CORRIDOR = 4,
+  // Stairs/elevation
+  STAIRS_UP = 5,
+  STAIRS_DOWN = 6,
+  PIT = 7,
+  // Treasure/loot
+  TREASURE = 8,
+  CHEST = 9,
+  // Traps
+  TRAP = 10,
+  TRAP_PIT = 11,
+  // Water/environmental
+  WATER = 12,
+  DEEP_WATER = 13,
+  LAVA = 14,
 }
 
 /** Terrain-specific tile types for Perlin generator */

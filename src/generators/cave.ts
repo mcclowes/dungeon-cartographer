@@ -1,6 +1,6 @@
 import type { Grid } from "../types";
 import { TileType } from "../types";
-import { sumInRadius } from "../utils";
+import { sumInRadius, placeFeatures, type FeaturePlacementOptions } from "../utils";
 
 export interface CaveOptions {
   /** Number of cellular automata iterations (default: 3) */
@@ -9,6 +9,10 @@ export interface CaveOptions {
   initialFillProbability?: number;
   /** Threshold for cell survival (default: 5) */
   survivalThreshold?: number;
+  /** Whether to add dungeon features like stairs, treasures, traps (default: false) */
+  addFeatures?: boolean;
+  /** Options for feature placement */
+  featureOptions?: FeaturePlacementOptions;
 }
 
 function applyCellularAutomata(grid: Grid): Grid {
@@ -46,6 +50,8 @@ export function generateCave(size: number, options: CaveOptions = {}): Grid {
   const {
     iterations = 3,
     initialFillProbability = 0.5,
+    addFeatures: addFeaturesEnabled = false,
+    featureOptions = {},
   } = options;
 
   // Create initial random grid
@@ -64,6 +70,10 @@ export function generateCave(size: number, options: CaveOptions = {}): Grid {
   // Apply cellular automata rules
   for (let i = 0; i < iterations; i++) {
     grid = applyCellularAutomata(grid);
+  }
+
+  if (addFeaturesEnabled) {
+    placeFeatures(grid, featureOptions);
   }
 
   return grid;

@@ -30,6 +30,7 @@ export interface GeneratorParams {
   minRoomSize?: number;
   padding?: number;
   addDoors?: boolean;
+  addFeatures?: boolean;
 
   // Cave
   iterations?: number;
@@ -86,10 +87,12 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     minRoomSize: 3,
     padding: 1,
     addDoors: true,
+    addFeatures: true,
   },
   cave: {
     iterations: 3,
     initialFillProbability: 0.5,
+    addFeatures: true,
   },
   wfc: {
     seedRadius: 5,

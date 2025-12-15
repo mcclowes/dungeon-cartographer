@@ -19,6 +19,7 @@ const PARAM_CONFIGS: Record<string, ParamConfig> = {
   minRoomSize: { label: "Min Room Size", type: "range", min: 2, max: 6, step: 1 },
   padding: { label: "Padding", type: "range", min: 0, max: 3, step: 1 },
   addDoors: { label: "Add Doors", type: "boolean" },
+  addFeatures: { label: "Add Features (stairs, treasure, traps)", type: "boolean" },
 
   // Cave
   iterations: { label: "Iterations", type: "range", min: 1, max: 10, step: 1 },
@@ -51,8 +52,8 @@ const PARAM_CONFIGS: Record<string, ParamConfig> = {
 };
 
 const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
-  bsp: ["minPartitionSize", "maxDepth", "minRoomSize", "padding", "addDoors"],
-  cave: ["iterations", "initialFillProbability"],
+  bsp: ["minPartitionSize", "maxDepth", "minRoomSize", "padding", "addDoors", "addFeatures"],
+  cave: ["iterations", "initialFillProbability", "addFeatures"],
   wfc: ["seedRadius"],
   drunkard: ["fillPercentage"],
   "drunkard-weighted": ["fillPercentage"],

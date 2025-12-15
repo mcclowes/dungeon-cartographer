@@ -32,7 +32,21 @@ function getNeighbor(grid: Grid, x: number, y: number): number {
 }
 
 function isFloorLike(tile: number): boolean {
-  return tile === TileType.FLOOR || tile === TileType.DOOR || tile === TileType.CORRIDOR;
+  return (
+    tile === TileType.FLOOR ||
+    tile === TileType.DOOR ||
+    tile === TileType.CORRIDOR ||
+    tile === TileType.STAIRS_UP ||
+    tile === TileType.STAIRS_DOWN ||
+    tile === TileType.PIT ||
+    tile === TileType.TREASURE ||
+    tile === TileType.CHEST ||
+    tile === TileType.TRAP ||
+    tile === TileType.TRAP_PIT ||
+    tile === TileType.WATER ||
+    tile === TileType.DEEP_WATER ||
+    tile === TileType.LAVA
+  );
 }
 
 function findEdges(grid: Grid, x: number, y: number): Edges {
@@ -367,26 +381,208 @@ export function drawParchmentTile(
   // Draw sketchy border where tile meets walls
   drawSketchyBorder(ctx, xCo, yCo, width, height, edges, colors.border);
 
-  // Draw door indicator
-  if (tileType === TileType.DOOR) {
-    ctx.fillStyle = colors.border;
+  // Draw tile-specific icons
+  drawTileIcon(ctx, xCo, yCo, width, height, tileType, grid, x, y, edges, colors);
+}
 
-    // Check orientation based on adjacent doors or walls
-    const doorAbove = y > 0 && grid[y - 1][x] === TileType.DOOR;
-    const doorBelow = y < grid.length - 1 && grid[y + 1][x] === TileType.DOOR;
-    const doorHorizontal = (x > 0 && grid[y][x - 1] === TileType.DOOR) ||
-                           (x < grid[0].length - 1 && grid[y][x + 1] === TileType.DOOR);
+/**
+ * Draw icons/symbols for special tile types
+ */
+function drawTileIcon(
+  ctx: CanvasRenderingContext2D,
+  xCo: number,
+  yCo: number,
+  width: number,
+  height: number,
+  tileType: TileType,
+  grid: Grid,
+  x: number,
+  y: number,
+  edges: Edges,
+  colors: ParchmentColors
+): void {
+  const cx = xCo + width / 2;
+  const cy = yCo + height / 2;
+  const size = Math.min(width, height);
 
-    const isVertical = doorAbove || doorBelow || (!doorHorizontal && edges[0] && edges[2]);
+  ctx.strokeStyle = colors.border;
+  ctx.fillStyle = colors.border;
+  ctx.lineWidth = 1.5;
+  ctx.lineCap = "round";
 
-    if (isVertical) {
-      // Vertical door - two short lines
-      ctx.fillRect(xCo + width / 2 - 1, yCo, 2, height * 0.3);
-      ctx.fillRect(xCo + width / 2 - 1, yCo + height * 0.7, 2, height * 0.3);
-    } else {
-      // Horizontal door - two short lines
-      ctx.fillRect(xCo, yCo + height / 2 - 1, width * 0.3, 2);
-      ctx.fillRect(xCo + width * 0.7, yCo + height / 2 - 1, width * 0.3, 2);
+  switch (tileType) {
+    case TileType.DOOR: {
+      const doorAbove = y > 0 && grid[y - 1][x] === TileType.DOOR;
+      const doorBelow = y < grid.length - 1 && grid[y + 1][x] === TileType.DOOR;
+      const doorHorizontal =
+        (x > 0 && grid[y][x - 1] === TileType.DOOR) ||
+        (x < grid[0].length - 1 && grid[y][x + 1] === TileType.DOOR);
+      const isVertical = doorAbove || doorBelow || (!doorHorizontal && edges[0] && edges[2]);
+
+      if (isVertical) {
+        ctx.fillRect(cx - 1, yCo, 2, height * 0.3);
+        ctx.fillRect(cx - 1, yCo + height * 0.7, 2, height * 0.3);
+      } else {
+        ctx.fillRect(xCo, cy - 1, width * 0.3, 2);
+        ctx.fillRect(xCo + width * 0.7, cy - 1, width * 0.3, 2);
+      }
+      break;
+    }
+
+    case TileType.STAIRS_UP: {
+      // Stairs going up - lines getting smaller toward top
+      ctx.beginPath();
+      for (let i = 0; i < 4; i++) {
+        const stepY = yCo + height * 0.2 + (i * height * 0.15);
+        const stepWidth = width * (0.7 - i * 0.1);
+        ctx.moveTo(cx - stepWidth / 2, stepY);
+        ctx.lineTo(cx + stepWidth / 2, stepY);
+      }
+      ctx.stroke();
+      // Up arrow
+      ctx.beginPath();
+      ctx.moveTo(cx, yCo + height * 0.1);
+      ctx.lineTo(cx - size * 0.15, yCo + height * 0.25);
+      ctx.moveTo(cx, yCo + height * 0.1);
+      ctx.lineTo(cx + size * 0.15, yCo + height * 0.25);
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.STAIRS_DOWN: {
+      // Stairs going down - lines getting smaller toward bottom
+      ctx.beginPath();
+      for (let i = 0; i < 4; i++) {
+        const stepY = yCo + height * 0.25 + (i * height * 0.15);
+        const stepWidth = width * (0.4 + i * 0.1);
+        ctx.moveTo(cx - stepWidth / 2, stepY);
+        ctx.lineTo(cx + stepWidth / 2, stepY);
+      }
+      ctx.stroke();
+      // Down arrow
+      ctx.beginPath();
+      ctx.moveTo(cx, yCo + height * 0.9);
+      ctx.lineTo(cx - size * 0.15, yCo + height * 0.75);
+      ctx.moveTo(cx, yCo + height * 0.9);
+      ctx.lineTo(cx + size * 0.15, yCo + height * 0.75);
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.PIT: {
+      // Dark pit - concentric rough circles
+      ctx.fillStyle = "rgba(40, 30, 20, 0.6)";
+      ctx.beginPath();
+      ctx.arc(cx, cy, size * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = colors.border;
+      ctx.beginPath();
+      ctx.arc(cx, cy, size * 0.35, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx, cy, size * 0.2, 0, Math.PI * 2);
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.TREASURE: {
+      // X marks the spot
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.25, cy - size * 0.25);
+      ctx.lineTo(cx + size * 0.25, cy + size * 0.25);
+      ctx.moveTo(cx + size * 0.25, cy - size * 0.25);
+      ctx.lineTo(cx - size * 0.25, cy + size * 0.25);
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.CHEST: {
+      // Chest icon - rectangle with curved top
+      ctx.beginPath();
+      ctx.rect(cx - size * 0.25, cy - size * 0.15, size * 0.5, size * 0.35);
+      ctx.stroke();
+      // Curved lid
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.25, cy - size * 0.15);
+      ctx.quadraticCurveTo(cx, cy - size * 0.35, cx + size * 0.25, cy - size * 0.15);
+      ctx.stroke();
+      // Lock/clasp
+      ctx.fillRect(cx - size * 0.05, cy - size * 0.05, size * 0.1, size * 0.1);
+      break;
+    }
+
+    case TileType.TRAP: {
+      // Pressure plate - dashed square
+      ctx.setLineDash([2, 2]);
+      ctx.strokeRect(cx - size * 0.25, cy - size * 0.25, size * 0.5, size * 0.5);
+      ctx.setLineDash([]);
+      // Exclamation mark hint
+      ctx.fillRect(cx - 1, cy - size * 0.15, 2, size * 0.15);
+      ctx.beginPath();
+      ctx.arc(cx, cy + size * 0.1, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+
+    case TileType.TRAP_PIT: {
+      // Hidden pit trap - dashed circle
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.arc(cx, cy, size * 0.3, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Spikes hint
+      ctx.beginPath();
+      for (let i = 0; i < 3; i++) {
+        const spikeX = cx - size * 0.15 + i * size * 0.15;
+        ctx.moveTo(spikeX, cy + size * 0.1);
+        ctx.lineTo(spikeX, cy - size * 0.1);
+      }
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.WATER: {
+      // Light water - wavy lines
+      ctx.fillStyle = "rgba(100, 150, 200, 0.3)";
+      ctx.fillRect(xCo, yCo, width, height);
+      ctx.strokeStyle = "rgba(60, 100, 150, 0.5)";
+      ctx.beginPath();
+      ctx.moveTo(xCo, cy);
+      ctx.quadraticCurveTo(xCo + width * 0.25, cy - 3, xCo + width * 0.5, cy);
+      ctx.quadraticCurveTo(xCo + width * 0.75, cy + 3, xCo + width, cy);
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.DEEP_WATER: {
+      // Deep water - darker with multiple waves
+      ctx.fillStyle = "rgba(50, 100, 150, 0.5)";
+      ctx.fillRect(xCo, yCo, width, height);
+      ctx.strokeStyle = "rgba(30, 70, 120, 0.6)";
+      for (let i = 0; i < 2; i++) {
+        const waveY = cy - size * 0.15 + i * size * 0.3;
+        ctx.beginPath();
+        ctx.moveTo(xCo, waveY);
+        ctx.quadraticCurveTo(xCo + width * 0.25, waveY - 3, xCo + width * 0.5, waveY);
+        ctx.quadraticCurveTo(xCo + width * 0.75, waveY + 3, xCo + width, waveY);
+        ctx.stroke();
+      }
+      break;
+    }
+
+    case TileType.LAVA: {
+      // Lava - orange/red with bubbles
+      ctx.fillStyle = "rgba(200, 80, 30, 0.5)";
+      ctx.fillRect(xCo, yCo, width, height);
+      ctx.strokeStyle = "rgba(150, 50, 20, 0.7)";
+      // Bubbles
+      ctx.beginPath();
+      ctx.arc(cx - size * 0.15, cy, size * 0.08, 0, Math.PI * 2);
+      ctx.arc(cx + size * 0.2, cy - size * 0.1, size * 0.06, 0, Math.PI * 2);
+      ctx.stroke();
+      break;
     }
   }
 }

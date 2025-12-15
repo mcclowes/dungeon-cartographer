@@ -1,6 +1,6 @@
 import type { Grid, Rect, Point } from "../types";
 import { TileType } from "../types";
-import { createGrid, randomInt } from "../utils";
+import { createGrid, randomInt, placeFeatures, type FeaturePlacementOptions } from "../utils";
 
 export interface BSPOptions {
   /** Minimum partition size (default: 6) */
@@ -13,6 +13,10 @@ export interface BSPOptions {
   padding?: number;
   /** Whether to add doors (default: true) */
   addDoors?: boolean;
+  /** Whether to add dungeon features like stairs, treasures, traps (default: false) */
+  addFeatures?: boolean;
+  /** Options for feature placement */
+  featureOptions?: FeaturePlacementOptions;
 }
 
 class BSPNode {
@@ -273,6 +277,8 @@ export function generateBSP(size: number, options: BSPOptions = {}): Grid {
     minRoomSize = 3,
     padding = 1,
     addDoors: addDoorsEnabled = true,
+    addFeatures: addFeaturesEnabled = false,
+    featureOptions = {},
   } = options;
 
   const grid = createGrid(size, size, TileType.WALL);
@@ -285,6 +291,10 @@ export function generateBSP(size: number, options: BSPOptions = {}): Grid {
 
   if (addDoorsEnabled) {
     addDoors(grid);
+  }
+
+  if (addFeaturesEnabled) {
+    placeFeatures(grid, featureOptions);
   }
 
   return grid;

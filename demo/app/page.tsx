@@ -42,6 +42,7 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
         minRoomSize: params.minRoomSize,
         padding: params.padding,
         addDoors: params.addDoors,
+        addFeatures: params.addFeatures,
       }),
   },
   cave: {
@@ -54,6 +55,7 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
       generateCave(size, {
         iterations: params.iterations,
         initialFillProbability: params.initialFillProbability,
+        addFeatures: params.addFeatures,
       }),
   },
   wfc: {
