@@ -15,6 +15,7 @@ import {
 } from "dungeon-cartographer";
 import { drawGrid, type RenderStyle } from "dungeon-cartographer/render";
 import {
+  AIMapGenerator,
   ErrorBoundary,
   GeneratorSelector,
   ParameterControls,
@@ -34,6 +35,20 @@ import { DEFAULT_PARAMS, PRESETS, createSeededRandom, generateSeed } from "./typ
 import styles from "./page.module.scss";
 
 const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
+  ai: {
+    name: "AI Generator",
+    description: "Describe your map in natural language",
+    category: "AI",
+    defaultStyle: "parchment",
+    availableStyles: ["parchment", "classic", "dungeon", "simple"],
+    generate: (size) => {
+      // AI generator uses async API, this is a placeholder
+      // Actual generation is handled by AIMapGenerator component
+      return Array.from({ length: size }, () =>
+        Array.from({ length: size }, () => 0)
+      );
+    },
+  },
   bsp: {
     name: "BSP Dungeon",
     description: "Binary Space Partitioning rooms & corridors",
@@ -257,7 +272,7 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
   },
 };
 
-const CATEGORIES = ["Dungeon", "Hybrid", "Random Walk", "Maze", "Terrain"];
+const CATEGORIES = ["AI", "Dungeon", "Hybrid", "Random Walk", "Maze", "Terrain"];
 
 function parseUrlState(): {
   generator?: GeneratorType;
@@ -503,6 +518,8 @@ export default function Home() {
   // Generate new grid when generator, size, params, or seed change
   useEffect(() => {
     if (!isInitialized) return;
+    // AI generator handles its own generation asynchronously
+    if (generatorType === "ai") return;
 
     const grid = generateGrid();
     if (renderParams.animateReveal) {
@@ -546,6 +563,20 @@ export default function Home() {
     navigator.clipboard.writeText(url);
   };
 
+  const handleAIMapGenerated = useCallback(
+    (grid: Grid) => {
+      const startTime = performance.now();
+      setCurrentGrid(grid);
+      setGenerationTime(performance.now() - startTime);
+      if (renderParams.animateReveal) {
+        animateReveal(grid);
+      } else {
+        draw(grid);
+      }
+    },
+    [draw, animateReveal, renderParams.animateReveal]
+  );
+
   return (
     <div className={styles.fullscreen}>
       <ErrorBoundary>
@@ -585,22 +616,33 @@ export default function Home() {
             />
           </div>
 
-          <div className={styles.panel}>
-            <SeedControl
-              seed={seed}
-              onSeedChange={setSeed}
-              onRandomize={handleRegenerate}
-              onCopyUrl={handleCopyUrl}
-            />
-          </div>
+          {generatorType === "ai" && (
+            <div className={styles.panel}>
+              <h3 className={styles.sectionTitle}>AI Map Generator</h3>
+              <AIMapGenerator onMapGenerated={handleAIMapGenerated} size={size} />
+            </div>
+          )}
 
-          <div className={styles.panel}>
-            <ParameterControls
-              generatorType={generatorType}
-              params={params}
-              onChange={setParams}
-            />
-          </div>
+          {generatorType !== "ai" && (
+            <>
+              <div className={styles.panel}>
+                <SeedControl
+                  seed={seed}
+                  onSeedChange={setSeed}
+                  onRandomize={handleRegenerate}
+                  onCopyUrl={handleCopyUrl}
+                />
+              </div>
+
+              <div className={styles.panel}>
+                <ParameterControls
+                  generatorType={generatorType}
+                  params={params}
+                  onChange={setParams}
+                />
+              </div>
+            </>
+          )}
 
           <div className={styles.panel}>
             <RenderControls

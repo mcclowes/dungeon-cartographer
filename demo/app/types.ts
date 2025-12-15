@@ -2,6 +2,7 @@ import type { Grid } from "dungeon-cartographer";
 import type { RenderStyle } from "dungeon-cartographer/render";
 
 export type GeneratorType =
+  | "ai"
   | "bsp"
   | "cave"
   | "dla"
@@ -103,6 +104,7 @@ export function generateSeed(): number {
 }
 
 export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
+  ai: {},
   bsp: {
     minPartitionSize: 6,
     maxDepth: 4,
