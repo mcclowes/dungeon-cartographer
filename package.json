@@ -1,6 +1,6 @@
 {
   "name": "dungeon-cartographer",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Procedural map generation library - dungeons, caves, mazes, terrain and more",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
