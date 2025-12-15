@@ -1,4 +1,5 @@
 import type { Grid } from "../types";
+import { TileType } from "../types";
 import { roundRect } from "./roundRect";
 
 type Edges = [boolean, boolean, boolean, boolean]; // top, right, bottom, left
@@ -25,6 +26,55 @@ function findEdges(grid: Grid, x: number, y: number): Edges {
   }
 
   return edges;
+}
+
+/**
+ * Determine door orientation by checking:
+ * 1. Adjacent walls (wall above+below = vertical, wall left+right = horizontal)
+ * 2. Adjacent doors (door above/below = vertical, door left/right = horizontal)
+ * This ensures multi-tile doors align correctly.
+ */
+function getDoorOrientation(
+  grid: Grid,
+  x: number,
+  y: number,
+  edges: Edges
+): "vertical" | "horizontal" {
+  const height = grid.length;
+  const width = grid[0].length;
+
+  // Check for adjacent doors
+  const doorAbove = y > 0 && grid[y - 1][x] === TileType.DOOR;
+  const doorBelow = y < height - 1 && grid[y + 1][x] === TileType.DOOR;
+  const doorLeft = x > 0 && grid[y][x - 1] === TileType.DOOR;
+  const doorRight = x < width - 1 && grid[y][x + 1] === TileType.DOOR;
+
+  // If there's an adjacent door vertically, this door should be vertical
+  if (doorAbove || doorBelow) {
+    return "vertical";
+  }
+
+  // If there's an adjacent door horizontally, this door should be horizontal
+  if (doorLeft || doorRight) {
+    return "horizontal";
+  }
+
+  // Fall back to wall-based orientation
+  // Vertical if walls are above and below (corridor runs left-right)
+  if (edges[0] && edges[2]) {
+    return "vertical";
+  }
+
+  // Horizontal if walls are left and right (corridor runs up-down)
+  if (edges[1] && edges[3]) {
+    return "horizontal";
+  }
+
+  // Default: check which direction has more wall adjacency
+  const verticalWalls = (edges[0] ? 1 : 0) + (edges[2] ? 1 : 0);
+  const horizontalWalls = (edges[1] ? 1 : 0) + (edges[3] ? 1 : 0);
+
+  return verticalWalls >= horizontalWalls ? "vertical" : "horizontal";
 }
 
 function findCorners(edges: Edges): Corners {
@@ -160,13 +210,11 @@ export function drawClassicTile(
   ctx.setLineDash([]);
 
   // Draw door
-  if (tileType === 2) {
+  if (tileType === TileType.DOOR) {
     ctx.fillStyle = colors.door;
+    const orientation = getDoorOrientation(grid, x, y, edges);
 
-    // Determine door orientation based on which edges border walls
-    const isVertical = edges[0] && edges[2];
-
-    if (isVertical) {
+    if (orientation === "vertical") {
       ctx.fillRect(xCo + width / 2 - 2, yCo, 4, height);
     } else {
       ctx.fillRect(xCo, yCo + height / 2 - 2, width, 4);
@@ -174,12 +222,11 @@ export function drawClassicTile(
   }
 
   // Draw secret door (thicker bar)
-  if (tileType === 3) {
+  if (tileType === TileType.SECRET_DOOR) {
     ctx.fillStyle = colors.door;
+    const orientation = getDoorOrientation(grid, x, y, edges);
 
-    const isVertical = edges[0] && edges[2];
-
-    if (isVertical) {
+    if (orientation === "vertical") {
       ctx.fillRect(xCo + width / 6, yCo, (width / 3) * 2, height);
     } else {
       ctx.fillRect(xCo, yCo + height / 6, width, (height / 3) * 2);
