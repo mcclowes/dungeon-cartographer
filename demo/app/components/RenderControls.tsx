@@ -90,6 +90,29 @@ export function RenderControls({
           />
           Animate
         </label>
+        {style === "parchment" && (
+          <label className={styles.checkbox}>
+            <input
+              type="checkbox"
+              checked={renderParams.showTitle}
+              onChange={(e) =>
+                onRenderParamsChange({ ...renderParams, showTitle: e.target.checked })
+              }
+            />
+            Title
+          </label>
+        )}
+        {style === "parchment" && renderParams.showTitle && (
+          <input
+            type="text"
+            value={renderParams.mapTitle}
+            onChange={(e) =>
+              onRenderParamsChange({ ...renderParams, mapTitle: e.target.value })
+            }
+            placeholder="Map title..."
+            className={styles.textInput}
+          />
+        )}
         <button onClick={onRegenerate} className={styles.primaryButton}>
           Regenerate
         </button>

@@ -84,6 +84,8 @@ export interface GeneratorParams {
 export interface RenderParams {
   showGrid: boolean;
   animateReveal: boolean;
+  showTitle: boolean;
+  mapTitle: string;
 }
 
 // Mulberry32 seeded PRNG

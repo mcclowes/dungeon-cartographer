@@ -349,6 +349,8 @@ export default function Home() {
   const [renderParams, setRenderParams] = useState<RenderParams>({
     showGrid: false,
     animateReveal: false,
+    showTitle: false,
+    mapTitle: "The Forgotten Dungeon",
   });
   const animationRef = useRef<number | null>(null);
   const [generationTime, setGenerationTime] = useState<number | undefined>();
@@ -424,6 +426,14 @@ export default function Home() {
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
+      const renderOptions = {
+        style,
+        showGrid: renderParams.showGrid,
+        titleCartouche: renderParams.showTitle && style === "parchment"
+          ? { title: renderParams.mapTitle || "Untitled Map" }
+          : undefined,
+      };
+
       // If we're animating, create a partial grid with only revealed tiles
       if (revealProgress < 1) {
         const height = grid.length;
@@ -442,18 +452,12 @@ export default function Home() {
           })
         );
 
-        drawGrid(ctx, partialGrid, canvas.width, canvas.height, {
-          style,
-          showGrid: renderParams.showGrid,
-        });
+        drawGrid(ctx, partialGrid, canvas.width, canvas.height, renderOptions);
       } else {
-        drawGrid(ctx, grid, canvas.width, canvas.height, {
-          style,
-          showGrid: renderParams.showGrid,
-        });
+        drawGrid(ctx, grid, canvas.width, canvas.height, renderOptions);
       }
     },
-    [style, renderParams.showGrid]
+    [style, renderParams.showGrid, renderParams.showTitle, renderParams.mapTitle]
   );
 
   const animateReveal = useCallback(
