@@ -70,8 +70,55 @@ export const CARDINAL_DIRECTIONS: Direction[] = [
   { dx: -1, dy: 0 }, // West
 ];
 
+/** Room purpose/type for thematic placement */
+export enum RoomType {
+  GENERIC = "generic",
+  ENTRANCE = "entrance",
+  TREASURE = "treasure",
+  GUARD = "guard",
+  STORAGE = "storage",
+  THRONE = "throne",
+  BARRACKS = "barracks",
+  CHAPEL = "chapel",
+}
+
+/** Room size classification */
+export enum RoomSize {
+  TINY = "tiny",       // < 9 tiles (closets, alcoves)
+  SMALL = "small",     // 9-25 tiles (chambers)
+  MEDIUM = "medium",   // 25-64 tiles (halls)
+  LARGE = "large",     // 64-144 tiles (great halls)
+  HUGE = "huge",       // > 144 tiles (throne rooms, arenas)
+}
+
+/** Room metadata for room-aware features */
+export interface Room {
+  /** Unique identifier for the room */
+  id: number;
+  /** Bounding rectangle of the room */
+  bounds: Rect;
+  /** Center point of the room */
+  center: Point;
+  /** All tiles belonging to this room */
+  tiles: Point[];
+  /** Room size classification */
+  size: RoomSize;
+  /** Room type/purpose (can be assigned) */
+  type: RoomType;
+  /** Area in tiles */
+  area: number;
+  /** Whether this room has been connected to the dungeon */
+  connected: boolean;
+}
+
 /** Generator result with metadata */
 export interface GeneratorResult<T = Grid> {
   grid: T;
   metadata?: Record<string, unknown>;
+}
+
+/** Extended generator result with room information */
+export interface DungeonResult extends GeneratorResult<Grid> {
+  /** List of rooms in the dungeon */
+  rooms: Room[];
 }

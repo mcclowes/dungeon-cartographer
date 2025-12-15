@@ -1,4 +1,4 @@
-import type { Grid } from "../types";
+import type { Grid, Room } from "../types";
 import { TileType, TerrainTile, MazeTile } from "../types";
 import type { Palette } from "./palettes";
 import { dungeonPalette, terrainPalette, mazePalette } from "./palettes";
@@ -10,7 +10,15 @@ import {
   addVignette,
   drawCompassRose,
   addFoldLines,
+  drawScaleBar,
+  drawRoomLabels,
+  drawPillars,
+  drawFullGridLines,
+  addTornEdges,
   type CompassRoseOptions,
+  type ScaleBarOptions,
+  type RoomLabelOptions,
+  type PillarOptions,
 } from "./parchmentTile";
 
 export type RenderStyle = "dungeon" | "classic" | "parchment" | "terrain" | "maze" | "simple";
@@ -36,6 +44,18 @@ export interface RenderOptions {
   compassRose?: boolean | CompassRoseOptions;
   /** Add fold lines for parchment style (default: false) */
   foldLines?: boolean | { horizontalFolds?: number; verticalFolds?: number; opacity?: number };
+  /** Show full grid lines across entire parchment including walls (default: false) */
+  fullGridLines?: boolean;
+  /** Add scale bar to the map (default: false) */
+  scaleBar?: boolean | ScaleBarOptions;
+  /** Add room labels/numbers (requires rooms data) */
+  roomLabels?: boolean | RoomLabelOptions;
+  /** Add pillars in large rooms (requires rooms data) */
+  pillars?: boolean | PillarOptions;
+  /** Add torn/rough edges effect (default: false) */
+  tornEdges?: boolean | { tearDepth?: number; tearFrequency?: number };
+  /** Room metadata for room-aware rendering features */
+  rooms?: Room[];
 }
 
 function drawSimpleTile(
@@ -224,6 +244,12 @@ export function drawGrid(
     vignette = style === "parchment",
     compassRose = false,
     foldLines = false,
+    fullGridLines = false,
+    scaleBar = false,
+    roomLabels = false,
+    pillars = false,
+    tornEdges = false,
+    rooms = [],
   } = options;
 
   const tileWidth = width / grid[0].length;
@@ -290,11 +316,23 @@ export function drawGrid(
 
   // Parchment post-processing effects
   if (style === "parchment") {
-    // Fold lines should be applied first (behind other effects)
+    // Full grid lines drawn first (before other decorations)
+    if (fullGridLines) {
+      drawFullGridLines(ctx, width, height, grid[0].length, grid.length, tileWidth, tileHeight);
+    }
+
+    // Fold lines should be applied early (behind other effects)
     if (foldLines) {
       const foldOpts = typeof foldLines === "object" ? foldLines : {};
       addFoldLines(ctx, width, height, foldOpts);
     }
+
+    // Draw pillars in large rooms (requires room data)
+    if (pillars && rooms.length > 0) {
+      const pillarOpts = typeof pillars === "object" ? pillars : {};
+      drawPillars(ctx, grid, rooms, tileWidth, tileHeight, pillarOpts);
+    }
+
     if (scuffs) {
       addParchmentScuffs(ctx, width, height);
     }
@@ -304,6 +342,25 @@ export function drawGrid(
     if (vignette) {
       addVignette(ctx, width, height);
     }
+
+    // Torn edges effect
+    if (tornEdges) {
+      const tornOpts = typeof tornEdges === "object" ? tornEdges : {};
+      addTornEdges(ctx, width, height, tornOpts);
+    }
+
+    // Room labels (requires room data)
+    if (roomLabels && rooms.length > 0) {
+      const labelOpts = typeof roomLabels === "object" ? roomLabels : {};
+      drawRoomLabels(ctx, rooms, tileWidth, tileHeight, labelOpts);
+    }
+
+    // Scale bar
+    if (scaleBar) {
+      const scaleOpts = typeof scaleBar === "object" ? scaleBar : {};
+      drawScaleBar(ctx, width, height, tileWidth, scaleOpts);
+    }
+
     // Compass rose drawn last so it's on top
     if (compassRose) {
       const compassOpts = typeof compassRose === "object" ? compassRose : {};

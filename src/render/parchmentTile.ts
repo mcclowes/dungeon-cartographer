@@ -1,4 +1,4 @@
-import type { Grid } from "../types";
+import type { Grid, Room } from "../types";
 import { TileType } from "../types";
 
 export interface ParchmentColors {
@@ -71,6 +71,7 @@ function seededRandom(seed: number): () => number {
 
 /**
  * Draw short scattered hatching strokes near the edge facing floors
+ * Now supports varied angles for a more organic, crosshatch-like pattern
  */
 function drawMarginHatching(
   ctx: CanvasRenderingContext2D,
@@ -81,7 +82,8 @@ function drawMarginHatching(
   grid: Grid,
   x: number,
   y: number,
-  color: string
+  color: string,
+  variedAngles = true
 ): void {
   ctx.strokeStyle = color;
   ctx.lineCap = "round";
@@ -89,6 +91,9 @@ function drawMarginHatching(
   const rand = seededRandom(x * 1000 + y);
   const baseSpacing = 3.5;
   const strokeLen = Math.min(width, height) * 0.55;
+
+  // Varied angle offsets for more organic hatching
+  const getAngleVariation = () => variedAngles ? (rand() - 0.5) * 0.4 : 0;
 
   // Check which sides face floors
   const floorAbove = y > 0 && isFloorLike(grid[y - 1][x]);
@@ -101,10 +106,20 @@ function drawMarginHatching(
     for (let i = 0; i < width; i += baseSpacing + rand() * 2) {
       ctx.lineWidth = 0.6 + rand() * 0.4;
       const len = strokeLen * (0.7 + rand() * 0.5);
+      const angleVar = getAngleVariation();
       ctx.beginPath();
       ctx.moveTo(xCo + i + rand() * 2, yCo);
-      ctx.lineTo(xCo + i + len * 0.4 + rand() * 2, yCo + len);
+      ctx.lineTo(xCo + i + len * (0.4 + angleVar) + rand() * 2, yCo + len);
       ctx.stroke();
+
+      // Add occasional crosshatch stroke
+      if (variedAngles && rand() < 0.3) {
+        ctx.lineWidth = 0.4 + rand() * 0.3;
+        ctx.beginPath();
+        ctx.moveTo(xCo + i + rand() * 2 + len * 0.2, yCo + len * 0.3);
+        ctx.lineTo(xCo + i - len * 0.3 + rand() * 2, yCo + len * 0.8);
+        ctx.stroke();
+      }
     }
   }
 
@@ -112,10 +127,20 @@ function drawMarginHatching(
     for (let i = 0; i < width; i += baseSpacing + rand() * 2) {
       ctx.lineWidth = 0.6 + rand() * 0.4;
       const len = strokeLen * (0.7 + rand() * 0.5);
+      const angleVar = getAngleVariation();
       ctx.beginPath();
       ctx.moveTo(xCo + i + rand() * 2, yCo + height);
-      ctx.lineTo(xCo + i + len * 0.4 + rand() * 2, yCo + height - len);
+      ctx.lineTo(xCo + i + len * (0.4 + angleVar) + rand() * 2, yCo + height - len);
       ctx.stroke();
+
+      // Add occasional crosshatch stroke
+      if (variedAngles && rand() < 0.3) {
+        ctx.lineWidth = 0.4 + rand() * 0.3;
+        ctx.beginPath();
+        ctx.moveTo(xCo + i + rand() * 2 + len * 0.2, yCo + height - len * 0.3);
+        ctx.lineTo(xCo + i - len * 0.3 + rand() * 2, yCo + height - len * 0.8);
+        ctx.stroke();
+      }
     }
   }
 
@@ -123,10 +148,20 @@ function drawMarginHatching(
     for (let i = 0; i < height; i += baseSpacing + rand() * 2) {
       ctx.lineWidth = 0.6 + rand() * 0.4;
       const len = strokeLen * (0.7 + rand() * 0.5);
+      const angleVar = getAngleVariation();
       ctx.beginPath();
       ctx.moveTo(xCo, yCo + i + rand() * 2);
-      ctx.lineTo(xCo + len, yCo + i + len * 0.4 + rand() * 2);
+      ctx.lineTo(xCo + len, yCo + i + len * (0.4 + angleVar) + rand() * 2);
       ctx.stroke();
+
+      // Add occasional crosshatch stroke
+      if (variedAngles && rand() < 0.3) {
+        ctx.lineWidth = 0.4 + rand() * 0.3;
+        ctx.beginPath();
+        ctx.moveTo(xCo + len * 0.3, yCo + i + rand() * 2 + len * 0.2);
+        ctx.lineTo(xCo + len * 0.8, yCo + i - len * 0.3 + rand() * 2);
+        ctx.stroke();
+      }
     }
   }
 
@@ -134,16 +169,26 @@ function drawMarginHatching(
     for (let i = 0; i < height; i += baseSpacing + rand() * 2) {
       ctx.lineWidth = 0.6 + rand() * 0.4;
       const len = strokeLen * (0.7 + rand() * 0.5);
+      const angleVar = getAngleVariation();
       ctx.beginPath();
       ctx.moveTo(xCo + width, yCo + i + rand() * 2);
-      ctx.lineTo(xCo + width - len, yCo + i + len * 0.4 + rand() * 2);
+      ctx.lineTo(xCo + width - len, yCo + i + len * (0.4 + angleVar) + rand() * 2);
       ctx.stroke();
+
+      // Add occasional crosshatch stroke
+      if (variedAngles && rand() < 0.3) {
+        ctx.lineWidth = 0.4 + rand() * 0.3;
+        ctx.beginPath();
+        ctx.moveTo(xCo + width - len * 0.3, yCo + i + rand() * 2 + len * 0.2);
+        ctx.lineTo(xCo + width - len * 0.8, yCo + i - len * 0.3 + rand() * 2);
+        ctx.stroke();
+      }
     }
   }
 }
 
 /**
- * Draw a line segment with optional gaps for a hand-drawn look
+ * Draw a line segment with optional gaps and organic wobble for a hand-drawn look
  */
 function drawLineWithGaps(
   ctx: CanvasRenderingContext2D,
@@ -152,37 +197,54 @@ function drawLineWithGaps(
   x2: number,
   y2: number,
   rand: () => number,
-  gapChance = 0.15
+  gapChance = 0.15,
+  wobbleAmount = 0.8
 ): void {
   const dx = x2 - x1;
   const dy = y2 - y1;
   const length = Math.sqrt(dx * dx + dy * dy);
 
   if (length < 8) {
-    // Short lines - draw without gaps
+    // Short lines - draw with slight wobble but no gaps
     ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
+    ctx.moveTo(x1 + (rand() - 0.5) * wobbleAmount, y1 + (rand() - 0.5) * wobbleAmount);
+    ctx.lineTo(x2 + (rand() - 0.5) * wobbleAmount, y2 + (rand() - 0.5) * wobbleAmount);
     ctx.stroke();
     return;
   }
 
-  // Break line into segments with potential gaps
-  const segmentLength = 6 + rand() * 8;
+  // Calculate perpendicular direction for wobble
+  const perpX = -dy / length;
+  const perpY = dx / length;
+
+  // Break line into segments with potential gaps and wobble
+  const segmentLength = 4 + rand() * 6;
   const segments = Math.ceil(length / segmentLength);
 
   let currentPos = 0;
   let drawing = true;
+  let lastWobble = (rand() - 0.5) * wobbleAmount;
 
   for (let i = 0; i < segments; i++) {
     const segStart = currentPos / length;
     const segEnd = Math.min((currentPos + segmentLength) / length, 1);
 
     if (drawing) {
+      // Add organic wobble perpendicular to line direction
+      const startWobble = lastWobble;
+      const endWobble = (rand() - 0.5) * wobbleAmount * 1.5;
+
+      const startX = x1 + dx * segStart + perpX * startWobble;
+      const startY = y1 + dy * segStart + perpY * startWobble;
+      const endX = x1 + dx * segEnd + perpX * endWobble;
+      const endY = y1 + dy * segEnd + perpY * endWobble;
+
       ctx.beginPath();
-      ctx.moveTo(x1 + dx * segStart, y1 + dy * segStart);
-      ctx.lineTo(x1 + dx * segEnd, y1 + dy * segEnd);
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
       ctx.stroke();
+
+      lastWobble = endWobble;
     }
 
     // Randomly decide to create a gap (more likely in the middle of lines)
@@ -190,6 +252,7 @@ function drawLineWithGaps(
     if (rand() < gapChance * midFactor && i < segments - 1 && i > 0) {
       drawing = false;
       currentPos += segmentLength * (0.3 + rand() * 0.4); // Gap size
+      lastWobble = (rand() - 0.5) * wobbleAmount; // Reset wobble after gap
     } else {
       drawing = true;
     }
@@ -1050,6 +1113,427 @@ export function addFoldLines(
 
       ctx.fillStyle = gradient;
       ctx.fillRect(fx - 20, fy - 20, 40, 40);
+    }
+  }
+
+  ctx.restore();
+}
+
+export type ScaleBarPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+
+export interface ScaleBarOptions {
+  /** Position of the scale bar (default: "bottom-left") */
+  position?: ScaleBarPosition;
+  /** Label text (default: "10 ft") */
+  label?: string;
+  /** Number of tiles the scale bar represents (default: 2) */
+  tiles?: number;
+  /** Margin from edges in pixels (default: 15) */
+  margin?: number;
+  /** Main color (default: brownish ink) */
+  color?: string;
+}
+
+/**
+ * Draw a scale bar on the map
+ */
+export function drawScaleBar(
+  ctx: CanvasRenderingContext2D,
+  canvasWidth: number,
+  canvasHeight: number,
+  tileWidth: number,
+  options: ScaleBarOptions = {}
+): void {
+  const {
+    position = "bottom-left",
+    label = "10 ft",
+    tiles = 2,
+    margin = 15,
+    color = "rgba(70, 45, 20, 0.85)",
+  } = options;
+
+  const barWidth = tileWidth * tiles;
+  const barHeight = 4;
+
+  // Calculate position
+  let x: number;
+  let y: number;
+
+  switch (position) {
+    case "top-left":
+      x = margin;
+      y = margin;
+      break;
+    case "top-right":
+      x = canvasWidth - margin - barWidth;
+      y = margin;
+      break;
+    case "bottom-right":
+      x = canvasWidth - margin - barWidth;
+      y = canvasHeight - margin - barHeight - 15;
+      break;
+    case "bottom-left":
+    default:
+      x = margin;
+      y = canvasHeight - margin - barHeight - 15;
+      break;
+  }
+
+  ctx.save();
+
+  // Draw scale bar background
+  ctx.fillStyle = "rgba(232, 217, 181, 0.8)";
+  ctx.fillRect(x - 5, y - 5, barWidth + 10, barHeight + 25);
+
+  // Draw bar with alternating segments
+  ctx.fillStyle = color;
+  const segmentWidth = barWidth / tiles;
+  for (let i = 0; i < tiles; i++) {
+    if (i % 2 === 0) {
+      ctx.fillRect(x + i * segmentWidth, y, segmentWidth, barHeight);
+    } else {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + i * segmentWidth, y, segmentWidth, barHeight);
+    }
+  }
+
+  // Draw end caps
+  ctx.fillRect(x, y - 3, 2, barHeight + 6);
+  ctx.fillRect(x + barWidth - 2, y - 3, 2, barHeight + 6);
+
+  // Draw label
+  ctx.fillStyle = color;
+  ctx.font = `${Math.max(10, tileWidth * 0.4)}px serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillText(label, x + barWidth / 2, y + barHeight + 3);
+
+  ctx.restore();
+}
+
+export interface RoomLabelOptions {
+  /** Font size multiplier (default: 1) */
+  fontSizeMultiplier?: number;
+  /** Use Roman numerals (default: true) */
+  romanNumerals?: boolean;
+  /** Main color (default: brownish ink) */
+  color?: string;
+  /** Minimum room size to label (default: "small") */
+  minSize?: "tiny" | "small" | "medium" | "large" | "huge";
+}
+
+/**
+ * Convert number to Roman numeral
+ */
+function toRoman(num: number): string {
+  const values = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+  const numerals = ["M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"];
+
+  let result = "";
+  for (let i = 0; i < values.length; i++) {
+    while (num >= values[i]) {
+      result += numerals[i];
+      num -= values[i];
+    }
+  }
+  return result;
+}
+
+/**
+ * Draw room labels/numbers on the map
+ */
+export function drawRoomLabels(
+  ctx: CanvasRenderingContext2D,
+  rooms: Room[],
+  tileWidth: number,
+  tileHeight: number,
+  options: RoomLabelOptions = {}
+): void {
+  const {
+    fontSizeMultiplier = 1,
+    romanNumerals = true,
+    color = "rgba(70, 45, 20, 0.7)",
+    minSize = "small",
+  } = options;
+
+  const sizeOrder = ["tiny", "small", "medium", "large", "huge"];
+  const minSizeIndex = sizeOrder.indexOf(minSize);
+
+  ctx.save();
+
+  // Sort rooms by position (top-left to bottom-right) for consistent numbering
+  const sortedRooms = [...rooms].sort((a, b) => {
+    const aPos = a.center.y * 1000 + a.center.x;
+    const bPos = b.center.y * 1000 + b.center.x;
+    return aPos - bPos;
+  });
+
+  let labelNum = 1;
+  for (const room of sortedRooms) {
+    // Skip rooms that are too small
+    const roomSizeIndex = sizeOrder.indexOf(room.size);
+    if (roomSizeIndex < minSizeIndex) continue;
+
+    const cx = room.center.x * tileWidth + tileWidth / 2;
+    const cy = room.center.y * tileHeight + tileHeight / 2;
+
+    // Calculate font size based on room size
+    const baseFontSize = Math.min(
+      room.bounds.width * tileWidth * 0.3,
+      room.bounds.height * tileHeight * 0.3,
+      tileWidth * 2
+    );
+    const fontSize = Math.max(10, baseFontSize * fontSizeMultiplier);
+
+    const label = romanNumerals ? toRoman(labelNum) : String(labelNum);
+
+    // Draw label with slight shadow for readability
+    ctx.font = `bold ${fontSize}px serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    // Shadow
+    ctx.fillStyle = "rgba(232, 217, 181, 0.6)";
+    ctx.fillText(label, cx + 1, cy + 1);
+
+    // Main text
+    ctx.fillStyle = color;
+    ctx.fillText(label, cx, cy);
+
+    labelNum++;
+  }
+
+  ctx.restore();
+}
+
+export interface PillarOptions {
+  /** Minimum room size to add pillars (default: "large") */
+  minRoomSize?: "medium" | "large" | "huge";
+  /** Pillar size as fraction of tile (default: 0.3) */
+  pillarSize?: number;
+  /** Main color (default: brownish ink) */
+  color?: string;
+  /** Spacing between pillars in tiles (default: 3) */
+  spacing?: number;
+}
+
+/**
+ * Draw pillars/columns in large rooms
+ */
+export function drawPillars(
+  ctx: CanvasRenderingContext2D,
+  grid: Grid,
+  rooms: Room[],
+  tileWidth: number,
+  tileHeight: number,
+  options: PillarOptions = {}
+): void {
+  const {
+    minRoomSize = "large",
+    pillarSize = 0.3,
+    color = "rgba(70, 45, 20, 0.85)",
+    spacing = 3,
+  } = options;
+
+  const sizeOrder = ["tiny", "small", "medium", "large", "huge"];
+  const minSizeIndex = sizeOrder.indexOf(minRoomSize);
+
+  ctx.save();
+
+  for (const room of rooms) {
+    // Skip rooms that are too small
+    const roomSizeIndex = sizeOrder.indexOf(room.size);
+    if (roomSizeIndex < minSizeIndex) continue;
+
+    // Skip rooms that aren't rectangular enough (pillars look odd in irregular shapes)
+    const rectArea = room.bounds.width * room.bounds.height;
+    const fillRatio = room.area / rectArea;
+    if (fillRatio < 0.7) continue;
+
+    // Calculate pillar positions - place pillars in a grid pattern with margin from walls
+    const marginTiles = 1;
+    const innerWidth = room.bounds.width - marginTiles * 2;
+    const innerHeight = room.bounds.height - marginTiles * 2;
+
+    // Need at least spacing tiles to place pillars
+    if (innerWidth < spacing || innerHeight < spacing) continue;
+
+    // Calculate number of pillars
+    const pillarsX = Math.floor(innerWidth / spacing);
+    const pillarsY = Math.floor(innerHeight / spacing);
+
+    if (pillarsX < 2 || pillarsY < 2) continue;
+
+    // Calculate actual spacing
+    const spacingX = innerWidth / pillarsX;
+    const spacingY = innerHeight / pillarsY;
+
+    // Draw pillars
+    for (let py = 0; py <= pillarsY; py++) {
+      for (let px = 0; px <= pillarsX; px++) {
+        // Skip center pillars (keep center clear)
+        if (px > 0 && px < pillarsX && py > 0 && py < pillarsY) continue;
+
+        const tileX = room.bounds.x + marginTiles + px * spacingX;
+        const tileY = room.bounds.y + marginTiles + py * spacingY;
+
+        // Verify tile is a floor
+        const gridX = Math.floor(tileX);
+        const gridY = Math.floor(tileY);
+        if (gridY < 0 || gridY >= grid.length || gridX < 0 || gridX >= grid[0].length) continue;
+        if (grid[gridY][gridX] !== TileType.FLOOR) continue;
+
+        const cx = tileX * tileWidth + tileWidth / 2;
+        const cy = tileY * tileHeight + tileHeight / 2;
+        const radius = Math.min(tileWidth, tileHeight) * pillarSize / 2;
+
+        // Draw pillar (circle with inner shading)
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(232, 217, 181, 0.9)";
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Inner highlight
+        ctx.beginPath();
+        ctx.arc(cx - radius * 0.2, cy - radius * 0.2, radius * 0.4, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.fill();
+
+        // Shadow
+        ctx.beginPath();
+        ctx.arc(cx + radius * 0.15, cy + radius * 0.15, radius * 0.3, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(70, 45, 20, 0.2)";
+        ctx.fill();
+      }
+    }
+  }
+
+  ctx.restore();
+}
+
+/**
+ * Draw full grid lines across the entire parchment (including wall areas)
+ */
+export function drawFullGridLines(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  gridWidth: number,
+  gridHeight: number,
+  tileWidth: number,
+  tileHeight: number,
+  color = "rgba(160, 100, 60, 0.12)"
+): void {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 0.5;
+
+  // Horizontal lines
+  for (let y = 0; y <= gridHeight; y++) {
+    ctx.beginPath();
+    ctx.moveTo(0, y * tileHeight);
+    ctx.lineTo(width, y * tileHeight);
+    ctx.stroke();
+  }
+
+  // Vertical lines
+  for (let x = 0; x <= gridWidth; x++) {
+    ctx.beginPath();
+    ctx.moveTo(x * tileWidth, 0);
+    ctx.lineTo(x * tileWidth, height);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+/**
+ * Add torn/rough edges effect to the parchment border
+ */
+export function addTornEdges(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  options: {
+    /** Depth of tears (default: 8) */
+    tearDepth?: number;
+    /** Frequency of tears (default: 0.1) */
+    tearFrequency?: number;
+    /** Edge color (default: darker parchment) */
+    edgeColor?: string;
+    /** Seed for consistent randomization */
+    seed?: number;
+  } = {}
+): void {
+  const {
+    tearDepth = 8,
+    tearFrequency = 0.1,
+    edgeColor = "rgba(150, 120, 80, 0.6)",
+    seed = 98765,
+  } = options;
+
+  const rand = seededRandom(seed);
+
+  ctx.save();
+  ctx.fillStyle = edgeColor;
+
+  // Top edge
+  for (let x = 0; x < width; x += 3) {
+    if (rand() < tearFrequency) {
+      const tearWidth = 5 + rand() * 15;
+      const depth = rand() * tearDepth;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x + tearWidth / 2, depth);
+      ctx.lineTo(x + tearWidth, 0);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  // Bottom edge
+  for (let x = 0; x < width; x += 3) {
+    if (rand() < tearFrequency) {
+      const tearWidth = 5 + rand() * 15;
+      const depth = rand() * tearDepth;
+      ctx.beginPath();
+      ctx.moveTo(x, height);
+      ctx.lineTo(x + tearWidth / 2, height - depth);
+      ctx.lineTo(x + tearWidth, height);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  // Left edge
+  for (let y = 0; y < height; y += 3) {
+    if (rand() < tearFrequency) {
+      const tearHeight = 5 + rand() * 15;
+      const depth = rand() * tearDepth;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(depth, y + tearHeight / 2);
+      ctx.lineTo(0, y + tearHeight);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  // Right edge
+  for (let y = 0; y < height; y += 3) {
+    if (rand() < tearFrequency) {
+      const tearHeight = 5 + rand() * 15;
+      const depth = rand() * tearDepth;
+      ctx.beginPath();
+      ctx.moveTo(width, y);
+      ctx.lineTo(width - depth, y + tearHeight / 2);
+      ctx.lineTo(width, y + tearHeight);
+      ctx.closePath();
+      ctx.fill();
     }
   }
 

@@ -1,6 +1,6 @@
-import type { Grid, Point } from "../types";
+import type { Grid, Point, Room, DungeonResult } from "../types";
 import { TileType } from "../types";
-import { createGrid, randomInt, placeFeatures, validateGridSize, type FeaturePlacementOptions } from "../utils";
+import { createGrid, randomInt, placeFeatures, validateGridSize, createRoomFromTiles, assignRoomTypes, type FeaturePlacementOptions } from "../utils";
 
 export interface VoronoiOptions {
   /** Number of room seeds to place (default: based on size) */
@@ -282,4 +282,86 @@ export function generateVoronoi(size: number, options: VoronoiOptions = {}): Gri
   }
 
   return grid;
+}
+
+/**
+ * Voronoi-based room generator with room metadata
+ *
+ * Creates organic, irregular room shapes using Voronoi tessellation,
+ * returning both the grid and room information for room-aware features.
+ *
+ * @param size - Grid size (width and height). Must be between 4 and 500.
+ * @param options - Generation options
+ * @returns Generated Voronoi dungeon with grid and room metadata
+ * @throws {Error} If size is invalid
+ *
+ * @example
+ * ```ts
+ * const result = generateVoronoiWithRooms(50, { numRooms: 8 });
+ * console.log(`Generated ${result.rooms.length} rooms`);
+ * ```
+ */
+export function generateVoronoiWithRooms(size: number, options: VoronoiOptions = {}): DungeonResult {
+  validateGridSize(size, "generateVoronoiWithRooms");
+
+  const {
+    numRooms = Math.floor(size / 6),
+    minRoomDistance = 4,
+    relaxation = 2,
+    addDoors: addDoorsEnabled = true,
+    addFeatures: addFeaturesEnabled = false,
+    featureOptions = {},
+  } = options;
+
+  const grid = createGrid(size, size, TileType.WALL);
+
+  // Generate room seeds
+  const seeds = generateSeeds(size, numRooms, minRoomDistance);
+
+  if (seeds.length < 2) {
+    console.warn("generateVoronoiWithRooms: Grid too small for requested number of rooms, returning empty dungeon");
+    return { grid, rooms: [] };
+  }
+
+  // Create Voronoi cells
+  let cells = assignCells(size, seeds);
+
+  // Relax/shrink cells to create walls
+  cells = relaxCells(cells, relaxation);
+
+  // Draw rooms and create Room objects
+  const rooms: Room[] = [];
+  for (let i = 0; i < cells.length; i++) {
+    const cell = cells[i];
+    for (const tile of cell.tiles) {
+      grid[tile.y][tile.x] = TileType.FLOOR;
+    }
+
+    // Only add cells that have tiles remaining after relaxation
+    if (cell.tiles.length >= 4) {
+      const room = createRoomFromTiles(cell.tiles, i);
+      room.connected = true; // Voronoi rooms are connected via neighbors
+      rooms.push(room);
+    }
+  }
+
+  // Assign room types based on size and position
+  assignRoomTypes(rooms);
+
+  // Find neighboring cells and connect them
+  const neighborPairs = findNeighboringCells(cells);
+  connectCells(grid, cells, neighborPairs);
+
+  if (addDoorsEnabled) {
+    addDoors(grid);
+  }
+
+  if (addFeaturesEnabled) {
+    placeFeatures(grid, featureOptions);
+  }
+
+  return {
+    grid,
+    rooms,
+  };
 }

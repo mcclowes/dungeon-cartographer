@@ -1,5 +1,5 @@
-import type { Grid, Point, Rect } from "../types";
-import { TileType } from "../types";
+import type { Grid, Point, Rect, Room } from "../types";
+import { TileType, RoomSize, RoomType } from "../types";
 import { cloneGrid } from "./grid";
 
 export interface FeaturePlacementOptions {
@@ -373,4 +373,347 @@ export function placePit(grid: Grid, room: Rect): boolean {
     return true;
   }
   return false;
+}
+
+export interface RoomAwareFeatureOptions extends FeaturePlacementOptions {
+  /** Place treasures preferentially in larger rooms (default: true) */
+  treasureInLargeRooms?: boolean;
+  /** Place traps in corridors and small rooms (default: true) */
+  trapsInCorridors?: boolean;
+  /** Place stairs at room edges (default: true) */
+  stairsAtEdges?: boolean;
+  /** Skip placing features in entrance rooms (default: false) */
+  safeEntrance?: boolean;
+  /** Skip placing features in treasure rooms (auto-placed treasure) (default: true) */
+  autoTreasureRoom?: boolean;
+}
+
+/**
+ * Get floor tiles within a specific room
+ */
+function getRoomFloorTiles(grid: Grid, room: Room): Point[] {
+  return room.tiles.filter(tile => {
+    const tileType = grid[tile.y][tile.x];
+    return tileType === TileType.FLOOR;
+  });
+}
+
+/**
+ * Get edge tiles (adjacent to walls) within a room
+ */
+function getRoomEdgeTiles(grid: Grid, room: Room): Point[] {
+  return room.tiles.filter(tile => {
+    if (grid[tile.y][tile.x] !== TileType.FLOOR) return false;
+
+    // Check if any neighbor is a wall
+    const neighbors = [
+      [tile.x - 1, tile.y],
+      [tile.x + 1, tile.y],
+      [tile.x, tile.y - 1],
+      [tile.x, tile.y + 1],
+    ];
+
+    return neighbors.some(([nx, ny]) => {
+      if (ny < 0 || ny >= grid.length || nx < 0 || nx >= grid[0].length) return true;
+      return grid[ny][nx] === TileType.WALL;
+    });
+  });
+}
+
+/**
+ * Get corner tiles within a room (tiles with 2 adjacent walls in L-shape)
+ */
+function getRoomCornerTiles(grid: Grid, room: Room): Point[] {
+  return room.tiles.filter(tile => {
+    if (grid[tile.y][tile.x] !== TileType.FLOOR) return false;
+
+    const top = tile.y > 0 && grid[tile.y - 1][tile.x] === TileType.WALL;
+    const bottom = tile.y < grid.length - 1 && grid[tile.y + 1][tile.x] === TileType.WALL;
+    const left = tile.x > 0 && grid[tile.y][tile.x - 1] === TileType.WALL;
+    const right = tile.x < grid[0].length - 1 && grid[tile.y][tile.x + 1] === TileType.WALL;
+
+    return (top && left) || (top && right) || (bottom && left) || (bottom && right);
+  });
+}
+
+/**
+ * Place features with room awareness
+ *
+ * This function considers room metadata to make smarter placement decisions:
+ * - Treasures are placed preferentially in larger rooms and treasure rooms
+ * - Traps are placed in corridors and guard rooms
+ * - Stairs are placed at room edges
+ * - Entrance rooms can be kept safe
+ *
+ * Note: This function creates a copy of the grid and does not mutate the original.
+ */
+export function placeFeaturesWithRooms(
+  inputGrid: Grid,
+  rooms: Room[],
+  options: RoomAwareFeatureOptions = {}
+): Grid {
+  const {
+    stairsChance = 0.3,
+    treasureChance = 0.2,
+    trapChance = 0.15,
+    waterChance = 0.1,
+    maxTreasures = 3,
+    maxTraps = 5,
+    guaranteeStairs = true,
+    minFeatureDistance = 3,
+    minAnyFeatureDistance = 2,
+    treasureInLargeRooms = true,
+    trapsInCorridors = true,
+    stairsAtEdges = true,
+    safeEntrance = false,
+    autoTreasureRoom = true,
+  } = options;
+
+  // Clone the grid to avoid mutating the original
+  const grid = cloneGrid(inputGrid);
+
+  if (rooms.length === 0) {
+    // Fall back to non-room-aware placement
+    return placeFeatures(grid, options);
+  }
+
+  // Track placed features by category for distance enforcement
+  const placedByCategory: Record<FeatureCategory, Point[]> = {
+    stairs: [],
+    treasure: [],
+    trap: [],
+    water: [],
+  };
+
+  const getAllPlaced = (): Point[] => [
+    ...placedByCategory.stairs,
+    ...placedByCategory.treasure,
+    ...placedByCategory.trap,
+    ...placedByCategory.water,
+  ];
+
+  let treasuresPlaced = 0;
+  let trapsPlaced = 0;
+  let stairsUpPlaced = false;
+  let stairsDownPlaced = false;
+
+  // Sort rooms by area for treasure placement (largest first)
+  const roomsBySize = [...rooms].sort((a, b) => b.area - a.area);
+
+  // Get treasure rooms
+  const treasureRooms = rooms.filter(r => r.type === RoomType.TREASURE);
+
+  // Get rooms that can receive features
+  const featureRooms = rooms.filter(r => {
+    if (safeEntrance && r.type === RoomType.ENTRANCE) return false;
+    return true;
+  });
+
+  // === STAIRS PLACEMENT ===
+  // Place stairs at edges of rooms, preferably in different rooms
+  const stairsRooms = shuffleArray([...featureRooms]);
+
+  for (const room of stairsRooms) {
+    if (stairsUpPlaced && stairsDownPlaced) break;
+
+    const edgeTiles = stairsAtEdges
+      ? shuffleArray(getRoomEdgeTiles(grid, room))
+      : shuffleArray(getRoomFloorTiles(grid, room));
+    const cornerTiles = shuffleArray(getRoomCornerTiles(grid, room));
+    const candidates = [...cornerTiles, ...edgeTiles];
+
+    for (const loc of candidates) {
+      if (stairsUpPlaced && stairsDownPlaced) break;
+      if (!hasMinDistance(loc, getAllPlaced(), minAnyFeatureDistance)) continue;
+
+      if (!stairsUpPlaced && (guaranteeStairs || Math.random() < stairsChance)) {
+        if (grid[loc.y][loc.x] === TileType.FLOOR) {
+          grid[loc.y][loc.x] = TileType.STAIRS_UP;
+          placedByCategory.stairs.push(loc);
+          stairsUpPlaced = true;
+          break; // Move to next room for stairs down
+        }
+      }
+    }
+  }
+
+  // Place stairs down in a different room if possible
+  const stairsDownRooms = stairsRooms.filter(r => {
+    // Avoid placing in same room as stairs up
+    return !placedByCategory.stairs.some(s =>
+      r.tiles.some(t => t.x === s.x && t.y === s.y)
+    );
+  });
+
+  for (const room of stairsDownRooms.length > 0 ? stairsDownRooms : stairsRooms) {
+    if (stairsDownPlaced) break;
+
+    const edgeTiles = stairsAtEdges
+      ? shuffleArray(getRoomEdgeTiles(grid, room))
+      : shuffleArray(getRoomFloorTiles(grid, room));
+    const cornerTiles = shuffleArray(getRoomCornerTiles(grid, room));
+    const candidates = [...cornerTiles, ...edgeTiles];
+
+    for (const loc of candidates) {
+      if (!hasMinDistance(loc, getAllPlaced(), minAnyFeatureDistance)) continue;
+      if (!hasMinDistance(loc, placedByCategory.stairs, minFeatureDistance)) continue;
+
+      if (!stairsDownPlaced && (guaranteeStairs || Math.random() < stairsChance)) {
+        if (grid[loc.y][loc.x] === TileType.FLOOR) {
+          grid[loc.y][loc.x] = TileType.STAIRS_DOWN;
+          placedByCategory.stairs.push(loc);
+          stairsDownPlaced = true;
+          break;
+        }
+      }
+    }
+  }
+
+  // === TREASURE PLACEMENT ===
+  // Auto-place treasure in designated treasure rooms
+  if (autoTreasureRoom) {
+    for (const room of treasureRooms) {
+      if (treasuresPlaced >= maxTreasures) break;
+
+      const floorTiles = shuffleArray(getRoomFloorTiles(grid, room));
+      for (const loc of floorTiles) {
+        if (treasuresPlaced >= maxTreasures) break;
+        if (!hasMinDistance(loc, getAllPlaced(), minAnyFeatureDistance)) continue;
+
+        grid[loc.y][loc.x] = TileType.CHEST;
+        placedByCategory.treasure.push(loc);
+        treasuresPlaced++;
+        break; // One treasure per treasure room
+      }
+    }
+  }
+
+  // Place remaining treasures in larger rooms if enabled
+  if (treasureInLargeRooms) {
+    const largeRooms = roomsBySize.filter(r =>
+      r.size === RoomSize.LARGE ||
+      r.size === RoomSize.HUGE ||
+      r.size === RoomSize.MEDIUM
+    );
+
+    for (const room of largeRooms) {
+      if (treasuresPlaced >= maxTreasures) break;
+      if (safeEntrance && room.type === RoomType.ENTRANCE) continue;
+
+      const cornerTiles = shuffleArray(getRoomCornerTiles(grid, room));
+      const floorTiles = shuffleArray(getRoomFloorTiles(grid, room));
+      const candidates = [...cornerTiles, ...floorTiles];
+
+      for (const loc of candidates) {
+        if (treasuresPlaced >= maxTreasures) break;
+        if (grid[loc.y][loc.x] !== TileType.FLOOR) continue;
+        if (!hasMinDistance(loc, placedByCategory.treasure, minFeatureDistance)) continue;
+        if (!hasMinDistance(loc, getAllPlaced(), minAnyFeatureDistance)) continue;
+
+        if (Math.random() < treasureChance) {
+          grid[loc.y][loc.x] = Math.random() < 0.5 ? TileType.TREASURE : TileType.CHEST;
+          placedByCategory.treasure.push(loc);
+          treasuresPlaced++;
+        }
+      }
+    }
+  }
+
+  // === TRAP PLACEMENT ===
+  // Place traps preferentially in guard rooms and smaller rooms
+  const trapRooms = trapsInCorridors
+    ? rooms.filter(r => r.type === RoomType.GUARD || r.size === RoomSize.TINY || r.size === RoomSize.SMALL)
+    : featureRooms;
+
+  const trapCandidateRooms = shuffleArray([...trapRooms, ...featureRooms]);
+
+  for (const room of trapCandidateRooms) {
+    if (trapsPlaced >= maxTraps) break;
+    if (safeEntrance && room.type === RoomType.ENTRANCE) continue;
+
+    const floorTiles = shuffleArray(getRoomFloorTiles(grid, room));
+
+    for (const loc of floorTiles) {
+      if (trapsPlaced >= maxTraps) break;
+      if (grid[loc.y][loc.x] !== TileType.FLOOR) continue;
+      if (!hasMinDistance(loc, placedByCategory.trap, minFeatureDistance)) continue;
+      if (!hasMinDistance(loc, getAllPlaced(), minAnyFeatureDistance)) continue;
+
+      if (Math.random() < trapChance) {
+        grid[loc.y][loc.x] = Math.random() < 0.6 ? TileType.TRAP : TileType.TRAP_PIT;
+        placedByCategory.trap.push(loc);
+        trapsPlaced++;
+      }
+    }
+  }
+
+  // === WATER PLACEMENT ===
+  // Place water in larger rooms
+  if (Math.random() < waterChance) {
+    const waterRooms = roomsBySize.filter(r =>
+      (r.size === RoomSize.MEDIUM || r.size === RoomSize.LARGE || r.size === RoomSize.HUGE) &&
+      !(safeEntrance && r.type === RoomType.ENTRANCE)
+    );
+
+    for (const room of waterRooms) {
+      const interiorTiles = room.tiles.filter(tile => {
+        if (grid[tile.y][tile.x] !== TileType.FLOOR) return false;
+
+        // Check all 4 neighbors are also floor-like
+        const neighbors = [
+          grid[tile.y - 1]?.[tile.x],
+          grid[tile.y + 1]?.[tile.x],
+          grid[tile.y]?.[tile.x - 1],
+          grid[tile.y]?.[tile.x + 1],
+        ];
+
+        return neighbors.every(n => n !== undefined && n !== TileType.WALL);
+      });
+
+      if (interiorTiles.length < 3) continue;
+
+      const shuffledInterior = shuffleArray([...interiorTiles]);
+      let waterCenter: Point | null = null;
+
+      for (const loc of shuffledInterior) {
+        if (hasMinDistance(loc, getAllPlaced(), minFeatureDistance)) {
+          waterCenter = loc;
+          break;
+        }
+      }
+
+      if (waterCenter) {
+        const waterType = Math.random() < 0.7 ? TileType.WATER :
+                          Math.random() < 0.5 ? TileType.DEEP_WATER : TileType.LAVA;
+
+        grid[waterCenter.y][waterCenter.x] = waterType;
+        placedByCategory.water.push(waterCenter);
+
+        // Expand to adjacent floor tiles
+        const neighbors = [
+          { x: waterCenter.x, y: waterCenter.y - 1 },
+          { x: waterCenter.x, y: waterCenter.y + 1 },
+          { x: waterCenter.x - 1, y: waterCenter.y },
+          { x: waterCenter.x + 1, y: waterCenter.y },
+        ];
+
+        for (const n of neighbors) {
+          if (
+            n.y >= 0 &&
+            n.y < grid.length &&
+            n.x >= 0 &&
+            n.x < grid[0].length &&
+            grid[n.y][n.x] === TileType.FLOOR &&
+            Math.random() < 0.5
+          ) {
+            grid[n.y][n.x] = waterType;
+            placedByCategory.water.push(n);
+          }
+        }
+        break; // Only one water feature
+      }
+    }
+  }
+
+  return grid;
 }

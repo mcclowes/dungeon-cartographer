@@ -1,4 +1,4 @@
-export { generateBSP, type BSPOptions } from "./bsp";
+export { generateBSP, generateBSPWithRooms, type BSPOptions } from "./bsp";
 export { generateCave, type CaveOptions } from "./cave";
 export { generateDLA, type DLAOptions } from "./dla";
 export {
@@ -22,5 +22,5 @@ export {
   type PerlinOptions,
   TerrainTile,
 } from "./perlin";
-export { generateVoronoi, type VoronoiOptions } from "./voronoi";
+export { generateVoronoi, generateVoronoiWithRooms, type VoronoiOptions } from "./voronoi";
 export { generateWFC, type WFCOptions } from "./wfc";

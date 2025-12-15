@@ -1,6 +1,6 @@
-import type { Grid, Rect, Point } from "../types";
+import type { Grid, Rect, Point, Room, DungeonResult } from "../types";
 import { TileType } from "../types";
-import { createGrid, randomInt, placeFeatures, validateGridSize, type FeaturePlacementOptions } from "../utils";
+import { createGrid, randomInt, placeFeatures, validateGridSize, createRoomFromRect, assignRoomTypes, type FeaturePlacementOptions } from "../utils";
 
 export interface BSPOptions {
   /** Minimum partition size (default: 6) */
@@ -242,6 +242,25 @@ function drawAllRooms(grid: Grid, node: BSPNode): void {
   if (node.right) drawAllRooms(grid, node.right);
 }
 
+/**
+ * Collect all room rectangles from the BSP tree
+ */
+function collectRoomRects(node: BSPNode): Rect[] {
+  const rooms: Rect[] = [];
+
+  if (node.room) {
+    rooms.push(node.room);
+  }
+  if (node.left) {
+    rooms.push(...collectRoomRects(node.left));
+  }
+  if (node.right) {
+    rooms.push(...collectRoomRects(node.right));
+  }
+
+  return rooms;
+}
+
 function isPassable(tile: number): boolean {
   return tile === TileType.FLOOR || tile === TileType.CORRIDOR || tile === TileType.DOOR;
 }
@@ -379,4 +398,67 @@ export function generateBSP(size: number, options: BSPOptions = {}): Grid {
   }
 
   return grid;
+}
+
+/**
+ * Binary Space Partitioning dungeon generator with room metadata
+ *
+ * Creates well-structured dungeons with distinct rooms and corridors,
+ * returning both the grid and room information for room-aware features.
+ *
+ * @param size - Grid size (width and height). Must be between 4 and 500.
+ * @param options - Generation options
+ * @returns Generated dungeon with grid and room metadata
+ * @throws {Error} If size is invalid
+ *
+ * @example
+ * ```ts
+ * const result = generateBSPWithRooms(50, { maxDepth: 5 });
+ * console.log(`Generated ${result.rooms.length} rooms`);
+ * ```
+ */
+export function generateBSPWithRooms(size: number, options: BSPOptions = {}): DungeonResult {
+  validateGridSize(size, "generateBSPWithRooms");
+
+  const {
+    minPartitionSize = 6,
+    maxDepth = 4,
+    minRoomSize = 3,
+    padding = 1,
+    addDoors: addDoorsEnabled = true,
+    addFeatures: addFeaturesEnabled = false,
+    featureOptions = {},
+  } = options;
+
+  const grid = createGrid(size, size, TileType.WALL);
+  const root = new BSPNode(1, 1, size - 2, size - 2);
+
+  buildTree(root, minPartitionSize, maxDepth);
+  createRooms(root, minRoomSize, padding);
+  drawAllRooms(grid, root);
+  connectRooms(grid, root);
+
+  // Collect room rectangles and convert to Room objects
+  const roomRects = collectRoomRects(root);
+  const rooms: Room[] = roomRects.map((rect, index) => {
+    const room = createRoomFromRect(rect, index);
+    room.connected = true; // All BSP rooms are connected by design
+    return room;
+  });
+
+  // Assign room types based on size and position
+  assignRoomTypes(rooms);
+
+  if (addDoorsEnabled) {
+    addDoors(grid);
+  }
+
+  if (addFeaturesEnabled) {
+    placeFeatures(grid, featureOptions);
+  }
+
+  return {
+    grid,
+    rooms,
+  };
 }
