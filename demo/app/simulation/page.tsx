@@ -100,8 +100,10 @@ export default function SimulationPage() {
 
     // Draw grid
     drawGrid(ctx, grid, canvas.width, canvas.height, {
-      style: "dungeon",
-      shadows: true,
+      style: "parchment",
+      texture: true,
+      scuffs: true,
+      vignette: true,
     });
 
     // Draw units
