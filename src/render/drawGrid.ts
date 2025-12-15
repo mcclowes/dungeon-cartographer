@@ -3,8 +3,9 @@ import { TileType, TerrainTile, MazeTile } from "../types";
 import type { Palette } from "./palettes";
 import { dungeonPalette, terrainPalette, mazePalette } from "./palettes";
 import { drawClassicTile } from "./classicTile";
+import { drawParchmentTile, addParchmentTexture, addVignette } from "./parchmentTile";
 
-export type RenderStyle = "dungeon" | "classic" | "terrain" | "maze" | "simple";
+export type RenderStyle = "dungeon" | "classic" | "parchment" | "terrain" | "maze" | "simple";
 
 export interface RenderOptions {
   /** Rendering style (default: "dungeon") */
@@ -17,6 +18,10 @@ export interface RenderOptions {
   gridColor?: string;
   /** Add shadows/3D effects (default: true for dungeon style) */
   shadows?: boolean;
+  /** Add texture noise for parchment style (default: true) */
+  texture?: boolean;
+  /** Add vignette effect for parchment style (default: true) */
+  vignette?: boolean;
 }
 
 function drawSimpleTile(
@@ -200,6 +205,8 @@ export function drawGrid(
     showGrid = false,
     gridColor = "rgba(0, 0, 0, 0.1)",
     shadows = style === "dungeon",
+    texture = style === "parchment",
+    vignette = style === "parchment",
   } = options;
 
   const tileWidth = width / grid[0].length;
@@ -222,8 +229,12 @@ export function drawGrid(
     }
   }
 
-  // Clear canvas
-  ctx.fillStyle = palette[0] || "#333333";
+  // Clear canvas with appropriate background
+  if (style === "parchment") {
+    ctx.fillStyle = "#e8d9b5"; // Parchment base
+  } else {
+    ctx.fillStyle = palette[0] || "#333333";
+  }
   ctx.fillRect(0, 0, width, height);
 
   // Draw tiles
@@ -232,6 +243,9 @@ export function drawGrid(
       switch (style) {
         case "classic":
           drawClassicTile(ctx, x, y, tileWidth, tileHeight, grid);
+          break;
+        case "parchment":
+          drawParchmentTile(ctx, x, y, tileWidth, tileHeight, grid);
           break;
         case "terrain":
           drawTerrainTile(ctx, x, y, tileWidth, tileHeight, grid, palette);
@@ -254,6 +268,16 @@ export function drawGrid(
           drawDungeonTile(ctx, x, y, tileWidth, tileHeight, grid, palette, shadows);
           break;
       }
+    }
+  }
+
+  // Parchment post-processing effects
+  if (style === "parchment") {
+    if (texture) {
+      addParchmentTexture(ctx, width, height);
+    }
+    if (vignette) {
+      addVignette(ctx, width, height);
     }
   }
 

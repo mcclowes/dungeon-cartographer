@@ -18,3 +18,9 @@ export {
 
 export { roundRect, type RadiusInput } from "./roundRect";
 export { drawClassicTile, type ClassicTileColors } from "./classicTile";
+export {
+  drawParchmentTile,
+  addParchmentTexture,
+  addVignette,
+  type ParchmentColors,
+} from "./parchmentTile";

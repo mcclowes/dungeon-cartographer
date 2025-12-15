@@ -29,7 +29,8 @@ interface GeneratorConfig {
   name: string;
   description: string;
   category: string;
-  style: RenderStyle;
+  defaultStyle: RenderStyle;
+  availableStyles: RenderStyle[];
   generate: (size: number) => Grid;
 }
 
@@ -38,105 +39,153 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
     name: "BSP Dungeon",
     description: "Binary Space Partitioning rooms & corridors",
     category: "Dungeon",
-    style: "classic",
+    defaultStyle: "classic",
+    availableStyles: ["classic", "parchment", "dungeon", "simple"],
     generate: (size) => generateBSP(size),
   },
   cave: {
     name: "Cellular Automata",
     description: "Organic cave-like structures",
     category: "Dungeon",
-    style: "classic",
+    defaultStyle: "classic",
+    availableStyles: ["classic", "parchment", "dungeon", "simple"],
     generate: (size) => generateCave(size),
   },
   wfc: {
     name: "Wave Function Collapse",
     description: "Constraint-based procedural generation",
     category: "Dungeon",
-    style: "classic",
+    defaultStyle: "classic",
+    availableStyles: ["classic", "parchment", "dungeon", "simple"],
     generate: (size) => generateWFC(size),
   },
   drunkard: {
     name: "Drunkard's Walk",
     description: "Simple random walk",
     category: "Random Walk",
-    style: "classic",
+    defaultStyle: "classic",
+    availableStyles: ["classic", "parchment", "dungeon", "simple"],
     generate: (size) => generateDrunkardWalk(size, { variant: "simple" }),
   },
   "drunkard-weighted": {
     name: "Weighted Walk",
     description: "Biased towards unexplored areas",
     category: "Random Walk",
-    style: "classic",
+    defaultStyle: "classic",
+    availableStyles: ["classic", "parchment", "dungeon", "simple"],
     generate: (size) => generateDrunkardWalk(size, { variant: "weighted" }),
   },
   "drunkard-multi": {
     name: "Multi Walker",
     description: "Multiple simultaneous walkers",
     category: "Random Walk",
-    style: "classic",
+    defaultStyle: "classic",
+    availableStyles: ["classic", "parchment", "dungeon", "simple"],
     generate: (size) => generateDrunkardWalk(size, { variant: "multiple", numWalkers: 6 }),
   },
   maze: {
     name: "Maze (Backtracking)",
     description: "Deep, winding passages",
     category: "Maze",
-    style: "maze",
+    defaultStyle: "maze",
+    availableStyles: ["maze", "parchment", "simple"],
     generate: (size) => generateMaze(size, { algorithm: "backtracking" }),
   },
   "maze-prims": {
     name: "Maze (Prim's)",
     description: "Shorter dead ends",
     category: "Maze",
-    style: "maze",
+    defaultStyle: "maze",
+    availableStyles: ["maze", "parchment", "simple"],
     generate: (size) => generateMaze(size, { algorithm: "prims" }),
   },
   "maze-division": {
     name: "Maze (Division)",
     description: "Grid-like recursive division",
     category: "Maze",
-    style: "maze",
+    defaultStyle: "maze",
+    availableStyles: ["maze", "parchment", "simple"],
     generate: (size) => generateMaze(size, { algorithm: "division" }),
   },
   perlin: {
     name: "Perlin Island",
     description: "Island terrain with Perlin noise",
     category: "Terrain",
-    style: "terrain",
+    defaultStyle: "terrain",
+    availableStyles: ["terrain", "simple"],
     generate: (size) => generatePerlin(size, { islandMode: true }),
   },
   "perlin-continent": {
     name: "Perlin Continent",
     description: "Large-scale terrain",
     category: "Terrain",
-    style: "terrain",
+    defaultStyle: "terrain",
+    availableStyles: ["terrain", "simple"],
     generate: (size) => generatePerlin(size, { islandMode: false, scale: 0.04 }),
   },
 };
 
 const CATEGORIES = ["Dungeon", "Random Walk", "Maze", "Terrain"];
 
+const STYLE_LABELS: Record<RenderStyle, string> = {
+  classic: "Classic",
+  parchment: "Parchment",
+  dungeon: "Dungeon",
+  terrain: "Terrain",
+  maze: "Maze",
+  simple: "Simple",
+};
+
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [generatorType, setGeneratorType] = useState<GeneratorType>("bsp");
   const [size, setSize] = useState(32);
+  const [style, setStyle] = useState<RenderStyle>("classic");
+  const [currentGrid, setCurrentGrid] = useState<Grid | null>(null);
 
-  const generateAndDraw = useCallback(() => {
+  const currentConfig = GENERATORS[generatorType];
+
+  // Update style when generator changes
+  useEffect(() => {
+    if (!currentConfig.availableStyles.includes(style)) {
+      setStyle(currentConfig.defaultStyle);
+    }
+  }, [generatorType, currentConfig, style]);
+
+  const generateGrid = useCallback(() => {
+    const config = GENERATORS[generatorType];
+    const grid = config.generate(size);
+    setCurrentGrid(grid);
+    return grid;
+  }, [generatorType, size]);
+
+  const draw = useCallback((grid: Grid) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const config = GENERATORS[generatorType];
-    const grid = config.generate(size);
-    drawGrid(ctx, grid, canvas.width, canvas.height, { style: config.style });
+    drawGrid(ctx, grid, canvas.width, canvas.height, { style });
+  }, [style]);
+
+  // Generate new grid when generator or size changes
+  useEffect(() => {
+    const grid = generateGrid();
+    draw(grid);
   }, [generatorType, size]);
 
+  // Redraw when style changes (same grid)
   useEffect(() => {
-    generateAndDraw();
-  }, [generateAndDraw]);
+    if (currentGrid) {
+      draw(currentGrid);
+    }
+  }, [style, currentGrid, draw]);
 
-  const currentConfig = GENERATORS[generatorType];
+  const handleRegenerate = () => {
+    const grid = generateGrid();
+    draw(grid);
+  };
 
   return (
     <div style={{ padding: 20 }}>
@@ -225,8 +274,22 @@ export default function Home() {
               <option value={64}>64</option>
             </select>
           </label>
+          <label style={{ fontSize: 14 }}>
+            Style:
+            <select
+              value={style}
+              onChange={(e) => setStyle(e.target.value as RenderStyle)}
+              style={{ marginLeft: 6, padding: 4 }}
+            >
+              {currentConfig.availableStyles.map((s) => (
+                <option key={s} value={s}>
+                  {STYLE_LABELS[s]}
+                </option>
+              ))}
+            </select>
+          </label>
           <button
-            onClick={generateAndDraw}
+            onClick={handleRegenerate}
             style={{
               padding: "10px 20px",
               border: "none",
@@ -238,7 +301,7 @@ export default function Home() {
               fontWeight: 500,
             }}
           >
-            ↻ Regenerate
+            Regenerate
           </button>
         </div>
       </div>
