@@ -21,6 +21,11 @@ const PARAM_CONFIGS: Record<string, ParamConfig> = {
   addDoors: { label: "Add Doors", type: "boolean" },
   addFeatures: { label: "Add Features (stairs, treasure, traps)", type: "boolean" },
 
+  // Debris features
+  rubbleChance: { label: "Rubble Chance", type: "range", min: 0, max: 0.5, step: 0.05 },
+  collapsedChance: { label: "Cave-in Chance", type: "range", min: 0, max: 0.3, step: 0.05 },
+  fallenColumnChance: { label: "Fallen Columns", type: "range", min: 0, max: 0.3, step: 0.05 },
+
   // Cave
   iterations: { label: "Iterations", type: "range", min: 1, max: 10, step: 1 },
   initialFillProbability: { label: "Fill Density", type: "range", min: 0.3, max: 0.7, step: 0.05 },
@@ -91,12 +96,12 @@ const PARAM_CONFIGS: Record<string, ParamConfig> = {
 };
 
 const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
-  bsp: ["minPartitionSize", "maxDepth", "minRoomSize", "padding", "addDoors", "addFeatures"],
-  cave: ["iterations", "initialFillProbability", "addFeatures"],
-  dla: ["fillPercentage", "stickiness", "spawnMode", "addFeatures"],
+  bsp: ["minPartitionSize", "maxDepth", "minRoomSize", "padding", "addDoors", "addFeatures", "rubbleChance", "collapsedChance", "fallenColumnChance"],
+  cave: ["iterations", "initialFillProbability", "addFeatures", "rubbleChance", "collapsedChance", "fallenColumnChance"],
+  dla: ["fillPercentage", "stickiness", "spawnMode", "addFeatures", "rubbleChance", "collapsedChance", "fallenColumnChance"],
   wfc: ["seedRadius"],
-  hybrid: ["splitDirection", "blendMode", "blendWidth", "connectRegions", "addFeatures"],
-  "hybrid-radial": ["blendMode", "blendWidth", "connectRegions", "addFeatures"],
+  hybrid: ["splitDirection", "blendMode", "blendWidth", "connectRegions", "addFeatures", "rubbleChance", "collapsedChance", "fallenColumnChance"],
+  "hybrid-radial": ["blendMode", "blendWidth", "connectRegions", "addFeatures", "rubbleChance", "collapsedChance", "fallenColumnChance"],
   drunkard: ["fillPercentage"],
   "drunkard-weighted": ["fillPercentage"],
   "drunkard-multi": ["fillPercentage", "numWalkers"],
@@ -105,7 +110,7 @@ const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
   "maze-division": ["addStartEnd", "loopChance", "openness"],
   perlin: ["scale", "octaves", "persistence", "lacunarity", "waterLevel", "sandLevel", "grassLevel", "forestLevel", "islandMode", "islandFalloff", "erosionIterations"],
   "perlin-continent": ["scale", "octaves", "persistence", "lacunarity", "waterLevel", "sandLevel", "grassLevel", "forestLevel", "islandMode", "islandFalloff", "erosionIterations"],
-  voronoi: ["numRooms", "minRoomDistance", "relaxation", "addDoors", "addFeatures"],
+  voronoi: ["numRooms", "minRoomDistance", "relaxation", "addDoors", "addFeatures", "rubbleChance", "collapsedChance", "fallenColumnChance"],
 };
 
 interface Props {

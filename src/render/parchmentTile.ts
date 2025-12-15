@@ -45,7 +45,10 @@ function isFloorLike(tile: number): boolean {
     tile === TileType.TRAP_PIT ||
     tile === TileType.WATER ||
     tile === TileType.DEEP_WATER ||
-    tile === TileType.LAVA
+    tile === TileType.LAVA ||
+    tile === TileType.RUBBLE ||
+    tile === TileType.COLLAPSED ||
+    tile === TileType.FALLEN_COLUMN
   );
 }
 
@@ -673,6 +676,187 @@ function drawTileIcon(
       ctx.arc(cx - size * 0.15, cy, size * 0.08, 0, Math.PI * 2);
       ctx.arc(cx + size * 0.2, cy - size * 0.1, size * 0.06, 0, Math.PI * 2);
       ctx.stroke();
+      break;
+    }
+
+    case TileType.RUBBLE: {
+      // Scattered rocks and debris - irregular stones of varying sizes
+      const rubbleRand = seededRandom(x * 1000 + y);
+      ctx.fillStyle = colors.border;
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 0.8;
+
+      // Draw 5-8 scattered stones
+      const stoneCount = 5 + Math.floor(rubbleRand() * 4);
+      for (let i = 0; i < stoneCount; i++) {
+        const stoneX = xCo + size * 0.15 + rubbleRand() * size * 0.7;
+        const stoneY = yCo + size * 0.15 + rubbleRand() * size * 0.7;
+        const stoneSize = size * (0.08 + rubbleRand() * 0.12);
+        const points = 4 + Math.floor(rubbleRand() * 3); // 4-6 sided stones
+
+        ctx.beginPath();
+        for (let p = 0; p < points; p++) {
+          const angle = (p / points) * Math.PI * 2 + rubbleRand() * 0.5;
+          const radius = stoneSize * (0.6 + rubbleRand() * 0.4);
+          const px = stoneX + Math.cos(angle) * radius;
+          const py = stoneY + Math.sin(angle) * radius;
+          if (p === 0) {
+            ctx.moveTo(px, py);
+          } else {
+            ctx.lineTo(px, py);
+          }
+        }
+        ctx.closePath();
+        // Some stones filled, some just outlined
+        if (rubbleRand() < 0.5) {
+          ctx.fill();
+        } else {
+          ctx.stroke();
+        }
+      }
+
+      // Add a few small dots for gravel
+      for (let i = 0; i < 8; i++) {
+        const dotX = xCo + size * 0.1 + rubbleRand() * size * 0.8;
+        const dotY = yCo + size * 0.1 + rubbleRand() * size * 0.8;
+        const dotSize = size * (0.02 + rubbleRand() * 0.03);
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, dotSize, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+    }
+
+    case TileType.COLLAPSED: {
+      // Cave-in / collapsed area - partial wall with debris spray
+      const collapseRand = seededRandom(x * 1000 + y);
+      ctx.fillStyle = colors.hatching;
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1;
+
+      // Draw irregular collapsed mass (like a pile of rubble from above)
+      ctx.beginPath();
+      const collapsePoints = 8 + Math.floor(collapseRand() * 4);
+      const collapseRadius = size * 0.35;
+
+      for (let p = 0; p < collapsePoints; p++) {
+        const angle = (p / collapsePoints) * Math.PI * 2;
+        const radius = collapseRadius * (0.5 + collapseRand() * 0.5);
+        const px = cx + Math.cos(angle) * radius;
+        const py = cy + Math.sin(angle) * radius;
+        if (p === 0) {
+          ctx.moveTo(px, py);
+        } else {
+          // Use quadratic curves for organic shapes
+          const prevAngle = ((p - 0.5) / collapsePoints) * Math.PI * 2;
+          const cpRadius = collapseRadius * (0.4 + collapseRand() * 0.6);
+          const cpx = cx + Math.cos(prevAngle) * cpRadius;
+          const cpy = cy + Math.sin(prevAngle) * cpRadius;
+          ctx.quadraticCurveTo(cpx, cpy, px, py);
+        }
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Draw hatching lines on the collapsed mass for texture
+      ctx.lineWidth = 0.6;
+      for (let i = 0; i < 6; i++) {
+        const hx = cx - size * 0.2 + collapseRand() * size * 0.4;
+        const hy = cy - size * 0.2 + collapseRand() * size * 0.4;
+        const hlen = size * (0.1 + collapseRand() * 0.15);
+        const hangle = collapseRand() * Math.PI;
+        ctx.beginPath();
+        ctx.moveTo(hx, hy);
+        ctx.lineTo(hx + Math.cos(hangle) * hlen, hy + Math.sin(hangle) * hlen);
+        ctx.stroke();
+      }
+
+      // Spray of debris extending outward
+      ctx.fillStyle = colors.border;
+      for (let i = 0; i < 12; i++) {
+        const angle = collapseRand() * Math.PI * 2;
+        const dist = size * (0.3 + collapseRand() * 0.35);
+        const debrisX = cx + Math.cos(angle) * dist;
+        const debrisY = cy + Math.sin(angle) * dist;
+        const debrisSize = size * (0.03 + collapseRand() * 0.06);
+
+        // Irregular stone shapes
+        const points = 3 + Math.floor(collapseRand() * 3);
+        ctx.beginPath();
+        for (let p = 0; p < points; p++) {
+          const a = (p / points) * Math.PI * 2 + collapseRand() * 0.5;
+          const r = debrisSize * (0.5 + collapseRand() * 0.5);
+          const px = debrisX + Math.cos(a) * r;
+          const py = debrisY + Math.sin(a) * r;
+          if (p === 0) {
+            ctx.moveTo(px, py);
+          } else {
+            ctx.lineTo(px, py);
+          }
+        }
+        ctx.closePath();
+        ctx.fill();
+      }
+      break;
+    }
+
+    case TileType.FALLEN_COLUMN: {
+      // Broken column sections - rectangular segments at angles
+      const columnRand = seededRandom(x * 1000 + y);
+      ctx.fillStyle = colors.parchment;
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1.2;
+
+      // Draw 2-3 fallen column segments
+      const segmentCount = 2 + Math.floor(columnRand() * 2);
+      for (let i = 0; i < segmentCount; i++) {
+        const segX = xCo + size * 0.2 + columnRand() * size * 0.3;
+        const segY = yCo + size * 0.2 + columnRand() * size * 0.4;
+        const segWidth = size * (0.35 + columnRand() * 0.2);
+        const segHeight = size * (0.12 + columnRand() * 0.08);
+        const angle = columnRand() * Math.PI - Math.PI / 2; // Random rotation
+
+        ctx.save();
+        ctx.translate(segX + segWidth / 2, segY + segHeight / 2);
+        ctx.rotate(angle);
+
+        // Draw column segment with rounded ends (like a drum section)
+        ctx.beginPath();
+        ctx.moveTo(-segWidth / 2, -segHeight / 2);
+        ctx.lineTo(segWidth / 2 - segHeight / 2, -segHeight / 2);
+        ctx.arc(segWidth / 2 - segHeight / 2, 0, segHeight / 2, -Math.PI / 2, Math.PI / 2);
+        ctx.lineTo(-segWidth / 2 + segHeight / 2, segHeight / 2);
+        ctx.arc(-segWidth / 2 + segHeight / 2, 0, segHeight / 2, Math.PI / 2, -Math.PI / 2);
+        ctx.closePath();
+
+        ctx.fill();
+        ctx.stroke();
+
+        // Add fluting lines (vertical grooves typical of classical columns)
+        ctx.lineWidth = 0.4;
+        const flutes = 3 + Math.floor(columnRand() * 2);
+        for (let f = 0; f < flutes; f++) {
+          const fx = -segWidth / 2 + segHeight / 2 + (f + 0.5) * ((segWidth - segHeight) / flutes);
+          ctx.beginPath();
+          ctx.moveTo(fx, -segHeight / 2 + 1);
+          ctx.lineTo(fx, segHeight / 2 - 1);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      // Add some small debris around the columns
+      ctx.fillStyle = colors.border;
+      for (let i = 0; i < 6; i++) {
+        const debrisX = xCo + size * 0.1 + columnRand() * size * 0.8;
+        const debrisY = yCo + size * 0.1 + columnRand() * size * 0.8;
+        const debrisSize = size * (0.02 + columnRand() * 0.04);
+        ctx.beginPath();
+        ctx.arc(debrisX, debrisY, debrisSize, 0, Math.PI * 2);
+        ctx.fill();
+      }
       break;
     }
   }

@@ -36,6 +36,11 @@ export interface GeneratorParams {
   addDoors?: boolean;
   addFeatures?: boolean;
 
+  // Debris features
+  rubbleChance?: number;
+  collapsedChance?: number;
+  fallenColumnChance?: number;
+
   // Cave
   iterations?: number;
   initialFillProbability?: number;
@@ -110,17 +115,26 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     padding: 1,
     addDoors: true,
     addFeatures: true,
+    rubbleChance: 0,
+    collapsedChance: 0,
+    fallenColumnChance: 0,
   },
   cave: {
     iterations: 3,
     initialFillProbability: 0.5,
     addFeatures: true,
+    rubbleChance: 0,
+    collapsedChance: 0,
+    fallenColumnChance: 0,
   },
   dla: {
     fillPercentage: 0.35,
     stickiness: 0.8,
     spawnMode: "edge",
     addFeatures: false,
+    rubbleChance: 0,
+    collapsedChance: 0,
+    fallenColumnChance: 0,
   },
   wfc: {
     seedRadius: 5,
@@ -182,6 +196,9 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     relaxation: 2,
     addDoors: true,
     addFeatures: false,
+    rubbleChance: 0,
+    collapsedChance: 0,
+    fallenColumnChance: 0,
   },
   hybrid: {
     splitDirection: "diagonal",
@@ -189,6 +206,9 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     blendWidth: 4,
     connectRegions: true,
     addFeatures: false,
+    rubbleChance: 0,
+    collapsedChance: 0,
+    fallenColumnChance: 0,
   },
   "hybrid-radial": {
     splitDirection: "radial",
@@ -196,6 +216,9 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     blendWidth: 6,
     connectRegions: true,
     addFeatures: false,
+    rubbleChance: 0,
+    collapsedChance: 0,
+    fallenColumnChance: 0,
   },
 };
 

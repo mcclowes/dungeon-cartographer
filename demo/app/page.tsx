@@ -48,6 +48,11 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
         padding: params.padding,
         addDoors: params.addDoors,
         addFeatures: params.addFeatures,
+        featureOptions: {
+          rubbleChance: params.rubbleChance,
+          collapsedChance: params.collapsedChance,
+          fallenColumnChance: params.fallenColumnChance,
+        },
       }),
   },
   cave: {
@@ -61,6 +66,11 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
         iterations: params.iterations,
         initialFillProbability: params.initialFillProbability,
         addFeatures: params.addFeatures,
+        featureOptions: {
+          rubbleChance: params.rubbleChance,
+          collapsedChance: params.collapsedChance,
+          fallenColumnChance: params.fallenColumnChance,
+        },
       }),
   },
   dla: {
@@ -75,6 +85,11 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
         stickiness: params.stickiness,
         spawnMode: params.spawnMode,
         addFeatures: params.addFeatures,
+        featureOptions: {
+          rubbleChance: params.rubbleChance,
+          collapsedChance: params.collapsedChance,
+          fallenColumnChance: params.fallenColumnChance,
+        },
       }),
   },
   voronoi: {
@@ -90,6 +105,11 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
         relaxation: params.relaxation,
         addDoors: params.addDoors,
         addFeatures: params.addFeatures,
+        featureOptions: {
+          rubbleChance: params.rubbleChance,
+          collapsedChance: params.collapsedChance,
+          fallenColumnChance: params.fallenColumnChance,
+        },
       }),
   },
   wfc: {
@@ -116,6 +136,11 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
         blendWidth: params.blendWidth ?? 4,
         connectRegions: params.connectRegions ?? true,
         addFeatures: params.addFeatures,
+        featureOptions: {
+          rubbleChance: params.rubbleChance,
+          collapsedChance: params.collapsedChance,
+          fallenColumnChance: params.fallenColumnChance,
+        },
       }),
   },
   "hybrid-radial": {
@@ -132,6 +157,11 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
         blendWidth: params.blendWidth ?? 6,
         connectRegions: params.connectRegions ?? true,
         addFeatures: params.addFeatures,
+        featureOptions: {
+          rubbleChance: params.rubbleChance,
+          collapsedChance: params.collapsedChance,
+          fallenColumnChance: params.fallenColumnChance,
+        },
       }),
   },
   drunkard: {
