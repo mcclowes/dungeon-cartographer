@@ -3,7 +3,15 @@ import { TileType, TerrainTile, MazeTile } from "../types";
 import type { Palette } from "./palettes";
 import { dungeonPalette, terrainPalette, mazePalette } from "./palettes";
 import { drawClassicTile } from "./classicTile";
-import { drawParchmentTile, addParchmentTexture, addParchmentScuffs, addVignette } from "./parchmentTile";
+import {
+  drawParchmentTile,
+  addParchmentTexture,
+  addParchmentScuffs,
+  addVignette,
+  drawCompassRose,
+  addFoldLines,
+  type CompassRoseOptions,
+} from "./parchmentTile";
 
 export type RenderStyle = "dungeon" | "classic" | "parchment" | "terrain" | "maze" | "simple";
 
@@ -24,6 +32,10 @@ export interface RenderOptions {
   scuffs?: boolean;
   /** Add vignette effect for parchment style (default: true) */
   vignette?: boolean;
+  /** Add compass rose decoration for parchment style (default: false) */
+  compassRose?: boolean | CompassRoseOptions;
+  /** Add fold lines for parchment style (default: false) */
+  foldLines?: boolean | { horizontalFolds?: number; verticalFolds?: number; opacity?: number };
 }
 
 function drawSimpleTile(
@@ -210,6 +222,8 @@ export function drawGrid(
     texture = style === "parchment",
     scuffs = style === "parchment",
     vignette = style === "parchment",
+    compassRose = false,
+    foldLines = false,
   } = options;
 
   const tileWidth = width / grid[0].length;
@@ -276,6 +290,11 @@ export function drawGrid(
 
   // Parchment post-processing effects
   if (style === "parchment") {
+    // Fold lines should be applied first (behind other effects)
+    if (foldLines) {
+      const foldOpts = typeof foldLines === "object" ? foldLines : {};
+      addFoldLines(ctx, width, height, foldOpts);
+    }
     if (scuffs) {
       addParchmentScuffs(ctx, width, height);
     }
@@ -284,6 +303,11 @@ export function drawGrid(
     }
     if (vignette) {
       addVignette(ctx, width, height);
+    }
+    // Compass rose drawn last so it's on top
+    if (compassRose) {
+      const compassOpts = typeof compassRose === "object" ? compassRose : {};
+      drawCompassRose(ctx, width, height, compassOpts);
     }
   }
 

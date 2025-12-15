@@ -21,6 +21,11 @@ export { drawClassicTile, type ClassicTileColors } from "./classicTile";
 export {
   drawParchmentTile,
   addParchmentTexture,
+  addParchmentScuffs,
   addVignette,
+  drawCompassRose,
+  addFoldLines,
   type ParchmentColors,
+  type CompassPosition,
+  type CompassRoseOptions,
 } from "./parchmentTile";
