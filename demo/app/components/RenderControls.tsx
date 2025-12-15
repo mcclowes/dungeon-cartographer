@@ -18,6 +18,7 @@ interface Props {
   size: number;
   style: RenderStyle;
   renderParams: RenderParams;
+  hasRooms: boolean;
   onSizeChange: (size: number) => void;
   onStyleChange: (style: RenderStyle) => void;
   onRenderParamsChange: (params: RenderParams) => void;
@@ -30,12 +31,15 @@ export function RenderControls({
   size,
   style,
   renderParams,
+  hasRooms,
   onSizeChange,
   onStyleChange,
   onRenderParamsChange,
   onRegenerate,
   onExport,
 }: Props) {
+  const isParchment = style === "parchment";
+
   return (
     <div className={styles.container}>
       <div className={styles.info}>
@@ -97,6 +101,89 @@ export function RenderControls({
           Export PNG
         </button>
       </div>
+
+      {/* Parchment style options */}
+      {isParchment && (
+        <div className={styles.parchmentOptions}>
+          <h4 className={styles.optionsTitle}>Parchment Effects</h4>
+          <div className={styles.optionsGrid}>
+            <label className={styles.checkbox}>
+              <input
+                type="checkbox"
+                checked={renderParams.compassRose}
+                onChange={(e) =>
+                  onRenderParamsChange({ ...renderParams, compassRose: e.target.checked })
+                }
+              />
+              Compass Rose
+            </label>
+            <label className={styles.checkbox}>
+              <input
+                type="checkbox"
+                checked={renderParams.scaleBar}
+                onChange={(e) =>
+                  onRenderParamsChange({ ...renderParams, scaleBar: e.target.checked })
+                }
+              />
+              Scale Bar
+            </label>
+            <label className={styles.checkbox}>
+              <input
+                type="checkbox"
+                checked={renderParams.foldLines}
+                onChange={(e) =>
+                  onRenderParamsChange({ ...renderParams, foldLines: e.target.checked })
+                }
+              />
+              Fold Lines
+            </label>
+            <label className={styles.checkbox}>
+              <input
+                type="checkbox"
+                checked={renderParams.tornEdges}
+                onChange={(e) =>
+                  onRenderParamsChange({ ...renderParams, tornEdges: e.target.checked })
+                }
+              />
+              Torn Edges
+            </label>
+            <label className={styles.checkbox}>
+              <input
+                type="checkbox"
+                checked={renderParams.fullGridLines}
+                onChange={(e) =>
+                  onRenderParamsChange({ ...renderParams, fullGridLines: e.target.checked })
+                }
+              />
+              Full Grid
+            </label>
+            {hasRooms && (
+              <>
+                <label className={styles.checkbox}>
+                  <input
+                    type="checkbox"
+                    checked={renderParams.roomLabels}
+                    onChange={(e) =>
+                      onRenderParamsChange({ ...renderParams, roomLabels: e.target.checked })
+                    }
+                  />
+                  Room Labels
+                </label>
+                <label className={styles.checkbox}>
+                  <input
+                    type="checkbox"
+                    checked={renderParams.pillars}
+                    onChange={(e) =>
+                      onRenderParamsChange({ ...renderParams, pillars: e.target.checked })
+                    }
+                  />
+                  Pillars
+                </label>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

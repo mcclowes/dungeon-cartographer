@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import {
   generateBSP,
+  generateBSPWithRooms,
   generateCave,
   generateDLA,
   generateDrunkardWalk,
@@ -10,8 +11,10 @@ import {
   generateMaze,
   generatePerlin,
   generateVoronoi,
+  generateVoronoiWithRooms,
   generateWFC,
   type Grid,
+  type Room,
 } from "dungeon-cartographer";
 import { drawGrid, type RenderStyle } from "dungeon-cartographer/render";
 import {
@@ -29,6 +32,7 @@ import type {
   GeneratorConfig,
   GeneratorParams,
   RenderParams,
+  GeneratorResult,
 } from "./types";
 import { DEFAULT_PARAMS, PRESETS, createSeededRandom, generateSeed } from "./types";
 import styles from "./page.module.scss";
@@ -42,6 +46,23 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
     availableStyles: ["parchment", "classic", "dungeon", "simple"],
     generate: (size, params) =>
       generateBSP(size, {
+        minPartitionSize: params.minPartitionSize,
+        maxDepth: params.maxDepth,
+        minRoomSize: params.minRoomSize,
+        padding: params.padding,
+        addDoors: params.addDoors,
+        addFeatures: params.addFeatures,
+      }),
+  },
+  "bsp-rooms": {
+    name: "BSP + Room Labels",
+    description: "BSP dungeon with room metadata for labels & pillars",
+    category: "Dungeon",
+    defaultStyle: "parchment",
+    availableStyles: ["parchment", "classic", "dungeon", "simple"],
+    hasRooms: true,
+    generate: (size, params) =>
+      generateBSPWithRooms(size, {
         minPartitionSize: params.minPartitionSize,
         maxDepth: params.maxDepth,
         minRoomSize: params.minRoomSize,
@@ -85,6 +106,22 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
     availableStyles: ["parchment", "classic", "dungeon", "simple"],
     generate: (size, params) =>
       generateVoronoi(size, {
+        numRooms: params.numRooms,
+        minRoomDistance: params.minRoomDistance,
+        relaxation: params.relaxation,
+        addDoors: params.addDoors,
+        addFeatures: params.addFeatures,
+      }),
+  },
+  "voronoi-rooms": {
+    name: "Voronoi + Room Labels",
+    description: "Voronoi dungeon with room metadata for labels & pillars",
+    category: "Dungeon",
+    defaultStyle: "parchment",
+    availableStyles: ["parchment", "classic", "dungeon", "simple"],
+    hasRooms: true,
+    generate: (size, params) =>
+      generateVoronoiWithRooms(size, {
         numRooms: params.numRooms,
         minRoomDistance: params.minRoomDistance,
         relaxation: params.relaxation,
@@ -345,10 +382,18 @@ export default function Home() {
   const [style, setStyle] = useState<RenderStyle>("parchment");
   const [seed, setSeed] = useState(() => generateSeed());
   const [currentGrid, setCurrentGrid] = useState<Grid | null>(null);
+  const [currentRooms, setCurrentRooms] = useState<Room[]>([]);
   const [params, setParams] = useState<GeneratorParams>(DEFAULT_PARAMS.bsp);
   const [renderParams, setRenderParams] = useState<RenderParams>({
     showGrid: false,
     animateReveal: false,
+    compassRose: false,
+    foldLines: false,
+    fullGridLines: false,
+    scaleBar: false,
+    roomLabels: false,
+    pillars: false,
+    tornEdges: false,
   });
   const animationRef = useRef<number | null>(null);
   const [generationTime, setGenerationTime] = useState<number | undefined>();
@@ -390,7 +435,7 @@ export default function Home() {
     setSeed(generateSeed());
   }, []);
 
-  const generateGrid = useCallback(() => {
+  const generateGrid = useCallback((): { grid: Grid; rooms: Room[] } => {
     // Override Math.random with seeded version
     const originalRandom = Math.random;
     Math.random = createSeededRandom(seed);
@@ -398,11 +443,28 @@ export default function Home() {
     try {
       const config = GENERATORS[generatorType];
       const startTime = performance.now();
-      const grid = config.generate(size, params);
+      const result = config.generate(size, params);
       const endTime = performance.now();
       setGenerationTime(endTime - startTime);
+
+      // Handle both Grid and GeneratorResult return types
+      let grid: Grid;
+      let rooms: Room[] = [];
+
+      if (Array.isArray(result)) {
+        // Plain Grid returned
+        grid = result;
+      } else if ('grid' in result) {
+        // GeneratorResult returned
+        grid = result.grid;
+        rooms = result.rooms ?? [];
+      } else {
+        grid = result as Grid;
+      }
+
       setCurrentGrid(grid);
-      return grid;
+      setCurrentRooms(rooms);
+      return { grid, rooms };
     } finally {
       // Restore original Math.random
       Math.random = originalRandom;
@@ -417,12 +479,25 @@ export default function Home() {
   }, []);
 
   const draw = useCallback(
-    (grid: Grid, revealProgress = 1) => {
+    (grid: Grid, rooms: Room[] = [], revealProgress = 1) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
 
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
+
+      const renderOptions = {
+        style,
+        showGrid: renderParams.showGrid,
+        compassRose: renderParams.compassRose,
+        foldLines: renderParams.foldLines,
+        fullGridLines: renderParams.fullGridLines,
+        scaleBar: renderParams.scaleBar,
+        roomLabels: renderParams.roomLabels,
+        pillars: renderParams.pillars,
+        tornEdges: renderParams.tornEdges,
+        rooms,
+      };
 
       // If we're animating, create a partial grid with only revealed tiles
       if (revealProgress < 1) {
@@ -442,22 +517,16 @@ export default function Home() {
           })
         );
 
-        drawGrid(ctx, partialGrid, canvas.width, canvas.height, {
-          style,
-          showGrid: renderParams.showGrid,
-        });
+        drawGrid(ctx, partialGrid, canvas.width, canvas.height, renderOptions);
       } else {
-        drawGrid(ctx, grid, canvas.width, canvas.height, {
-          style,
-          showGrid: renderParams.showGrid,
-        });
+        drawGrid(ctx, grid, canvas.width, canvas.height, renderOptions);
       }
     },
-    [style, renderParams.showGrid]
+    [style, renderParams]
   );
 
   const animateReveal = useCallback(
-    (grid: Grid) => {
+    (grid: Grid, rooms: Room[] = []) => {
       // Cancel any existing animation
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
@@ -473,7 +542,7 @@ export default function Home() {
         // Ease out cubic for smooth deceleration
         const easedProgress = 1 - Math.pow(1 - progress, 3);
 
-        draw(grid, easedProgress);
+        draw(grid, rooms, easedProgress);
 
         if (progress < 1) {
           animationRef.current = requestAnimationFrame(animate);
@@ -500,20 +569,20 @@ export default function Home() {
   useEffect(() => {
     if (!isInitialized) return;
 
-    const grid = generateGrid();
+    const { grid, rooms } = generateGrid();
     if (renderParams.animateReveal) {
-      animateReveal(grid);
+      animateReveal(grid, rooms);
     } else {
-      draw(grid);
+      draw(grid, rooms);
     }
   }, [generatorType, size, params, seed, isInitialized]);
 
   // Redraw when style or render params change (same grid)
   useEffect(() => {
     if (currentGrid) {
-      draw(currentGrid);
+      draw(currentGrid, currentRooms);
     }
-  }, [style, renderParams.showGrid, currentGrid, draw]);
+  }, [style, renderParams, currentGrid, currentRooms, draw]);
 
   // Update URL when state changes
   useEffect(() => {
@@ -604,6 +673,7 @@ export default function Home() {
               size={size}
               style={style}
               renderParams={renderParams}
+              hasRooms={currentRooms.length > 0}
               onSizeChange={setSize}
               onStyleChange={setStyle}
               onRenderParamsChange={setRenderParams}

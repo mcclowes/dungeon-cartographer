@@ -1,8 +1,9 @@
-import type { Grid } from "dungeon-cartographer";
+import type { Grid, Room } from "dungeon-cartographer";
 import type { RenderStyle } from "dungeon-cartographer/render";
 
 export type GeneratorType =
   | "bsp"
+  | "bsp-rooms"
   | "cave"
   | "dla"
   | "drunkard"
@@ -16,7 +17,13 @@ export type GeneratorType =
   | "perlin"
   | "perlin-continent"
   | "voronoi"
+  | "voronoi-rooms"
   | "wfc";
+
+export interface GeneratorResult {
+  grid: Grid;
+  rooms?: Room[];
+}
 
 export interface GeneratorConfig {
   name: string;
@@ -24,7 +31,8 @@ export interface GeneratorConfig {
   category: string;
   defaultStyle: RenderStyle;
   availableStyles: RenderStyle[];
-  generate: (size: number, params: GeneratorParams) => Grid;
+  generate: (size: number, params: GeneratorParams) => Grid | GeneratorResult;
+  hasRooms?: boolean;
 }
 
 export interface GeneratorParams {
@@ -84,6 +92,14 @@ export interface GeneratorParams {
 export interface RenderParams {
   showGrid: boolean;
   animateReveal: boolean;
+  // Parchment style options
+  compassRose: boolean;
+  foldLines: boolean;
+  fullGridLines: boolean;
+  scaleBar: boolean;
+  roomLabels: boolean;
+  pillars: boolean;
+  tornEdges: boolean;
 }
 
 // Mulberry32 seeded PRNG
@@ -102,6 +118,14 @@ export function generateSeed(): number {
 
 export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
   bsp: {
+    minPartitionSize: 6,
+    maxDepth: 4,
+    minRoomSize: 3,
+    padding: 1,
+    addDoors: true,
+    addFeatures: true,
+  },
+  "bsp-rooms": {
     minPartitionSize: 6,
     maxDepth: 4,
     minRoomSize: 3,
@@ -175,6 +199,13 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     erosionIterations: 2,
   },
   voronoi: {
+    numRooms: 8,
+    minRoomDistance: 4,
+    relaxation: 2,
+    addDoors: true,
+    addFeatures: false,
+  },
+  "voronoi-rooms": {
     numRooms: 8,
     minRoomDistance: 4,
     relaxation: 2,

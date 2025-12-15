@@ -92,6 +92,7 @@ const PARAM_CONFIGS: Record<string, ParamConfig> = {
 
 const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
   bsp: ["minPartitionSize", "maxDepth", "minRoomSize", "padding", "addDoors", "addFeatures"],
+  "bsp-rooms": ["minPartitionSize", "maxDepth", "minRoomSize", "padding", "addDoors", "addFeatures"],
   cave: ["iterations", "initialFillProbability", "addFeatures"],
   dla: ["fillPercentage", "stickiness", "spawnMode", "addFeatures"],
   wfc: ["seedRadius"],
@@ -106,6 +107,7 @@ const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
   perlin: ["scale", "octaves", "persistence", "lacunarity", "waterLevel", "sandLevel", "grassLevel", "forestLevel", "islandMode", "islandFalloff", "erosionIterations"],
   "perlin-continent": ["scale", "octaves", "persistence", "lacunarity", "waterLevel", "sandLevel", "grassLevel", "forestLevel", "islandMode", "islandFalloff", "erosionIterations"],
   voronoi: ["numRooms", "minRoomDistance", "relaxation", "addDoors", "addFeatures"],
+  "voronoi-rooms": ["numRooms", "minRoomDistance", "relaxation", "addDoors", "addFeatures"],
 };
 
 interface Props {
