@@ -2,8 +2,9 @@ import type { Grid } from "../types";
 import { TileType, TerrainTile, MazeTile } from "../types";
 import type { Palette } from "./palettes";
 import { dungeonPalette, terrainPalette, mazePalette } from "./palettes";
+import { drawClassicTile } from "./classicTile";
 
-export type RenderStyle = "dungeon" | "terrain" | "maze" | "simple";
+export type RenderStyle = "dungeon" | "classic" | "terrain" | "maze" | "simple";
 
 export interface RenderOptions {
   /** Rendering style (default: "dungeon") */
@@ -229,6 +230,9 @@ export function drawGrid(
   for (let y = 0; y < grid.length; y++) {
     for (let x = 0; x < grid[y].length; x++) {
       switch (style) {
+        case "classic":
+          drawClassicTile(ctx, x, y, tileWidth, tileHeight, grid);
+          break;
         case "terrain":
           drawTerrainTile(ctx, x, y, tileWidth, tileHeight, grid, palette);
           break;

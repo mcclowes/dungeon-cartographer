@@ -15,3 +15,6 @@ export {
   type Palette,
   type PaletteType,
 } from "./palettes";
+
+export { roundRect, type RadiusInput } from "./roundRect";
+export { drawClassicTile, type ClassicTileColors } from "./classicTile";
