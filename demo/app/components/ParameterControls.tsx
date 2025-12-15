@@ -49,11 +49,28 @@ const PARAM_CONFIGS: Record<string, ParamConfig> = {
 
   // WFC
   seedRadius: { label: "Seed Radius", type: "range", min: 2, max: 10, step: 1 },
+
+  // Voronoi
+  numRooms: { label: "Rooms", type: "range", min: 3, max: 20, step: 1 },
+  minRoomDistance: { label: "Min Distance", type: "range", min: 2, max: 8, step: 1 },
+  relaxation: { label: "Relaxation", type: "range", min: 0, max: 5, step: 1 },
+
+  // DLA
+  stickiness: { label: "Stickiness", type: "range", min: 0.3, max: 1, step: 0.1 },
+  spawnMode: {
+    label: "Spawn Mode",
+    type: "select",
+    options: [
+      { value: "edge", label: "Edge" },
+      { value: "random", label: "Random" },
+    ],
+  },
 };
 
 const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
   bsp: ["minPartitionSize", "maxDepth", "minRoomSize", "padding", "addDoors", "addFeatures"],
   cave: ["iterations", "initialFillProbability", "addFeatures"],
+  dla: ["fillPercentage", "stickiness", "spawnMode", "addFeatures"],
   wfc: ["seedRadius"],
   drunkard: ["fillPercentage"],
   "drunkard-weighted": ["fillPercentage"],
@@ -63,6 +80,7 @@ const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
   "maze-division": ["addStartEnd", "loopChance", "openness"],
   perlin: ["scale", "octaves", "persistence", "lacunarity", "waterLevel", "sandLevel", "grassLevel", "forestLevel", "islandMode", "islandFalloff", "erosionIterations"],
   "perlin-continent": ["scale", "octaves", "persistence", "lacunarity", "waterLevel", "sandLevel", "grassLevel", "forestLevel", "islandMode", "islandFalloff", "erosionIterations"],
+  voronoi: ["numRooms", "minRoomDistance", "relaxation", "addDoors", "addFeatures"],
 };
 
 interface Props {
@@ -78,7 +96,7 @@ export function ParameterControls({ generatorType, params, onChange }: Props) {
     return null;
   }
 
-  const handleChange = (key: string, value: number | boolean) => {
+  const handleChange = (key: string, value: number | boolean | string) => {
     onChange({ ...params, [key]: value });
   };
 
@@ -102,6 +120,25 @@ export function ParameterControls({ generatorType, params, onChange }: Props) {
                 />
                 <span>{config.label}</span>
               </label>
+            );
+          }
+
+          if (config.type === "select" && config.options) {
+            return (
+              <div key={key} className={styles.param}>
+                <label className={styles.label}>{config.label}</label>
+                <select
+                  value={value as string}
+                  onChange={(e) => handleChange(key, e.target.value)}
+                  className={styles.select}
+                >
+                  {config.options.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             );
           }
 

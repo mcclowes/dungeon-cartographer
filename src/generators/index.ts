@@ -1,5 +1,6 @@
 export { generateBSP, type BSPOptions } from "./bsp";
 export { generateCave, type CaveOptions } from "./cave";
+export { generateDLA, type DLAOptions } from "./dla";
 export {
   generateDrunkardWalk,
   type DrunkardWalkOptions,
@@ -15,4 +16,5 @@ export {
   type PerlinOptions,
   TerrainTile,
 } from "./perlin";
+export { generateVoronoi, type VoronoiOptions } from "./voronoi";
 export { generateWFC, type WFCOptions } from "./wfc";

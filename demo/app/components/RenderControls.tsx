@@ -80,6 +80,16 @@ export function RenderControls({
           />
           Grid
         </label>
+        <label className={styles.checkbox}>
+          <input
+            type="checkbox"
+            checked={renderParams.animateReveal}
+            onChange={(e) =>
+              onRenderParamsChange({ ...renderParams, animateReveal: e.target.checked })
+            }
+          />
+          Animate
+        </label>
         <button onClick={onRegenerate} className={styles.primaryButton}>
           Regenerate
         </button>

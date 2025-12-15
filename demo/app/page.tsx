@@ -4,9 +4,11 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import {
   generateBSP,
   generateCave,
+  generateDLA,
   generateDrunkardWalk,
   generateMaze,
   generatePerlin,
+  generateVoronoi,
   generateWFC,
   type Grid,
 } from "dungeon-cartographer";
@@ -15,9 +17,11 @@ import {
   ErrorBoundary,
   GeneratorSelector,
   ParameterControls,
+  PresetSelector,
   RenderControls,
   MapCanvas,
   SeedControl,
+  StatsDisplay,
 } from "./components";
 import type {
   GeneratorType,
@@ -25,7 +29,7 @@ import type {
   GeneratorParams,
   RenderParams,
 } from "./types";
-import { DEFAULT_PARAMS, createSeededRandom, generateSeed } from "./types";
+import { DEFAULT_PARAMS, PRESETS, createSeededRandom, generateSeed } from "./types";
 import styles from "./page.module.scss";
 
 const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
@@ -55,6 +59,35 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
       generateCave(size, {
         iterations: params.iterations,
         initialFillProbability: params.initialFillProbability,
+        addFeatures: params.addFeatures,
+      }),
+  },
+  dla: {
+    name: "DLA Growth",
+    description: "Diffusion-limited aggregation patterns",
+    category: "Dungeon",
+    defaultStyle: "parchment",
+    availableStyles: ["parchment", "classic", "dungeon", "simple"],
+    generate: (size, params) =>
+      generateDLA(size, {
+        fillPercentage: params.fillPercentage,
+        stickiness: params.stickiness,
+        spawnMode: params.spawnMode,
+        addFeatures: params.addFeatures,
+      }),
+  },
+  voronoi: {
+    name: "Voronoi Rooms",
+    description: "Organic room shapes via tessellation",
+    category: "Dungeon",
+    defaultStyle: "parchment",
+    availableStyles: ["parchment", "classic", "dungeon", "simple"],
+    generate: (size, params) =>
+      generateVoronoi(size, {
+        numRooms: params.numRooms,
+        minRoomDistance: params.minRoomDistance,
+        relaxation: params.relaxation,
+        addDoors: params.addDoors,
         addFeatures: params.addFeatures,
       }),
   },
@@ -283,7 +316,10 @@ export default function Home() {
   const [params, setParams] = useState<GeneratorParams>(DEFAULT_PARAMS.bsp);
   const [renderParams, setRenderParams] = useState<RenderParams>({
     showGrid: false,
+    animateReveal: false,
   });
+  const animationRef = useRef<number | null>(null);
+  const [generationTime, setGenerationTime] = useState<number | undefined>();
 
   const currentConfig = GENERATORS[generatorType];
 
@@ -328,7 +364,10 @@ export default function Home() {
 
     try {
       const config = GENERATORS[generatorType];
+      const startTime = performance.now();
       const grid = config.generate(size, params);
+      const endTime = performance.now();
+      setGenerationTime(endTime - startTime);
       setCurrentGrid(grid);
       return grid;
     } finally {
@@ -337,28 +376,103 @@ export default function Home() {
     }
   }, [generatorType, size, params, seed]);
 
+  const handlePresetSelect = useCallback((preset: typeof PRESETS[number]) => {
+    setGeneratorType(preset.generator);
+    setSize(preset.size);
+    setParams({ ...DEFAULT_PARAMS[preset.generator], ...preset.params });
+    setSeed(generateSeed());
+  }, []);
+
   const draw = useCallback(
-    (grid: Grid) => {
+    (grid: Grid, revealProgress = 1) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
 
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      drawGrid(ctx, grid, canvas.width, canvas.height, {
-        style,
-        showGrid: renderParams.showGrid,
-      });
+      // If we're animating, create a partial grid with only revealed tiles
+      if (revealProgress < 1) {
+        const height = grid.length;
+        const width = grid[0]?.length ?? 0;
+
+        // Create a mask grid showing only revealed tiles (radial reveal from center)
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const maxDist = Math.sqrt(centerX * centerX + centerY * centerY);
+
+        const partialGrid = grid.map((row, y) =>
+          row.map((tile, x) => {
+            const dist = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
+            const normalizedDist = dist / maxDist;
+            return normalizedDist <= revealProgress ? tile : 0; // 0 = WALL (hidden)
+          })
+        );
+
+        drawGrid(ctx, partialGrid, canvas.width, canvas.height, {
+          style,
+          showGrid: renderParams.showGrid,
+        });
+      } else {
+        drawGrid(ctx, grid, canvas.width, canvas.height, {
+          style,
+          showGrid: renderParams.showGrid,
+        });
+      }
     },
-    [style, renderParams]
+    [style, renderParams.showGrid]
   );
+
+  const animateReveal = useCallback(
+    (grid: Grid) => {
+      // Cancel any existing animation
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+
+      const duration = 800; // ms
+      const startTime = performance.now();
+
+      const animate = (currentTime: number) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Ease out cubic for smooth deceleration
+        const easedProgress = 1 - Math.pow(1 - progress, 3);
+
+        draw(grid, easedProgress);
+
+        if (progress < 1) {
+          animationRef.current = requestAnimationFrame(animate);
+        } else {
+          animationRef.current = null;
+        }
+      };
+
+      animationRef.current = requestAnimationFrame(animate);
+    },
+    [draw]
+  );
+
+  // Cleanup animation on unmount
+  useEffect(() => {
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []);
 
   // Generate new grid when generator, size, params, or seed change
   useEffect(() => {
     if (!isInitialized) return;
 
     const grid = generateGrid();
-    draw(grid);
+    if (renderParams.animateReveal) {
+      animateReveal(grid);
+    } else {
+      draw(grid);
+    }
   }, [generatorType, size, params, seed, isInitialized]);
 
   // Redraw when style or render params change (same grid)
@@ -366,7 +480,7 @@ export default function Home() {
     if (currentGrid) {
       draw(currentGrid);
     }
-  }, [style, renderParams, currentGrid, draw]);
+  }, [style, renderParams.showGrid, currentGrid, draw]);
 
   // Update URL when state changes
   useEffect(() => {
@@ -402,6 +516,11 @@ export default function Home() {
 
         <div className={styles.controls}>
           <h1 className={styles.title}>Dungeon Cartographer</h1>
+
+          <div className={styles.panel}>
+            <h3 className={styles.sectionTitle}>Quick Presets</h3>
+            <PresetSelector presets={PRESETS} onSelect={handlePresetSelect} />
+          </div>
 
           <div className={styles.panel}>
             <GeneratorSelector
@@ -441,6 +560,11 @@ export default function Home() {
               onRegenerate={handleRegenerate}
               onExport={handleExport}
             />
+          </div>
+
+          <div className={styles.panel}>
+            <h3 className={styles.sectionTitle}>Statistics</h3>
+            <StatsDisplay grid={currentGrid} generationTime={generationTime} />
           </div>
         </div>
       </ErrorBoundary>

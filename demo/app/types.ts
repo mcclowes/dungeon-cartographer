@@ -4,6 +4,7 @@ import type { RenderStyle } from "dungeon-cartographer/render";
 export type GeneratorType =
   | "bsp"
   | "cave"
+  | "dla"
   | "drunkard"
   | "drunkard-weighted"
   | "drunkard-multi"
@@ -12,6 +13,7 @@ export type GeneratorType =
   | "maze-division"
   | "perlin"
   | "perlin-continent"
+  | "voronoi"
   | "wfc";
 
 export interface GeneratorConfig {
@@ -60,10 +62,20 @@ export interface GeneratorParams {
 
   // WFC
   seedRadius?: number;
+
+  // Voronoi
+  numRooms?: number;
+  minRoomDistance?: number;
+  relaxation?: number;
+
+  // DLA
+  stickiness?: number;
+  spawnMode?: "edge" | "random";
 }
 
 export interface RenderParams {
   showGrid: boolean;
+  animateReveal: boolean;
 }
 
 // Mulberry32 seeded PRNG
@@ -93,6 +105,12 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     iterations: 3,
     initialFillProbability: 0.5,
     addFeatures: true,
+  },
+  dla: {
+    fillPercentage: 0.35,
+    stickiness: 0.8,
+    spawnMode: "edge",
+    addFeatures: false,
   },
   wfc: {
     seedRadius: 5,
@@ -148,4 +166,79 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     islandFalloff: 1.8,
     erosionIterations: 2,
   },
+  voronoi: {
+    numRooms: 8,
+    minRoomDistance: 4,
+    relaxation: 2,
+    addDoors: true,
+    addFeatures: false,
+  },
 };
+
+// Preset configurations for quick selection
+export interface Preset {
+  name: string;
+  description: string;
+  generator: GeneratorType;
+  size: number;
+  params: GeneratorParams;
+}
+
+export const PRESETS: Preset[] = [
+  {
+    name: "Classic Dungeon",
+    description: "Traditional room-and-corridor layout",
+    generator: "bsp",
+    size: 48,
+    params: { minPartitionSize: 8, maxDepth: 4, addDoors: true, addFeatures: true },
+  },
+  {
+    name: "Cavern System",
+    description: "Organic cave network",
+    generator: "cave",
+    size: 48,
+    params: { iterations: 4, initialFillProbability: 0.45, addFeatures: true },
+  },
+  {
+    name: "Coral Growth",
+    description: "Organic DLA pattern",
+    generator: "dla",
+    size: 48,
+    params: { fillPercentage: 0.4, stickiness: 0.7, spawnMode: "edge" },
+  },
+  {
+    name: "Organic Rooms",
+    description: "Irregular Voronoi chambers",
+    generator: "voronoi",
+    size: 48,
+    params: { numRooms: 10, relaxation: 2, addDoors: true },
+  },
+  {
+    name: "Labyrinth",
+    description: "Dense winding maze",
+    generator: "maze",
+    size: 32,
+    params: { addStartEnd: true, loopChance: 0, openness: 0 },
+  },
+  {
+    name: "Open Maze",
+    description: "Maze with shortcuts",
+    generator: "maze-prims",
+    size: 32,
+    params: { addStartEnd: true, loopChance: 0.15, openness: 0.1 },
+  },
+  {
+    name: "Tropical Island",
+    description: "Island surrounded by water",
+    generator: "perlin",
+    size: 64,
+    params: { scale: 0.06, islandMode: true, islandFalloff: 2.0, erosionIterations: 3 },
+  },
+  {
+    name: "Continental",
+    description: "Large landmass terrain",
+    generator: "perlin-continent",
+    size: 64,
+    params: { scale: 0.03, islandMode: false, erosionIterations: 2 },
+  },
+];
