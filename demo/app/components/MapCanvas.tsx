@@ -105,17 +105,20 @@ export function MapCanvas({ canvasRef, width, height }: Props) {
         // Two touches - pinch zoom
         const newDistance = getTouchDistance(e.touches);
         const newCenter = getTouchCenter(e.touches);
+        const prevCenter = lastTouchCenter.current;
 
         if (lastTouchDistance.current !== null && newDistance !== null) {
           const scale = newDistance / lastTouchDistance.current;
           setZoom((z) => Math.min(Math.max(0.25, z * scale), 4));
         }
 
-        // Also pan while pinching
-        if (lastTouchCenter.current !== null) {
+        // Also pan while pinching - capture prevCenter before setState
+        if (prevCenter !== null) {
+          const dx = newCenter.x - prevCenter.x;
+          const dy = newCenter.y - prevCenter.y;
           setPan((p) => ({
-            x: p.x + (newCenter.x - lastTouchCenter.current!.x),
-            y: p.y + (newCenter.y - lastTouchCenter.current!.y),
+            x: p.x + dx,
+            y: p.y + dy,
           }));
         }
 
