@@ -36,6 +36,8 @@ export interface RenderOptions {
   compassRose?: boolean | CompassRoseOptions;
   /** Add fold lines for parchment style (default: false) */
   foldLines?: boolean | { horizontalFolds?: number; verticalFolds?: number; opacity?: number };
+  /** Use varied hatching with crosshatch patterns for parchment style (default: true) */
+  variedHatching?: boolean;
 }
 
 function drawSimpleTile(
@@ -224,6 +226,7 @@ export function drawGrid(
     vignette = style === "parchment",
     compassRose = false,
     foldLines = false,
+    variedHatching = true,
   } = options;
 
   const tileWidth = width / grid[0].length;
@@ -262,7 +265,7 @@ export function drawGrid(
           drawClassicTile(ctx, x, y, tileWidth, tileHeight, grid);
           break;
         case "parchment":
-          drawParchmentTile(ctx, x, y, tileWidth, tileHeight, grid);
+          drawParchmentTile(ctx, x, y, tileWidth, tileHeight, grid, undefined, variedHatching);
           break;
         case "terrain":
           drawTerrainTile(ctx, x, y, tileWidth, tileHeight, grid, palette);

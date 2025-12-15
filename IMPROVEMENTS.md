@@ -6,7 +6,7 @@ Potential enhancements for the parchment/treasure map render style.
 
 - [ ] **Organic/wobbly borders** - More irregular, hand-drawn edges that meander slightly instead of smooth curves
 - [ ] **Grid lines across full parchment** - Faint grid extends across margins/wall areas, not just inside rooms
-- [ ] **Varied hatching patterns** - Crosshatch with varied angles, not just perpendicular strokes
+- [x] **Varied hatching patterns** - Crosshatch with varied angles, not just perpendicular strokes *(enabled by default via `variedHatching` option)*
 - [ ] **Edge wear/torn edges** - Rough, torn-looking edges around the parchment border
 - [x] **Fold lines/creases** - Subtle fold marks across the parchment surface *(added via `foldLines` option)*
 

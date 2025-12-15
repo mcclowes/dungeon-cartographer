@@ -71,6 +71,7 @@ function seededRandom(seed: number): () => number {
 
 /**
  * Draw short scattered hatching strokes near the edge facing floors
+ * When variedHatching is true, draws crosshatch patterns with varied angles
  */
 function drawMarginHatching(
   ctx: CanvasRenderingContext2D,
@@ -81,7 +82,8 @@ function drawMarginHatching(
   grid: Grid,
   x: number,
   y: number,
-  color: string
+  color: string,
+  variedHatching = true
 ): void {
   ctx.strokeStyle = color;
   ctx.lineCap = "round";
@@ -96,14 +98,21 @@ function drawMarginHatching(
   const floorLeft = x > 0 && isFloorLike(grid[y][x - 1]);
   const floorRight = x < grid[0].length - 1 && isFloorLike(grid[y][x + 1]);
 
-  // Draw hatching only near edges that face floors
+  // Angle variation for hand-drawn look (in radians, roughly -15 to +15 degrees)
+  const getAngleVariation = () => (variedHatching ? (rand() - 0.5) * 0.5 : 0);
+
+  // Draw primary hatching strokes near edges that face floors
   if (floorAbove) {
     for (let i = 0; i < width; i += baseSpacing + rand() * 2) {
       ctx.lineWidth = 0.6 + rand() * 0.4;
       const len = strokeLen * (0.7 + rand() * 0.5);
+      const angleVar = getAngleVariation();
       ctx.beginPath();
       ctx.moveTo(xCo + i + rand() * 2, yCo);
-      ctx.lineTo(xCo + i + len * 0.4 + rand() * 2, yCo + len);
+      ctx.lineTo(
+        xCo + i + len * 0.4 + rand() * 2 + Math.sin(angleVar) * len * 0.3,
+        yCo + len
+      );
       ctx.stroke();
     }
   }
@@ -112,9 +121,13 @@ function drawMarginHatching(
     for (let i = 0; i < width; i += baseSpacing + rand() * 2) {
       ctx.lineWidth = 0.6 + rand() * 0.4;
       const len = strokeLen * (0.7 + rand() * 0.5);
+      const angleVar = getAngleVariation();
       ctx.beginPath();
       ctx.moveTo(xCo + i + rand() * 2, yCo + height);
-      ctx.lineTo(xCo + i + len * 0.4 + rand() * 2, yCo + height - len);
+      ctx.lineTo(
+        xCo + i + len * 0.4 + rand() * 2 + Math.sin(angleVar) * len * 0.3,
+        yCo + height - len
+      );
       ctx.stroke();
     }
   }
@@ -123,9 +136,13 @@ function drawMarginHatching(
     for (let i = 0; i < height; i += baseSpacing + rand() * 2) {
       ctx.lineWidth = 0.6 + rand() * 0.4;
       const len = strokeLen * (0.7 + rand() * 0.5);
+      const angleVar = getAngleVariation();
       ctx.beginPath();
       ctx.moveTo(xCo, yCo + i + rand() * 2);
-      ctx.lineTo(xCo + len, yCo + i + len * 0.4 + rand() * 2);
+      ctx.lineTo(
+        xCo + len,
+        yCo + i + len * 0.4 + rand() * 2 + Math.sin(angleVar) * len * 0.3
+      );
       ctx.stroke();
     }
   }
@@ -134,10 +151,70 @@ function drawMarginHatching(
     for (let i = 0; i < height; i += baseSpacing + rand() * 2) {
       ctx.lineWidth = 0.6 + rand() * 0.4;
       const len = strokeLen * (0.7 + rand() * 0.5);
+      const angleVar = getAngleVariation();
       ctx.beginPath();
       ctx.moveTo(xCo + width, yCo + i + rand() * 2);
-      ctx.lineTo(xCo + width - len, yCo + i + len * 0.4 + rand() * 2);
+      ctx.lineTo(
+        xCo + width - len,
+        yCo + i + len * 0.4 + rand() * 2 + Math.sin(angleVar) * len * 0.3
+      );
       ctx.stroke();
+    }
+  }
+
+  // Draw crosshatch strokes (second pass at different angle) for varied hatching
+  if (variedHatching) {
+    const crossSpacing = baseSpacing * 1.5;
+    const crossLen = strokeLen * 0.7;
+
+    // Create a new random seed for crosshatch (offset to differ from primary strokes)
+    const crossRand = seededRandom(x * 1000 + y + 7777);
+
+    ctx.strokeStyle = color;
+
+    if (floorAbove) {
+      for (let i = crossSpacing / 2; i < width; i += crossSpacing + crossRand() * 2.5) {
+        ctx.lineWidth = 0.4 + crossRand() * 0.3;
+        const len = crossLen * (0.6 + crossRand() * 0.4);
+        // Crosshatch goes opposite direction (angled the other way)
+        ctx.beginPath();
+        ctx.moveTo(xCo + i + crossRand() * 2, yCo);
+        ctx.lineTo(xCo + i - len * 0.5 + crossRand() * 2, yCo + len * 0.8);
+        ctx.stroke();
+      }
+    }
+
+    if (floorBelow) {
+      for (let i = crossSpacing / 2; i < width; i += crossSpacing + crossRand() * 2.5) {
+        ctx.lineWidth = 0.4 + crossRand() * 0.3;
+        const len = crossLen * (0.6 + crossRand() * 0.4);
+        ctx.beginPath();
+        ctx.moveTo(xCo + i + crossRand() * 2, yCo + height);
+        ctx.lineTo(xCo + i - len * 0.5 + crossRand() * 2, yCo + height - len * 0.8);
+        ctx.stroke();
+      }
+    }
+
+    if (floorLeft) {
+      for (let i = crossSpacing / 2; i < height; i += crossSpacing + crossRand() * 2.5) {
+        ctx.lineWidth = 0.4 + crossRand() * 0.3;
+        const len = crossLen * (0.6 + crossRand() * 0.4);
+        ctx.beginPath();
+        ctx.moveTo(xCo, yCo + i + crossRand() * 2);
+        ctx.lineTo(xCo + len * 0.8, yCo + i - len * 0.5 + crossRand() * 2);
+        ctx.stroke();
+      }
+    }
+
+    if (floorRight) {
+      for (let i = crossSpacing / 2; i < height; i += crossSpacing + crossRand() * 2.5) {
+        ctx.lineWidth = 0.4 + crossRand() * 0.3;
+        const len = crossLen * (0.6 + crossRand() * 0.4);
+        ctx.beginPath();
+        ctx.moveTo(xCo + width, yCo + i + crossRand() * 2);
+        ctx.lineTo(xCo + width - len * 0.8, yCo + i - len * 0.5 + crossRand() * 2);
+        ctx.stroke();
+      }
     }
   }
 }
@@ -351,7 +428,8 @@ export function drawParchmentTile(
   width: number,
   height: number,
   grid: Grid,
-  colors: ParchmentColors = DEFAULT_COLORS
+  colors: ParchmentColors = DEFAULT_COLORS,
+  variedHatching = true
 ): void {
   const xCo = x * width;
   const yCo = y * height;
@@ -363,7 +441,7 @@ export function drawParchmentTile(
 
     // Only draw margin hatching on walls that are adjacent to floors
     if (isEdgeWall(grid, x, y)) {
-      drawMarginHatching(ctx, xCo, yCo, width, height, grid, x, y, colors.hatching);
+      drawMarginHatching(ctx, xCo, yCo, width, height, grid, x, y, colors.hatching, variedHatching);
     }
     return;
   }
