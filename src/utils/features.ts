@@ -10,10 +10,14 @@ export interface FeaturePlacementOptions {
   trapChance?: number;
   /** Chance to place water features (0-1, default: 0.1) */
   waterChance?: number;
+  /** Chance to place pillars in rooms (0-1, default: 0.15) */
+  pillarChance?: number;
   /** Max treasures per dungeon (default: 3) */
   maxTreasures?: number;
   /** Max traps per dungeon (default: 5) */
   maxTraps?: number;
+  /** Max pillars per dungeon (default: 8) */
+  maxPillars?: number;
   /** Guarantee at least one stairs up and down (default: true) */
   guaranteeStairs?: boolean;
 }
@@ -186,8 +190,10 @@ export function placeFeatures(
     treasureChance = 0.2,
     trapChance = 0.15,
     waterChance = 0.1,
+    pillarChance = 0.15,
     maxTreasures = 3,
     maxTraps = 5,
+    maxPillars = 8,
     guaranteeStairs = true,
   } = options;
 
@@ -279,6 +285,27 @@ export function placeFeatures(
       ) {
         grid[n.y][n.x] = waterType;
       }
+    }
+  }
+
+  // Place pillars - prefer interior spaces with spacing
+  let pillarsPlaced = 0;
+  const pillarLocations: Point[] = [];
+
+  for (const loc of interiors) {
+    if (pillarsPlaced >= maxPillars) break;
+    if (grid[loc.y][loc.x] !== TileType.FLOOR) continue;
+
+    // Check minimum spacing from other pillars (at least 2 tiles apart)
+    const tooClose = pillarLocations.some(
+      (p) => Math.abs(p.x - loc.x) < 3 && Math.abs(p.y - loc.y) < 3
+    );
+    if (tooClose) continue;
+
+    if (Math.random() < pillarChance) {
+      grid[loc.y][loc.x] = TileType.PILLAR;
+      pillarLocations.push(loc);
+      pillarsPlaced++;
     }
   }
 

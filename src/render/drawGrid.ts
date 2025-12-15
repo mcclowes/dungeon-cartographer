@@ -85,6 +85,31 @@ function drawDungeonTile(
     ctx.strokeRect(xCo + 2, yCo + 2, width - 4, height - 4);
     ctx.setLineDash([]);
   }
+
+  // Pillar indicator - circular stone pillar
+  if (tileType === TileType.PILLAR) {
+    const cx = xCo + width / 2;
+    const cy = yCo + height / 2;
+    const radius = Math.min(width, height) * 0.35;
+
+    // Pillar base/shadow
+    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+    ctx.beginPath();
+    ctx.arc(cx + 2, cy + 2, radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pillar body
+    ctx.fillStyle = palette[TileType.PILLAR] || "#6b6b6b";
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Highlight
+    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.beginPath();
+    ctx.arc(cx - radius * 0.3, cy - radius * 0.3, radius * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 function drawTerrainTile(

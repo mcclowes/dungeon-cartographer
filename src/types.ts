@@ -22,6 +22,8 @@ export enum TileType {
   WATER = 12,
   DEEP_WATER = 13,
   LAVA = 14,
+  // Structural
+  PILLAR = 15,
 }
 
 /** Terrain-specific tile types for Perlin generator */

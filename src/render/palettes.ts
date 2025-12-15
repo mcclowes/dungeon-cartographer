@@ -9,6 +9,7 @@ export const dungeonPalette: Palette = {
   [TileType.DOOR]: "#8b4513",
   [TileType.SECRET_DOOR]: "#654321",
   [TileType.CORRIDOR]: "#d4c4a8",
+  [TileType.PILLAR]: "#6b6b6b",
 };
 
 /** Terrain palette for Perlin generator */
@@ -36,6 +37,7 @@ export const darkDungeonPalette: Palette = {
   [TileType.DOOR]: "#5d3a1a",
   [TileType.SECRET_DOOR]: "#3d2a0a",
   [TileType.CORRIDOR]: "#4a4a4a",
+  [TileType.PILLAR]: "#5a5a5a",
 };
 
 export type PaletteType = "dungeon" | "terrain" | "maze" | "darkDungeon";
