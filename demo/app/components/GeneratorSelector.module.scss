@@ -44,3 +44,37 @@
     color: #fff;
   }
 }
+
+// Mobile styles
+@media (max-width: 768px) {
+  .container {
+    gap: 10px;
+  }
+
+  .category {
+    padding: 8px;
+  }
+
+  .categoryTitle {
+    font-size: 10px;
+  }
+
+  .buttonGroup {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .button {
+    padding: 10px 12px;
+    font-size: 12px;
+    min-height: 40px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 400px) {
+  .buttonGroup {
+    grid-template-columns: 1fr;
+  }
+}

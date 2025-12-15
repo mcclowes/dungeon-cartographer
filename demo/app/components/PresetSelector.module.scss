@@ -42,3 +42,30 @@
   font-size: 10px;
   color: rgba(255, 255, 255, 0.5);
 }
+
+// Mobile styles
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .preset {
+    padding: 10px 12px;
+    min-height: 44px;
+  }
+
+  .name {
+    font-size: 13px;
+  }
+
+  .description {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 400px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

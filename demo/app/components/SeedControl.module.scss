@@ -44,3 +44,30 @@
     background: rgba(255, 255, 255, 0.2);
   }
 }
+
+// Mobile styles
+@media (max-width: 768px) {
+  .container {
+    gap: 10px;
+  }
+
+  .label {
+    font-size: 13px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .input {
+    flex: 1;
+    min-width: 80px;
+    padding: 8px 10px;
+    font-size: 14px;
+    min-height: 40px;
+  }
+
+  .button {
+    padding: 8px 14px;
+    font-size: 13px;
+    min-height: 40px;
+  }
+}
