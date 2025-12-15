@@ -1,6 +1,6 @@
 import type { Grid, Rect, Point } from "../types";
 import { TileType } from "../types";
-import { createGrid, randomInt, placeFeatures, type FeaturePlacementOptions } from "../utils";
+import { createGrid, randomInt, placeFeatures, validateGridSize, type FeaturePlacementOptions } from "../utils";
 
 export interface BSPOptions {
   /** Minimum partition size (default: 6) */
@@ -338,8 +338,20 @@ function addDoors(grid: Grid): void {
  *
  * Creates well-structured dungeons with distinct rooms and corridors
  * by recursively dividing space into partitions.
+ *
+ * @param size - Grid size (width and height). Must be between 4 and 500.
+ * @param options - Generation options
+ * @returns Generated dungeon grid
+ * @throws {Error} If size is invalid
+ *
+ * @example
+ * ```ts
+ * const grid = generateBSP(50, { maxDepth: 5, addDoors: true });
+ * ```
  */
 export function generateBSP(size: number, options: BSPOptions = {}): Grid {
+  validateGridSize(size, "generateBSP");
+
   const {
     minPartitionSize = 6,
     maxDepth = 4,

@@ -1,11 +1,14 @@
 import type { Grid } from "../types";
 import { TileType } from "../types";
+import { cloneGrid } from "./grid";
 
 /**
  * Remove orphaned doors - doors that don't have at least one adjacent wall.
  * A valid door should be in a doorway (walls on opposite sides).
  */
 export function removeOrphanedDoors(grid: Grid): Grid {
+  if (!grid || grid.length === 0 || !grid[0]) return grid;
+
   const height = grid.length;
   const width = grid[0].length;
 
@@ -35,6 +38,8 @@ export function removeOrphanedDoors(grid: Grid): Grid {
  * Remove isolated floor tiles - floors completely surrounded by walls.
  */
 export function removeIsolatedFloors(grid: Grid): Grid {
+  if (!grid || grid.length === 0 || !grid[0]) return grid;
+
   const height = grid.length;
   const width = grid[0].length;
 
@@ -63,6 +68,8 @@ export function removeIsolatedFloors(grid: Grid): Grid {
  * Clean up corridors that are only 1 tile and surrounded by walls on 3 sides.
  */
 export function removeDeadEndCorridors(grid: Grid): Grid {
+  if (!grid || grid.length === 0 || !grid[0]) return grid;
+
   const height = grid.length;
   const width = grid[0].length;
   let changed = true;
@@ -107,6 +114,8 @@ export interface PostProcessOptions {
 
 /**
  * Apply post-processing cleanup to a generated grid.
+ *
+ * Note: This function creates a copy of the grid and does not mutate the original.
  */
 export function postProcess(grid: Grid, options: PostProcessOptions = {}): Grid {
   const {
@@ -115,17 +124,20 @@ export function postProcess(grid: Grid, options: PostProcessOptions = {}): Grid 
     removeDeadEndCorridors: cleanCorridors = false,
   } = options;
 
+  // Clone the grid to avoid mutating the original
+  const result = cloneGrid(grid);
+
   if (cleanDoors) {
-    removeOrphanedDoors(grid);
+    removeOrphanedDoors(result);
   }
 
   if (cleanFloors) {
-    removeIsolatedFloors(grid);
+    removeIsolatedFloors(result);
   }
 
   if (cleanCorridors) {
-    removeDeadEndCorridors(grid);
+    removeDeadEndCorridors(result);
   }
 
-  return grid;
+  return result;
 }

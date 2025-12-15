@@ -1,6 +1,6 @@
 import type { Grid, Point } from "../types";
 import { TileType, CARDINAL_DIRECTIONS } from "../types";
-import { createGrid, isInBoundsInner, randomItem, placeFeatures, type FeaturePlacementOptions } from "../utils";
+import { createGrid, isInBoundsInner, randomItem, placeFeatures, validateGridSize, type FeaturePlacementOptions } from "../utils";
 
 export interface DLAOptions {
   /** Target percentage of floor tiles (default: 0.35) */
@@ -68,8 +68,20 @@ function randomWalk(point: Point, size: number): Point {
  *
  * Creates organic, coral-like structures by releasing particles that
  * random walk until they stick to the existing structure.
+ *
+ * @param size - Grid size (width and height). Must be between 4 and 500.
+ * @param options - Generation options
+ * @returns Generated DLA grid
+ * @throws {Error} If size is invalid
+ *
+ * @example
+ * ```ts
+ * const grid = generateDLA(50, { fillPercentage: 0.4, numSeeds: 3 });
+ * ```
  */
 export function generateDLA(size: number, options: DLAOptions = {}): Grid {
+  validateGridSize(size, "generateDLA");
+
   const {
     fillPercentage = 0.35,
     numSeeds = 1,

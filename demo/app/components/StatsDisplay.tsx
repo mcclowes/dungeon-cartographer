@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import type { Grid } from "dungeon-cartographer";
+import { TileType } from "dungeon-cartographer";
 import styles from "./StatsDisplay.module.scss";
 
 interface Props {
@@ -33,12 +34,12 @@ function calculateStats(grid: Grid): GridStats {
       const tile = grid[y][x];
       tileCounts.set(tile, (tileCounts.get(tile) ?? 0) + 1);
 
-      // Common floor-like tiles (1, 4 = floor, corridor)
-      if (tile === 1 || tile === 4) {
+      // Count floor-like tiles using TileType enum
+      if (tile === TileType.FLOOR || tile === TileType.CORRIDOR) {
         floorTiles++;
       }
-      // Wall tiles (0)
-      if (tile === 0) {
+      // Count wall tiles using TileType enum
+      if (tile === TileType.WALL) {
         wallTiles++;
       }
     }

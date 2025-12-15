@@ -1,6 +1,6 @@
 import type { Grid, Point } from "../types";
 import { TileType } from "../types";
-import { createGrid, randomInt, placeFeatures, type FeaturePlacementOptions } from "../utils";
+import { createGrid, randomInt, placeFeatures, validateGridSize, type FeaturePlacementOptions } from "../utils";
 
 export interface VoronoiOptions {
   /** Number of room seeds to place (default: based on size) */
@@ -223,8 +223,20 @@ function addDoors(grid: Grid): void {
  *
  * Creates organic, irregular room shapes using Voronoi tessellation.
  * Rooms are connected via corridors between neighboring cells.
+ *
+ * @param size - Grid size (width and height). Must be between 4 and 500.
+ * @param options - Generation options
+ * @returns Generated Voronoi dungeon grid
+ * @throws {Error} If size is invalid
+ *
+ * @example
+ * ```ts
+ * const grid = generateVoronoi(50, { numRooms: 8, relaxation: 3 });
+ * ```
  */
 export function generateVoronoi(size: number, options: VoronoiOptions = {}): Grid {
+  validateGridSize(size, "generateVoronoi");
+
   const {
     numRooms = Math.floor(size / 6),
     minRoomDistance = 4,
@@ -240,7 +252,7 @@ export function generateVoronoi(size: number, options: VoronoiOptions = {}): Gri
   const seeds = generateSeeds(size, numRooms, minRoomDistance);
 
   if (seeds.length < 2) {
-    // Not enough space for rooms, return empty dungeon
+    console.warn("generateVoronoi: Grid too small for requested number of rooms, returning empty dungeon");
     return grid;
   }
 

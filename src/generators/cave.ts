@@ -1,6 +1,6 @@
 import type { Grid } from "../types";
 import { TileType } from "../types";
-import { sumInRadius, placeFeatures, type FeaturePlacementOptions } from "../utils";
+import { sumInRadius, placeFeatures, validateGridSize, type FeaturePlacementOptions } from "../utils";
 
 export interface CaveOptions {
   /** Number of cellular automata iterations (default: 3) */
@@ -44,9 +44,21 @@ function applyCellularAutomata(grid: Grid): Grid {
  * Creates organic cave-like structures by starting with random noise
  * and applying cellular automata rules iteratively.
  *
+ * @param size - Grid size (width and height). Must be between 4 and 500.
+ * @param options - Generation options
+ * @returns Generated cave grid
+ * @throws {Error} If size is invalid
+ *
+ * @example
+ * ```ts
+ * const grid = generateCave(50, { iterations: 5, initialFillProbability: 0.45 });
+ * ```
+ *
  * @see http://roguebasin.roguelikedevelopment.org/index.php?title=Cellular_Automata_Method_for_Generating_Random_Cave-Like_Levels
  */
 export function generateCave(size: number, options: CaveOptions = {}): Grid {
+  validateGridSize(size, "generateCave");
+
   const {
     iterations = 3,
     initialFillProbability = 0.5,
