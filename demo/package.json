@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "clear": "rm -rf .next"
   },
   "dependencies": {
     "dungeon-cartographer": "file:..",
@@ -17,6 +18,7 @@
     "@types/node": "^20.10.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "sass": "^1.96.0",
     "typescript": "^5.3.0"
   }
 }

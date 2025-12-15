@@ -1,0 +1,39 @@
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: #fee;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.title {
+  margin: 0 0 12px;
+  font-size: 20px;
+  color: #c00;
+}
+
+.message {
+  margin: 0 0 20px;
+  color: #666;
+  font-family: monospace;
+  font-size: 14px;
+}
+
+.retryButton {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  background: #c00;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #a00;
+  }
+}

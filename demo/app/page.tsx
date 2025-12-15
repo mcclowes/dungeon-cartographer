@@ -11,101 +11,140 @@ import {
   type Grid,
 } from "dungeon-cartographer";
 import { drawGrid, type RenderStyle } from "dungeon-cartographer/render";
-
-type GeneratorType =
-  | "bsp"
-  | "cave"
-  | "drunkard"
-  | "drunkard-weighted"
-  | "drunkard-multi"
-  | "maze"
-  | "maze-prims"
-  | "maze-division"
-  | "perlin"
-  | "perlin-continent"
-  | "wfc";
-
-interface GeneratorConfig {
-  name: string;
-  description: string;
-  category: string;
-  defaultStyle: RenderStyle;
-  availableStyles: RenderStyle[];
-  generate: (size: number) => Grid;
-}
+import {
+  ErrorBoundary,
+  GeneratorSelector,
+  ParameterControls,
+  RenderControls,
+  MapCanvas,
+  SeedControl,
+} from "./components";
+import type {
+  GeneratorType,
+  GeneratorConfig,
+  GeneratorParams,
+  RenderParams,
+} from "./types";
+import { DEFAULT_PARAMS, createSeededRandom, generateSeed } from "./types";
+import styles from "./page.module.scss";
 
 const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
   bsp: {
     name: "BSP Dungeon",
     description: "Binary Space Partitioning rooms & corridors",
     category: "Dungeon",
-    defaultStyle: "classic",
-    availableStyles: ["classic", "parchment", "dungeon", "simple"],
-    generate: (size) => generateBSP(size),
+    defaultStyle: "parchment",
+    availableStyles: ["parchment", "classic", "dungeon", "simple"],
+    generate: (size, params) =>
+      generateBSP(size, {
+        minPartitionSize: params.minPartitionSize,
+        maxDepth: params.maxDepth,
+        minRoomSize: params.minRoomSize,
+        padding: params.padding,
+        addDoors: params.addDoors,
+      }),
   },
   cave: {
     name: "Cellular Automata",
     description: "Organic cave-like structures",
     category: "Dungeon",
-    defaultStyle: "classic",
-    availableStyles: ["classic", "parchment", "dungeon", "simple"],
-    generate: (size) => generateCave(size),
+    defaultStyle: "parchment",
+    availableStyles: ["parchment", "classic", "dungeon", "simple"],
+    generate: (size, params) =>
+      generateCave(size, {
+        iterations: params.iterations,
+        initialFillProbability: params.initialFillProbability,
+      }),
   },
   wfc: {
     name: "Wave Function Collapse",
     description: "Constraint-based procedural generation",
     category: "Dungeon",
-    defaultStyle: "classic",
-    availableStyles: ["classic", "parchment", "dungeon", "simple"],
-    generate: (size) => generateWFC(size),
+    defaultStyle: "parchment",
+    availableStyles: ["parchment", "classic", "dungeon", "simple"],
+    generate: (size, params) =>
+      generateWFC(size, {
+        seedRadius: params.seedRadius,
+      }),
   },
   drunkard: {
     name: "Drunkard's Walk",
     description: "Simple random walk",
     category: "Random Walk",
-    defaultStyle: "classic",
-    availableStyles: ["classic", "parchment", "dungeon", "simple"],
-    generate: (size) => generateDrunkardWalk(size, { variant: "simple" }),
+    defaultStyle: "parchment",
+    availableStyles: ["parchment", "classic", "dungeon", "simple"],
+    generate: (size, params) =>
+      generateDrunkardWalk(size, {
+        variant: "simple",
+        fillPercentage: params.fillPercentage,
+      }),
   },
   "drunkard-weighted": {
     name: "Weighted Walk",
     description: "Biased towards unexplored areas",
     category: "Random Walk",
-    defaultStyle: "classic",
-    availableStyles: ["classic", "parchment", "dungeon", "simple"],
-    generate: (size) => generateDrunkardWalk(size, { variant: "weighted" }),
+    defaultStyle: "parchment",
+    availableStyles: ["parchment", "classic", "dungeon", "simple"],
+    generate: (size, params) =>
+      generateDrunkardWalk(size, {
+        variant: "weighted",
+        fillPercentage: params.fillPercentage,
+      }),
   },
   "drunkard-multi": {
     name: "Multi Walker",
     description: "Multiple simultaneous walkers",
     category: "Random Walk",
-    defaultStyle: "classic",
-    availableStyles: ["classic", "parchment", "dungeon", "simple"],
-    generate: (size) => generateDrunkardWalk(size, { variant: "multiple", numWalkers: 6 }),
+    defaultStyle: "parchment",
+    availableStyles: ["parchment", "classic", "dungeon", "simple"],
+    generate: (size, params) =>
+      generateDrunkardWalk(size, {
+        variant: "multiple",
+        fillPercentage: params.fillPercentage,
+        numWalkers: params.numWalkers,
+      }),
   },
   maze: {
     name: "Maze (Backtracking)",
     description: "Deep, winding passages",
     category: "Maze",
-    defaultStyle: "maze",
-    availableStyles: ["maze", "parchment", "simple"],
-    generate: (size) => generateMaze(size, { algorithm: "backtracking" }),
+    defaultStyle: "parchment",
+    availableStyles: ["parchment", "maze", "simple"],
+    generate: (size, params) =>
+      generateMaze(size, {
+        algorithm: "backtracking",
+        addStartEnd: params.addStartEnd,
+        loopChance: params.loopChance,
+        openness: params.openness,
+      }),
   },
   "maze-prims": {
     name: "Maze (Prim's)",
     description: "Shorter dead ends",
     category: "Maze",
-    defaultStyle: "maze",
-    availableStyles: ["maze", "parchment", "simple"],
-    generate: (size) => generateMaze(size, { algorithm: "prims" }),
+    defaultStyle: "parchment",
+    availableStyles: ["parchment", "maze", "simple"],
+    generate: (size, params) =>
+      generateMaze(size, {
+        algorithm: "prims",
+        addStartEnd: params.addStartEnd,
+        loopChance: params.loopChance,
+        openness: params.openness,
+      }),
   },
   "maze-division": {
     name: "Maze (Division)",
     description: "Grid-like recursive division",
     category: "Maze",
-    defaultStyle: "maze",
-    availableStyles: ["maze", "parchment", "simple"],
-    generate: (size) => generateMaze(size, { algorithm: "division" }),
+    defaultStyle: "parchment",
+    availableStyles: ["parchment", "maze", "simple"],
+    generate: (size, params) =>
+      generateMaze(size, {
+        algorithm: "division",
+        addStartEnd: params.addStartEnd,
+        loopChance: params.loopChance,
+        openness: params.openness,
+      }),
   },
   perlin: {
     name: "Perlin Island",
@@ -113,7 +152,20 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
     category: "Terrain",
     defaultStyle: "terrain",
     availableStyles: ["terrain", "simple"],
-    generate: (size) => generatePerlin(size, { islandMode: true }),
+    generate: (size, params) =>
+      generatePerlin(size, {
+        scale: params.scale,
+        octaves: params.octaves,
+        persistence: params.persistence,
+        lacunarity: params.lacunarity,
+        waterLevel: params.waterLevel,
+        sandLevel: params.sandLevel,
+        grassLevel: params.grassLevel,
+        forestLevel: params.forestLevel,
+        islandMode: params.islandMode,
+        islandFalloff: params.islandFalloff,
+        erosionIterations: params.erosionIterations,
+      }),
   },
   "perlin-continent": {
     name: "Perlin Continent",
@@ -121,292 +173,265 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
     category: "Terrain",
     defaultStyle: "terrain",
     availableStyles: ["terrain", "simple"],
-    generate: (size) => generatePerlin(size, { islandMode: false, scale: 0.04 }),
+    generate: (size, params) =>
+      generatePerlin(size, {
+        scale: params.scale,
+        octaves: params.octaves,
+        persistence: params.persistence,
+        lacunarity: params.lacunarity,
+        waterLevel: params.waterLevel,
+        sandLevel: params.sandLevel,
+        grassLevel: params.grassLevel,
+        forestLevel: params.forestLevel,
+        islandMode: params.islandMode,
+        islandFalloff: params.islandFalloff,
+        erosionIterations: params.erosionIterations,
+      }),
   },
 };
 
 const CATEGORIES = ["Dungeon", "Random Walk", "Maze", "Terrain"];
 
-const STYLE_LABELS: Record<RenderStyle, string> = {
-  classic: "Classic",
-  parchment: "Parchment",
-  dungeon: "Dungeon",
-  terrain: "Terrain",
-  maze: "Maze",
-  simple: "Simple",
-};
+function parseUrlState(): {
+  generator?: GeneratorType;
+  size?: number;
+  style?: RenderStyle;
+  seed?: number;
+  params?: Partial<GeneratorParams>;
+} {
+  if (typeof window === "undefined") return {};
+
+  const params = new URLSearchParams(window.location.search);
+  const result: ReturnType<typeof parseUrlState> = {};
+
+  const generator = params.get("g");
+  if (generator && generator in GENERATORS) {
+    result.generator = generator as GeneratorType;
+  }
+
+  const size = params.get("s");
+  if (size) {
+    const sizeNum = parseInt(size);
+    if ([16, 32, 48, 64].includes(sizeNum)) {
+      result.size = sizeNum;
+    }
+  }
+
+  const style = params.get("st");
+  if (style) {
+    result.style = style as RenderStyle;
+  }
+
+  const seed = params.get("seed");
+  if (seed) {
+    result.seed = parseInt(seed);
+  }
+
+  const paramsJson = params.get("p");
+  if (paramsJson) {
+    try {
+      result.params = JSON.parse(decodeURIComponent(paramsJson));
+    } catch {
+      // Invalid params, ignore
+    }
+  }
+
+  return result;
+}
+
+function buildUrl(
+  generator: GeneratorType,
+  size: number,
+  style: RenderStyle,
+  seed: number,
+  params: GeneratorParams
+): string {
+  const url = new URL(window.location.href);
+  url.search = "";
+
+  url.searchParams.set("g", generator);
+  url.searchParams.set("s", size.toString());
+  url.searchParams.set("st", style);
+  url.searchParams.set("seed", seed.toString());
+
+  // Only include non-default params
+  const defaults = DEFAULT_PARAMS[generator];
+  const changedParams: Partial<GeneratorParams> = {};
+  for (const [key, value] of Object.entries(params)) {
+    if (defaults[key as keyof GeneratorParams] !== value) {
+      changedParams[key as keyof GeneratorParams] = value;
+    }
+  }
+
+  if (Object.keys(changedParams).length > 0) {
+    url.searchParams.set("p", encodeURIComponent(JSON.stringify(changedParams)));
+  }
+
+  return url.toString();
+}
 
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [generatorType, setGeneratorType] = useState<GeneratorType>("bsp");
   const [size, setSize] = useState(32);
-  const [style, setStyle] = useState<RenderStyle>("classic");
+  const [style, setStyle] = useState<RenderStyle>("parchment");
+  const [seed, setSeed] = useState(() => generateSeed());
   const [currentGrid, setCurrentGrid] = useState<Grid | null>(null);
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = useState(false);
-  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [params, setParams] = useState<GeneratorParams>(DEFAULT_PARAMS.bsp);
+  const [renderParams, setRenderParams] = useState<RenderParams>({
+    showGrid: false,
+  });
 
   const currentConfig = GENERATORS[generatorType];
 
-  // Update style when generator changes
+  // Load state from URL on mount
   useEffect(() => {
+    const urlState = parseUrlState();
+
+    if (urlState.generator) {
+      setGeneratorType(urlState.generator);
+      setParams({
+        ...DEFAULT_PARAMS[urlState.generator],
+        ...urlState.params,
+      });
+    }
+    if (urlState.size) setSize(urlState.size);
+    if (urlState.style) setStyle(urlState.style);
+    if (urlState.seed) setSeed(urlState.seed);
+
+    setIsInitialized(true);
+  }, []);
+
+  // Update style when generator changes (only after initialization)
+  useEffect(() => {
+    if (!isInitialized) return;
+
     if (!currentConfig.availableStyles.includes(style)) {
       setStyle(currentConfig.defaultStyle);
     }
-  }, [generatorType, currentConfig, style]);
+  }, [generatorType, currentConfig, style, isInitialized]);
+
+  // Reset params when generator changes (only if not from URL)
+  const handleGeneratorChange = useCallback((newGenerator: GeneratorType) => {
+    setGeneratorType(newGenerator);
+    setParams(DEFAULT_PARAMS[newGenerator]);
+    setSeed(generateSeed());
+  }, []);
 
   const generateGrid = useCallback(() => {
-    const config = GENERATORS[generatorType];
-    const grid = config.generate(size);
-    setCurrentGrid(grid);
-    return grid;
-  }, [generatorType, size]);
+    // Override Math.random with seeded version
+    const originalRandom = Math.random;
+    Math.random = createSeededRandom(seed);
 
-  const draw = useCallback((grid: Grid) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    try {
+      const config = GENERATORS[generatorType];
+      const grid = config.generate(size, params);
+      setCurrentGrid(grid);
+      return grid;
+    } finally {
+      // Restore original Math.random
+      Math.random = originalRandom;
+    }
+  }, [generatorType, size, params, seed]);
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+  const draw = useCallback(
+    (grid: Grid) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
 
-    drawGrid(ctx, grid, canvas.width, canvas.height, { style });
-  }, [style]);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
 
-  // Generate new grid when generator or size changes
+      drawGrid(ctx, grid, canvas.width, canvas.height, {
+        style,
+        showGrid: renderParams.showGrid,
+      });
+    },
+    [style, renderParams]
+  );
+
+  // Generate new grid when generator, size, params, or seed change
   useEffect(() => {
+    if (!isInitialized) return;
+
     const grid = generateGrid();
     draw(grid);
-  }, [generatorType, size]);
+  }, [generatorType, size, params, seed, isInitialized]);
 
-  // Redraw when style changes (same grid)
+  // Redraw when style or render params change (same grid)
   useEffect(() => {
     if (currentGrid) {
       draw(currentGrid);
     }
-  }, [style, currentGrid, draw]);
+  }, [style, renderParams, currentGrid, draw]);
+
+  // Update URL when state changes
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const url = buildUrl(generatorType, size, style, seed, params);
+    window.history.replaceState({}, "", url);
+  }, [generatorType, size, style, seed, params, isInitialized]);
 
   const handleRegenerate = () => {
-    const grid = generateGrid();
-    draw(grid);
+    setSeed(generateSeed());
   };
 
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    setZoom((z) => Math.min(Math.max(0.5, z * delta), 4));
-  }, []);
+  const handleExport = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button === 0) {
-      setIsPanning(true);
-      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
-    }
-  }, [pan]);
+    const link = document.createElement("a");
+    link.download = `${generatorType}-${size}x${size}-${seed}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  };
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (isPanning) {
-      setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
-    }
-  }, [isPanning, panStart]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsPanning(false);
-  }, []);
-
-  const resetView = useCallback(() => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-  }, []);
+  const handleCopyUrl = () => {
+    const url = buildUrl(generatorType, size, style, seed, params);
+    navigator.clipboard.writeText(url);
+  };
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1 style={{ margin: "0 0 20px", fontSize: 24 }}>
-        Dungeon Cartographer
-      </h1>
+    <div className={styles.container}>
+      <h1 className={styles.title}>Dungeon Cartographer</h1>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 20, marginBottom: 20 }}>
-        {CATEGORIES.map((category) => (
-          <div
-            key={category}
-            style={{
-              background: "#f5f5f5",
-              borderRadius: 8,
-              padding: 12,
-              minWidth: 180,
-            }}
-          >
-            <h3
-              style={{
-                margin: "0 0 10px",
-                fontSize: 14,
-                color: "#666",
-                textTransform: "uppercase",
-                letterSpacing: 0.5,
-              }}
-            >
-              {category}
-            </h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {Object.entries(GENERATORS)
-                .filter(([_, config]) => config.category === category)
-                .map(([type, config]) => (
-                  <button
-                    key={type}
-                    onClick={() => setGeneratorType(type as GeneratorType)}
-                    style={{
-                      padding: "8px 12px",
-                      border: "none",
-                      borderRadius: 4,
-                      background: generatorType === type ? "#4a90d9" : "#fff",
-                      color: generatorType === type ? "#fff" : "#333",
-                      cursor: "pointer",
-                      fontSize: 13,
-                      textAlign: "left",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                    }}
-                  >
-                    {config.name}
-                  </button>
-                ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 20,
-          marginBottom: 20,
-          padding: "12px 16px",
-          background: "#e8f4fd",
-          borderRadius: 8,
-          borderLeft: "4px solid #4a90d9",
-        }}
-      >
-        <div style={{ flex: 1 }}>
-          <span style={{ fontWeight: 600 }}>{currentConfig.name}</span>
-          <span style={{ color: "#666", marginLeft: 8 }}>
-            — {currentConfig.description}
-          </span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <label style={{ fontSize: 14 }}>
-            Size:
-            <select
-              value={size}
-              onChange={(e) => setSize(Number(e.target.value))}
-              style={{ marginLeft: 6, padding: 4 }}
-            >
-              <option value={16}>16</option>
-              <option value={32}>32</option>
-              <option value={48}>48</option>
-              <option value={64}>64</option>
-            </select>
-          </label>
-          <label style={{ fontSize: 14 }}>
-            Style:
-            <select
-              value={style}
-              onChange={(e) => setStyle(e.target.value as RenderStyle)}
-              style={{ marginLeft: 6, padding: 4 }}
-            >
-              {currentConfig.availableStyles.map((s) => (
-                <option key={s} value={s}>
-                  {STYLE_LABELS[s]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            onClick={handleRegenerate}
-            style={{
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: 6,
-              background: "#4a90d9",
-              color: "#fff",
-              cursor: "pointer",
-              fontSize: 14,
-              fontWeight: 500,
-            }}
-          >
-            Regenerate
-          </button>
-        </div>
-      </div>
-
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-        <button
-          onClick={() => setZoom((z) => Math.min(4, z * 1.2))}
-          style={{
-            padding: "6px 12px",
-            border: "1px solid #ccc",
-            borderRadius: 4,
-            background: "#fff",
-            cursor: "pointer",
-          }}
-        >
-          + Zoom In
-        </button>
-        <button
-          onClick={() => setZoom((z) => Math.max(0.5, z / 1.2))}
-          style={{
-            padding: "6px 12px",
-            border: "1px solid #ccc",
-            borderRadius: 4,
-            background: "#fff",
-            cursor: "pointer",
-          }}
-        >
-          - Zoom Out
-        </button>
-        <button
-          onClick={resetView}
-          style={{
-            padding: "6px 12px",
-            border: "1px solid #ccc",
-            borderRadius: 4,
-            background: "#fff",
-            cursor: "pointer",
-          }}
-        >
-          Reset View
-        </button>
-        <span style={{ fontSize: 13, color: "#666" }}>
-          {Math.round(zoom * 100)}% — Scroll to zoom, drag to pan
-        </span>
-      </div>
-
-      <div
-        ref={containerRef}
-        onWheel={handleWheel}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        style={{
-          display: "inline-block",
-          borderRadius: 8,
-          overflow: "hidden",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-          cursor: isPanning ? "grabbing" : "grab",
-        }}
-      >
-        <canvas
-          ref={canvasRef}
-          width={700}
-          height={700}
-          style={{
-            display: "block",
-            transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
-            transformOrigin: "center center",
-          }}
+      <ErrorBoundary>
+        <GeneratorSelector
+          generators={GENERATORS}
+          categories={CATEGORIES}
+          selectedGenerator={generatorType}
+          onSelect={handleGeneratorChange}
         />
-      </div>
+
+        <SeedControl
+          seed={seed}
+          onSeedChange={setSeed}
+          onRandomize={handleRegenerate}
+          onCopyUrl={handleCopyUrl}
+        />
+
+        <ParameterControls
+          generatorType={generatorType}
+          params={params}
+          onChange={setParams}
+        />
+
+        <RenderControls
+          config={currentConfig}
+          size={size}
+          style={style}
+          renderParams={renderParams}
+          onSizeChange={setSize}
+          onStyleChange={setStyle}
+          onRenderParamsChange={setRenderParams}
+          onRegenerate={handleRegenerate}
+          onExport={handleExport}
+        />
+
+        <MapCanvas canvasRef={canvasRef} width={700} height={700} />
+      </ErrorBoundary>
     </div>
   );
 }
