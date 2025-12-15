@@ -10,7 +10,9 @@ import {
   addVignette,
   drawCompassRose,
   addFoldLines,
+  drawTitleCartouche,
   type CompassRoseOptions,
+  type TitleCartoucheOptions,
 } from "./parchmentTile";
 
 export type RenderStyle = "dungeon" | "classic" | "parchment" | "terrain" | "maze" | "simple";
@@ -36,6 +38,8 @@ export interface RenderOptions {
   compassRose?: boolean | CompassRoseOptions;
   /** Add fold lines for parchment style (default: false) */
   foldLines?: boolean | { horizontalFolds?: number; verticalFolds?: number; opacity?: number };
+  /** Add title cartouche decoration for parchment style */
+  titleCartouche?: TitleCartoucheOptions;
 }
 
 function drawSimpleTile(
@@ -224,6 +228,7 @@ export function drawGrid(
     vignette = style === "parchment",
     compassRose = false,
     foldLines = false,
+    titleCartouche,
   } = options;
 
   const tileWidth = width / grid[0].length;
@@ -308,6 +313,10 @@ export function drawGrid(
     if (compassRose) {
       const compassOpts = typeof compassRose === "object" ? compassRose : {};
       drawCompassRose(ctx, width, height, compassOpts);
+    }
+    // Title cartouche drawn on top of everything
+    if (titleCartouche) {
+      drawTitleCartouche(ctx, width, height, titleCartouche);
     }
   }
 

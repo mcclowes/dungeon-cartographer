@@ -25,7 +25,10 @@ export {
   addVignette,
   drawCompassRose,
   addFoldLines,
+  drawTitleCartouche,
   type ParchmentColors,
   type CompassPosition,
   type CompassRoseOptions,
+  type CartouchePosition,
+  type TitleCartoucheOptions,
 } from "./parchmentTile";
