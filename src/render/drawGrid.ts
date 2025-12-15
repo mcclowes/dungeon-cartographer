@@ -3,7 +3,7 @@ import { TileType, TerrainTile, MazeTile } from "../types";
 import type { Palette } from "./palettes";
 import { dungeonPalette, terrainPalette, mazePalette } from "./palettes";
 import { drawClassicTile } from "./classicTile";
-import { drawParchmentTile, addParchmentTexture, addParchmentScuffs, addVignette } from "./parchmentTile";
+import { drawParchmentTile, addParchmentTexture, addParchmentScuffs, addVignette, addParchmentEdges } from "./parchmentTile";
 
 export type RenderStyle = "dungeon" | "classic" | "parchment" | "terrain" | "maze" | "simple";
 
@@ -24,6 +24,8 @@ export interface RenderOptions {
   scuffs?: boolean;
   /** Add vignette effect for parchment style (default: true) */
   vignette?: boolean;
+  /** Add torn/scuffed parchment edges around border (default: true for parchment style) */
+  parchmentEdges?: boolean;
 }
 
 function drawSimpleTile(
@@ -210,6 +212,7 @@ export function drawGrid(
     texture = style === "parchment",
     scuffs = style === "parchment",
     vignette = style === "parchment",
+    parchmentEdges = style === "parchment",
   } = options;
 
   const tileWidth = width / grid[0].length;
@@ -284,6 +287,9 @@ export function drawGrid(
     }
     if (vignette) {
       addVignette(ctx, width, height);
+    }
+    if (parchmentEdges) {
+      addParchmentEdges(ctx, width, height);
     }
   }
 

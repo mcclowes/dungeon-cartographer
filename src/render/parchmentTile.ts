@@ -759,3 +759,203 @@ export function addVignette(
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, height);
 }
+
+/**
+ * Add scuffed, torn parchment edges around the canvas border
+ */
+export function addParchmentEdges(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  edgeWidth = 0.04,
+  seed = 54321
+): void {
+  const rand = seededRandom(seed);
+  const maxEdge = Math.min(width, height) * edgeWidth;
+
+  ctx.save();
+
+  // Create torn edge path for each side
+  // We'll draw the "outside" area with parchment-colored torn edges
+
+  // First, draw the torn edge border color (darker parchment/burnt edge)
+  ctx.fillStyle = "rgba(80, 55, 30, 0.85)";
+
+  // Top edge
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  let x = 0;
+  while (x < width) {
+    const segmentWidth = 8 + rand() * 15;
+    const tearDepth = maxEdge * (0.3 + rand() * 0.7);
+    const midX = x + segmentWidth / 2;
+
+    // Create jagged tear with varying depths
+    const y1 = tearDepth * (0.5 + rand() * 0.5);
+    const y2 = tearDepth * (0.3 + rand() * 0.7);
+
+    ctx.lineTo(x, y1);
+    ctx.quadraticCurveTo(midX, y2 + (rand() - 0.5) * tearDepth * 0.5, x + segmentWidth, tearDepth * (0.4 + rand() * 0.6));
+
+    x += segmentWidth;
+  }
+  ctx.lineTo(width, 0);
+  ctx.closePath();
+  ctx.fill();
+
+  // Bottom edge
+  ctx.beginPath();
+  ctx.moveTo(0, height);
+  x = 0;
+  while (x < width) {
+    const segmentWidth = 8 + rand() * 15;
+    const tearDepth = maxEdge * (0.3 + rand() * 0.7);
+    const midX = x + segmentWidth / 2;
+
+    const y1 = height - tearDepth * (0.5 + rand() * 0.5);
+    const y2 = height - tearDepth * (0.3 + rand() * 0.7);
+
+    ctx.lineTo(x, y1);
+    ctx.quadraticCurveTo(midX, y2 + (rand() - 0.5) * tearDepth * 0.5, x + segmentWidth, height - tearDepth * (0.4 + rand() * 0.6));
+
+    x += segmentWidth;
+  }
+  ctx.lineTo(width, height);
+  ctx.closePath();
+  ctx.fill();
+
+  // Left edge
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  let y = 0;
+  while (y < height) {
+    const segmentHeight = 8 + rand() * 15;
+    const tearDepth = maxEdge * (0.3 + rand() * 0.7);
+    const midY = y + segmentHeight / 2;
+
+    const x1 = tearDepth * (0.5 + rand() * 0.5);
+    const x2 = tearDepth * (0.3 + rand() * 0.7);
+
+    ctx.lineTo(x1, y);
+    ctx.quadraticCurveTo(x2 + (rand() - 0.5) * tearDepth * 0.5, midY, tearDepth * (0.4 + rand() * 0.6), y + segmentHeight);
+
+    y += segmentHeight;
+  }
+  ctx.lineTo(0, height);
+  ctx.closePath();
+  ctx.fill();
+
+  // Right edge
+  ctx.beginPath();
+  ctx.moveTo(width, 0);
+  y = 0;
+  while (y < height) {
+    const segmentHeight = 8 + rand() * 15;
+    const tearDepth = maxEdge * (0.3 + rand() * 0.7);
+    const midY = y + segmentHeight / 2;
+
+    const x1 = width - tearDepth * (0.5 + rand() * 0.5);
+    const x2 = width - tearDepth * (0.3 + rand() * 0.7);
+
+    ctx.lineTo(x1, y);
+    ctx.quadraticCurveTo(x2 + (rand() - 0.5) * tearDepth * 0.5, midY, width - tearDepth * (0.4 + rand() * 0.6), y + segmentHeight);
+
+    y += segmentHeight;
+  }
+  ctx.lineTo(width, height);
+  ctx.closePath();
+  ctx.fill();
+
+  // Add burnt/singed marks near edges
+  const burnCount = Math.floor((width + height) / 80);
+  for (let i = 0; i < burnCount; i++) {
+    // Position burns along edges
+    const edge = Math.floor(rand() * 4);
+    let bx: number, by: number;
+
+    switch (edge) {
+      case 0: // top
+        bx = rand() * width;
+        by = rand() * maxEdge * 1.5;
+        break;
+      case 1: // right
+        bx = width - rand() * maxEdge * 1.5;
+        by = rand() * height;
+        break;
+      case 2: // bottom
+        bx = rand() * width;
+        by = height - rand() * maxEdge * 1.5;
+        break;
+      default: // left
+        bx = rand() * maxEdge * 1.5;
+        by = rand() * height;
+        break;
+    }
+
+    const burnSize = 5 + rand() * 20;
+    const burnOpacity = 0.1 + rand() * 0.2;
+
+    // Irregular burn shape
+    ctx.beginPath();
+    const points = 5 + Math.floor(rand() * 4);
+    for (let p = 0; p < points; p++) {
+      const angle = (p / points) * Math.PI * 2;
+      const radius = burnSize * (0.5 + rand() * 0.5);
+      const px = bx + Math.cos(angle) * radius;
+      const py = by + Math.sin(angle) * radius;
+
+      if (p === 0) {
+        ctx.moveTo(px, py);
+      } else {
+        const cpAngle = ((p - 0.5) / points) * Math.PI * 2;
+        const cpRadius = burnSize * (0.3 + rand() * 0.7);
+        const cpx = bx + Math.cos(cpAngle) * cpRadius;
+        const cpy = by + Math.sin(cpAngle) * cpRadius;
+        ctx.quadraticCurveTo(cpx, cpy, px, py);
+      }
+    }
+    ctx.closePath();
+    ctx.fillStyle = `rgba(50, 30, 15, ${burnOpacity})`;
+    ctx.fill();
+  }
+
+  // Add subtle fibrous texture along torn edges
+  ctx.strokeStyle = "rgba(100, 70, 40, 0.15)";
+  ctx.lineWidth = 0.5;
+
+  for (let i = 0; i < 80; i++) {
+    const edge = Math.floor(rand() * 4);
+    let fx: number, fy: number, angle: number;
+
+    switch (edge) {
+      case 0: // top
+        fx = rand() * width;
+        fy = rand() * maxEdge * 0.8;
+        angle = Math.PI / 2 + (rand() - 0.5) * 0.8;
+        break;
+      case 1: // right
+        fx = width - rand() * maxEdge * 0.8;
+        fy = rand() * height;
+        angle = Math.PI + (rand() - 0.5) * 0.8;
+        break;
+      case 2: // bottom
+        fx = rand() * width;
+        fy = height - rand() * maxEdge * 0.8;
+        angle = -Math.PI / 2 + (rand() - 0.5) * 0.8;
+        break;
+      default: // left
+        fx = rand() * maxEdge * 0.8;
+        fy = rand() * height;
+        angle = (rand() - 0.5) * 0.8;
+        break;
+    }
+
+    const fiberLen = 3 + rand() * 8;
+    ctx.beginPath();
+    ctx.moveTo(fx, fy);
+    ctx.lineTo(fx + Math.cos(angle) * fiberLen, fy + Math.sin(angle) * fiberLen);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}

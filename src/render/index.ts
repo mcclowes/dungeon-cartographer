@@ -21,6 +21,8 @@ export { drawClassicTile, type ClassicTileColors } from "./classicTile";
 export {
   drawParchmentTile,
   addParchmentTexture,
+  addParchmentScuffs,
   addVignette,
+  addParchmentEdges,
   type ParchmentColors,
 } from "./parchmentTile";
