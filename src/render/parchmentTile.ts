@@ -4,8 +4,10 @@ import { TileType } from "../types";
 export interface ParchmentColors {
   /** Parchment/floor color */
   parchment: string;
-  /** Wall/hatching color */
+  /** Wall/background color */
   wall: string;
+  /** Hatching stroke color */
+  hatching: string;
   /** Grid line color */
   gridLine: string;
   /** Border/shadow color */
@@ -14,9 +16,10 @@ export interface ParchmentColors {
 
 const DEFAULT_COLORS: ParchmentColors = {
   parchment: "#e8d9b5",
-  wall: "#c4a882",
-  gridLine: "rgba(139, 90, 43, 0.3)",
-  border: "rgba(80, 50, 20, 0.6)",
+  wall: "#ba9c63", // Background/wall color
+  hatching: "#8a7045", // Darker shade for hatching strokes
+  gridLine: "rgba(165, 90, 60, 0.6)", // More visible reddish-brown
+  border: "rgba(70, 45, 20, 0.85)", // Darker border
 };
 
 type Edges = [boolean, boolean, boolean, boolean]; // top, right, bottom, left
@@ -42,86 +45,189 @@ function findEdges(grid: Grid, x: number, y: number): Edges {
 }
 
 /**
- * Draw crosshatch pattern for wall areas
+ * Simple seeded random for consistent hatching per tile
  */
-function drawHatching(
+function seededRandom(seed: number): () => number {
+  let s = seed;
+  return () => {
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+}
+
+/**
+ * Draw short scattered hatching strokes near the edge facing floors
+ */
+function drawMarginHatching(
   ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
+  xCo: number,
+  yCo: number,
   width: number,
   height: number,
-  color: string,
-  spacing = 4
+  grid: Grid,
+  x: number,
+  y: number,
+  color: string
 ): void {
   ctx.strokeStyle = color;
-  ctx.lineWidth = 1;
+  ctx.lineCap = "round";
 
-  // Diagonal lines (top-left to bottom-right)
-  for (let i = -height; i < width; i += spacing) {
-    ctx.beginPath();
-    ctx.moveTo(x + i, y);
-    ctx.lineTo(x + i + height, y + height);
-    ctx.stroke();
+  const rand = seededRandom(x * 1000 + y);
+  const baseSpacing = 3.5;
+  const strokeLen = Math.min(width, height) * 0.55;
+
+  // Check which sides face floors
+  const floorAbove = y > 0 && isFloorLike(grid[y - 1][x]);
+  const floorBelow = y < grid.length - 1 && isFloorLike(grid[y + 1][x]);
+  const floorLeft = x > 0 && isFloorLike(grid[y][x - 1]);
+  const floorRight = x < grid[0].length - 1 && isFloorLike(grid[y][x + 1]);
+
+  // Draw hatching only near edges that face floors
+  if (floorAbove) {
+    for (let i = 0; i < width; i += baseSpacing + rand() * 2) {
+      ctx.lineWidth = 0.6 + rand() * 0.4;
+      const len = strokeLen * (0.7 + rand() * 0.5);
+      ctx.beginPath();
+      ctx.moveTo(xCo + i + rand() * 2, yCo);
+      ctx.lineTo(xCo + i + len * 0.4 + rand() * 2, yCo + len);
+      ctx.stroke();
+    }
   }
 
-  // Cross-hatching (top-right to bottom-left)
-  for (let i = 0; i < width + height; i += spacing) {
-    ctx.beginPath();
-    ctx.moveTo(x + i, y);
-    ctx.lineTo(x + i - height, y + height);
-    ctx.stroke();
+  if (floorBelow) {
+    for (let i = 0; i < width; i += baseSpacing + rand() * 2) {
+      ctx.lineWidth = 0.6 + rand() * 0.4;
+      const len = strokeLen * (0.7 + rand() * 0.5);
+      ctx.beginPath();
+      ctx.moveTo(xCo + i + rand() * 2, yCo + height);
+      ctx.lineTo(xCo + i + len * 0.4 + rand() * 2, yCo + height - len);
+      ctx.stroke();
+    }
+  }
+
+  if (floorLeft) {
+    for (let i = 0; i < height; i += baseSpacing + rand() * 2) {
+      ctx.lineWidth = 0.6 + rand() * 0.4;
+      const len = strokeLen * (0.7 + rand() * 0.5);
+      ctx.beginPath();
+      ctx.moveTo(xCo, yCo + i + rand() * 2);
+      ctx.lineTo(xCo + len, yCo + i + len * 0.4 + rand() * 2);
+      ctx.stroke();
+    }
+  }
+
+  if (floorRight) {
+    for (let i = 0; i < height; i += baseSpacing + rand() * 2) {
+      ctx.lineWidth = 0.6 + rand() * 0.4;
+      const len = strokeLen * (0.7 + rand() * 0.5);
+      ctx.beginPath();
+      ctx.moveTo(xCo + width, yCo + i + rand() * 2);
+      ctx.lineTo(xCo + width - len, yCo + i + len * 0.4 + rand() * 2);
+      ctx.stroke();
+    }
   }
 }
 
 /**
- * Draw a soft, slightly irregular border
+ * Draw a sketchy, hand-drawn style border with rounded corners
  */
-function drawSoftBorder(
+function drawSketchyBorder(
   ctx: CanvasRenderingContext2D,
   xCo: number,
   yCo: number,
   width: number,
   height: number,
   edges: Edges,
-  color: string,
-  borderWidth = 3
+  color: string
 ): void {
   ctx.strokeStyle = color;
-  ctx.lineWidth = borderWidth;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
-  // Draw border on edges that face walls
-  if (edges[0]) {
-    // Top
-    ctx.beginPath();
-    ctx.moveTo(xCo - 1, yCo + borderWidth / 2);
-    ctx.lineTo(xCo + width + 1, yCo + borderWidth / 2);
-    ctx.stroke();
-  }
+  // Seed for consistent variation per tile position
+  const seed = (xCo * 7 + yCo * 13) % 100;
+  const r = Math.min(width, height) * 0.2; // corner radius
 
-  if (edges[1]) {
-    // Right
-    ctx.beginPath();
-    ctx.moveTo(xCo + width - borderWidth / 2, yCo - 1);
-    ctx.lineTo(xCo + width - borderWidth / 2, yCo + height + 1);
-    ctx.stroke();
-  }
+  // Check for corners (where two adjacent edges meet)
+  const topLeft = edges[0] && edges[3];
+  const topRight = edges[0] && edges[1];
+  const bottomRight = edges[2] && edges[1];
+  const bottomLeft = edges[2] && edges[3];
 
-  if (edges[2]) {
-    // Bottom
-    ctx.beginPath();
-    ctx.moveTo(xCo - 1, yCo + height - borderWidth / 2);
-    ctx.lineTo(xCo + width + 1, yCo + height - borderWidth / 2);
-    ctx.stroke();
-  }
+  // Draw 2 slightly offset strokes for sketchy effect
+  for (let s = 0; s < 2; s++) {
+    const off = (s - 0.5) * 0.6;
+    ctx.lineWidth = s === 0 ? 1.5 : 0.8;
 
-  if (edges[3]) {
-    // Left
-    ctx.beginPath();
-    ctx.moveTo(xCo + borderWidth / 2, yCo - 1);
-    ctx.lineTo(xCo + borderWidth / 2, yCo + height + 1);
-    ctx.stroke();
+    // Draw each edge separately
+    if (edges[0]) {
+      // Top edge
+      ctx.beginPath();
+      const y = yCo + 1 + off;
+      const x1 = topLeft ? xCo + r : xCo - 1;
+      const x2 = topRight ? xCo + width - r : xCo + width + 1;
+      ctx.moveTo(x1, y + Math.sin(seed + s) * 0.4);
+      ctx.lineTo(x2, y + Math.sin(seed + s + 1) * 0.4);
+      ctx.stroke();
+    }
+
+    if (edges[1]) {
+      // Right edge
+      ctx.beginPath();
+      const x = xCo + width - 1 - off;
+      const y1 = topRight ? yCo + r : yCo - 1;
+      const y2 = bottomRight ? yCo + height - r : yCo + height + 1;
+      ctx.moveTo(x + Math.sin(seed + s + 2) * 0.4, y1);
+      ctx.lineTo(x + Math.sin(seed + s + 3) * 0.4, y2);
+      ctx.stroke();
+    }
+
+    if (edges[2]) {
+      // Bottom edge
+      ctx.beginPath();
+      const y = yCo + height - 1 - off;
+      const x1 = bottomLeft ? xCo + r : xCo - 1;
+      const x2 = bottomRight ? xCo + width - r : xCo + width + 1;
+      ctx.moveTo(x1, y + Math.sin(seed + s + 4) * 0.4);
+      ctx.lineTo(x2, y + Math.sin(seed + s + 5) * 0.4);
+      ctx.stroke();
+    }
+
+    if (edges[3]) {
+      // Left edge
+      ctx.beginPath();
+      const x = xCo + 1 + off;
+      const y1 = topLeft ? yCo + r : yCo - 1;
+      const y2 = bottomLeft ? yCo + height - r : yCo + height + 1;
+      ctx.moveTo(x + Math.sin(seed + s + 6) * 0.4, y1);
+      ctx.lineTo(x + Math.sin(seed + s + 7) * 0.4, y2);
+      ctx.stroke();
+    }
+
+    // Draw corner arcs
+    if (topLeft) {
+      ctx.beginPath();
+      ctx.arc(xCo + r, yCo + r, r - 1 - off, Math.PI, Math.PI * 1.5);
+      ctx.stroke();
+    }
+
+    if (topRight) {
+      ctx.beginPath();
+      ctx.arc(xCo + width - r, yCo + r, r - 1 - off, Math.PI * 1.5, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    if (bottomRight) {
+      ctx.beginPath();
+      ctx.arc(xCo + width - r, yCo + height - r, r - 1 - off, 0, Math.PI * 0.5);
+      ctx.stroke();
+    }
+
+    if (bottomLeft) {
+      ctx.beginPath();
+      ctx.arc(xCo + r, yCo + height - r, r - 1 - off, Math.PI * 0.5, Math.PI);
+      ctx.stroke();
+    }
   }
 }
 
@@ -153,6 +259,27 @@ function drawGridLines(
 }
 
 /**
+ * Check if a wall tile is adjacent to a floor tile
+ */
+function isEdgeWall(grid: Grid, x: number, y: number): boolean {
+  const neighbors = [
+    [x, y - 1],
+    [x + 1, y],
+    [x, y + 1],
+    [x - 1, y],
+  ];
+
+  for (const [nx, ny] of neighbors) {
+    if (ny >= 0 && ny < grid.length && nx >= 0 && nx < grid[0].length) {
+      if (isFloorLike(grid[ny][nx])) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
  * Draw a tile in parchment/treasure map style
  */
 export function drawParchmentTile(
@@ -169,8 +296,13 @@ export function drawParchmentTile(
   const tileType = grid[y][x];
 
   if (tileType === TileType.WALL) {
-    // Draw hatched wall pattern
-    drawHatching(ctx, xCo, yCo, width, height, colors.wall, 5);
+    // Draw faint grid lines on wall tiles too (like the reference)
+    drawGridLines(ctx, xCo, yCo, width, height, "rgba(160, 100, 60, 0.15)");
+
+    // Only draw margin hatching on walls that are adjacent to floors
+    if (isEdgeWall(grid, x, y)) {
+      drawMarginHatching(ctx, xCo, yCo, width, height, grid, x, y, colors.hatching);
+    }
     return;
   }
 
@@ -178,14 +310,14 @@ export function drawParchmentTile(
   ctx.fillStyle = colors.parchment;
   ctx.fillRect(xCo, yCo, width, height);
 
-  // Draw subtle grid lines
+  // Draw grid lines
   drawGridLines(ctx, xCo, yCo, width, height, colors.gridLine);
 
   // Get edges for border drawing
   const edges = findEdges(grid, x, y);
 
-  // Draw soft border where tile meets walls
-  drawSoftBorder(ctx, xCo, yCo, width, height, edges, colors.border, 3);
+  // Draw sketchy border where tile meets walls
+  drawSketchyBorder(ctx, xCo, yCo, width, height, edges, colors.border);
 
   // Draw door indicator
   if (tileType === TileType.DOOR) {

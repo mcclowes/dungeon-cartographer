@@ -231,7 +231,7 @@ export function drawGrid(
 
   // Clear canvas with appropriate background
   if (style === "parchment") {
-    ctx.fillStyle = "#e8d9b5"; // Parchment base
+    ctx.fillStyle = "#ba9c63"; // Parchment base (wall/margin color)
   } else {
     ctx.fillStyle = palette[0] || "#333333";
   }
