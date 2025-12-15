@@ -9,7 +9,8 @@ import type {
 import { Faction } from "./types";
 import { findPath, findClosestPositionInRange } from "./pathfinding";
 import { spawnUnits, getUnitsByFaction, getLivingUnits } from "./spawning";
-import { findBestTarget, canAttack, executeAttack } from "./combat";
+import { findBestTarget, canAttack, executeAttack, getAllies } from "./combat";
+import { distance } from "./pathfinding";
 import { shuffle } from "../utils/random";
 
 /**
@@ -40,6 +41,74 @@ function getOccupiedPositions(units: Map<string, Unit>): Set<string> {
     }
   });
   return occupied;
+}
+
+/**
+ * Calculate the centroid (average position) of a group of units
+ */
+function calculateCentroid(units: Unit[]): Point | null {
+  if (units.length === 0) return null;
+
+  let sumX = 0;
+  let sumY = 0;
+  for (const unit of units) {
+    sumX += unit.position.x;
+    sumY += unit.position.y;
+  }
+
+  return {
+    x: Math.round(sumX / units.length),
+    y: Math.round(sumY / units.length),
+  };
+}
+
+/**
+ * Find destination that balances attacking target with staying near allies
+ * Swarming cohesion: don't stray too far from the pack
+ */
+function getSwarmDestination(
+  unit: Unit,
+  target: Point,
+  allies: Unit[]
+): Point {
+  // If no allies or unit is ranged, just go to target
+  if (allies.length === 0) {
+    return target;
+  }
+
+  const centroid = calculateCentroid(allies);
+  if (!centroid) {
+    return target;
+  }
+
+  // Calculate distances
+  const distToTarget = distance(unit.position, target);
+  const distToCentroid = distance(unit.position, centroid);
+  const centroidToTarget = distance(centroid, target);
+
+  // If already close to allies or allies are close to target, go to target
+  if (distToCentroid <= 3 || centroidToTarget <= 5) {
+    return target;
+  }
+
+  // If too far from allies (more than 6 tiles), move toward centroid first
+  // This creates a "wait for the pack" behavior
+  if (distToCentroid > 6 && distToTarget > distToCentroid) {
+    // Move toward a point between centroid and target
+    // Weighted more toward centroid to regroup
+    const weight = 0.7; // 70% toward centroid
+    return {
+      x: Math.round(centroid.x * weight + target.x * (1 - weight)),
+      y: Math.round(centroid.y * weight + target.y * (1 - weight)),
+    };
+  }
+
+  // Otherwise, move toward target but bias slightly toward staying grouped
+  const weight = 0.2; // 20% toward centroid
+  return {
+    x: Math.round(centroid.x * weight + target.x * (1 - weight)),
+    y: Math.round(centroid.y * weight + target.y * (1 - weight)),
+  };
 }
 
 /**
@@ -108,6 +177,7 @@ function processUnitTurn(
   } else {
     // Need to move toward target
     const occupied = getOccupiedPositions(state.units);
+    const allies = getAllies(unit, state.units);
 
     // Determine where we want to go
     let destination: Point;
@@ -126,6 +196,9 @@ function processUnitTurn(
       // Melee: go to target position (will stop adjacent)
       destination = target.position;
     }
+
+    // Apply swarming behavior: stay closer to allies
+    destination = getSwarmDestination(unit, destination, allies);
 
     const newPos = moveUnitToward(unit, destination, grid, occupied);
 

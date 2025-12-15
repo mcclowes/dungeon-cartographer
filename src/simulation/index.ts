@@ -15,6 +15,7 @@ export {
   canAttack,
   findBestTarget,
   getPotentialTargets,
+  getAllies,
 } from "./combat";
 
 // Simulation
