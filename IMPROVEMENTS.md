@@ -8,26 +8,26 @@ Potential enhancements for the parchment/treasure map render style.
 - [ ] **Grid lines across full parchment** - Faint grid extends across margins/wall areas, not just inside rooms
 - [ ] **Varied hatching patterns** - Crosshatch with varied angles, not just perpendicular strokes
 - [ ] **Edge wear/torn edges** - Rough, torn-looking edges around the parchment border
-- [ ] **Fold lines/creases** - Subtle fold marks across the parchment surface
+- [x] **Fold lines/creases** - Subtle fold marks across the parchment surface *(added via `foldLines` option)*
 
 ## Map Decorations
 
 - [ ] **Room labels/numbers** - Option to add room identifiers (I, II, III, etc.)
-- [ ] **Compass rose** - Classic N/S/E/W decoration
+- [x] **Compass rose** - Classic N/S/E/W decoration *(added via `compassRose` option)*
 - [ ] **Scale bar** - "10 feet" style indicator
 - [ ] **Legend** - Key explaining tile symbols
 - [ ] **Title cartouche** - Decorative frame for map title
 
 ## Tile Rendering
 
-- [ ] **Secret doors** - Different visual treatment (dotted line with 'S')
+- [x] **Secret doors** - Different visual treatment (dotted line with 'S')
 - [ ] **Pillars/columns** - Support columns in large rooms
 - [ ] **Furniture** - Tables, beds, altars for room dressing
 - [ ] **Rubble/debris** - Collapsed areas
 
 ## Generation Quality
 
-- [ ] **Reduce trap clustering** - Better spacing between trap placements
-- [ ] **Even feature distribution** - Spread features across rooms, not clustered
+- [x] **Reduce trap clustering** - Better spacing between trap placements *(via `minFeatureDistance` option)*
+- [x] **Even feature distribution** - Spread features across rooms, not clustered *(via distance enforcement)*
 - [ ] **Room-aware placement** - Place features considering room size/purpose
-- [ ] **Minimum distances** - Enforce spacing between special tiles
+- [x] **Minimum distances** - Enforce spacing between special tiles *(via `minFeatureDistance` and `minAnyFeatureDistance` options)*

@@ -16,6 +16,10 @@ export interface FeaturePlacementOptions {
   maxTraps?: number;
   /** Guarantee at least one stairs up and down (default: true) */
   guaranteeStairs?: boolean;
+  /** Minimum distance between features of the same type (default: 3) */
+  minFeatureDistance?: number;
+  /** Minimum distance between any features (default: 2) */
+  minAnyFeatureDistance?: number;
 }
 
 /**
@@ -175,7 +179,32 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 /**
+ * Calculate Manhattan distance between two points
+ */
+function manhattanDistance(a: Point, b: Point): number {
+  return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+}
+
+/**
+ * Check if a point is at least minDistance away from all points in the list
+ */
+function hasMinDistance(point: Point, placed: Point[], minDistance: number): boolean {
+  for (const p of placed) {
+    if (manhattanDistance(point, p) < minDistance) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Feature types for tracking placed features
+ */
+type FeatureCategory = "stairs" | "treasure" | "trap" | "water";
+
+/**
  * Place dungeon features (stairs, treasures, traps, water) on a grid
+ * with improved spacing to prevent clustering
  */
 export function placeFeatures(
   grid: Grid,
@@ -189,6 +218,8 @@ export function placeFeatures(
     maxTreasures = 3,
     maxTraps = 5,
     guaranteeStairs = true,
+    minFeatureDistance = 3,
+    minAnyFeatureDistance = 2,
   } = options;
 
   // Find suitable locations
@@ -197,87 +228,126 @@ export function placeFeatures(
   const deadEnds = shuffleArray([...findDeadEnds(grid)]);
   const interiors = shuffleArray([...findInteriorFloors(grid)]);
 
+  // Track placed features by category for distance enforcement
+  const placedByCategory: Record<FeatureCategory, Point[]> = {
+    stairs: [],
+    treasure: [],
+    trap: [],
+    water: [],
+  };
+
+  // Get all placed features as a flat array
+  const getAllPlaced = (): Point[] => [
+    ...placedByCategory.stairs,
+    ...placedByCategory.treasure,
+    ...placedByCategory.trap,
+    ...placedByCategory.water,
+  ];
+
   let treasuresPlaced = 0;
   let trapsPlaced = 0;
   let stairsUpPlaced = false;
   let stairsDownPlaced = false;
 
-  // Place stairs - prefer corners or dead ends
+  // Place stairs - prefer corners or dead ends, spread apart
   const stairsLocations = [...corners, ...deadEnds, ...floors];
   for (const loc of stairsLocations) {
     if (stairsUpPlaced && stairsDownPlaced) break;
 
+    // Check minimum distance from all features
+    if (!hasMinDistance(loc, getAllPlaced(), minAnyFeatureDistance)) continue;
+
     if (!stairsUpPlaced && (guaranteeStairs || Math.random() < stairsChance)) {
       grid[loc.y][loc.x] = TileType.STAIRS_UP;
+      placedByCategory.stairs.push(loc);
       stairsUpPlaced = true;
       continue;
     }
 
     if (!stairsDownPlaced && (guaranteeStairs || Math.random() < stairsChance)) {
-      // Ensure stairs down is not adjacent to stairs up
-      const hasStairsNearby =
-        (loc.y > 0 && grid[loc.y - 1][loc.x] === TileType.STAIRS_UP) ||
-        (loc.y < grid.length - 1 && grid[loc.y + 1][loc.x] === TileType.STAIRS_UP) ||
-        (loc.x > 0 && grid[loc.y][loc.x - 1] === TileType.STAIRS_UP) ||
-        (loc.x < grid[0].length - 1 && grid[loc.y][loc.x + 1] === TileType.STAIRS_UP);
+      // Ensure stairs down is well-separated from stairs up
+      if (!hasMinDistance(loc, placedByCategory.stairs, minFeatureDistance)) continue;
 
-      if (!hasStairsNearby && grid[loc.y][loc.x] === TileType.FLOOR) {
+      if (grid[loc.y][loc.x] === TileType.FLOOR) {
         grid[loc.y][loc.x] = TileType.STAIRS_DOWN;
+        placedByCategory.stairs.push(loc);
         stairsDownPlaced = true;
       }
     }
   }
 
-  // Place treasures - prefer dead ends and corners
+  // Place treasures - prefer dead ends and corners, spread evenly
   const treasureLocations = [...deadEnds, ...corners, ...interiors];
   for (const loc of treasureLocations) {
     if (treasuresPlaced >= maxTreasures) break;
     if (grid[loc.y][loc.x] !== TileType.FLOOR) continue;
 
+    // Check minimum distance from same type and all features
+    if (!hasMinDistance(loc, placedByCategory.treasure, minFeatureDistance)) continue;
+    if (!hasMinDistance(loc, getAllPlaced(), minAnyFeatureDistance)) continue;
+
     if (Math.random() < treasureChance) {
       grid[loc.y][loc.x] = Math.random() < 0.5 ? TileType.TREASURE : TileType.CHEST;
+      placedByCategory.treasure.push(loc);
       treasuresPlaced++;
     }
   }
 
-  // Place traps - prefer corridors and doorways
+  // Place traps - prefer corridors and floor tiles, with good spacing
   for (const loc of floors) {
     if (trapsPlaced >= maxTraps) break;
     if (grid[loc.y][loc.x] !== TileType.FLOOR && grid[loc.y][loc.x] !== TileType.CORRIDOR) continue;
 
+    // Enforce minimum distance between traps (prevents clustering)
+    if (!hasMinDistance(loc, placedByCategory.trap, minFeatureDistance)) continue;
+    // Also check distance from all other features
+    if (!hasMinDistance(loc, getAllPlaced(), minAnyFeatureDistance)) continue;
+
     if (Math.random() < trapChance) {
       grid[loc.y][loc.x] = Math.random() < 0.6 ? TileType.TRAP : TileType.TRAP_PIT;
+      placedByCategory.trap.push(loc);
       trapsPlaced++;
     }
   }
 
   // Place water features - prefer interior spaces
   if (interiors.length > 3 && Math.random() < waterChance) {
-    // Create a small water pool
-    const center = interiors[0];
-    const waterType = Math.random() < 0.7 ? TileType.WATER :
-                      Math.random() < 0.5 ? TileType.DEEP_WATER : TileType.LAVA;
+    // Find an interior tile that's away from other features
+    let waterCenter: Point | null = null;
+    for (const loc of interiors) {
+      if (hasMinDistance(loc, getAllPlaced(), minFeatureDistance)) {
+        waterCenter = loc;
+        break;
+      }
+    }
 
-    grid[center.y][center.x] = waterType;
+    if (waterCenter) {
+      const waterType = Math.random() < 0.7 ? TileType.WATER :
+                        Math.random() < 0.5 ? TileType.DEEP_WATER : TileType.LAVA;
 
-    // Expand to adjacent floor tiles
-    const neighbors = [
-      { x: center.x, y: center.y - 1 },
-      { x: center.x, y: center.y + 1 },
-      { x: center.x - 1, y: center.y },
-      { x: center.x + 1, y: center.y },
-    ];
+      grid[waterCenter.y][waterCenter.x] = waterType;
+      placedByCategory.water.push(waterCenter);
 
-    for (const n of neighbors) {
-      if (
-        n.y >= 0 &&
-        n.y < grid.length &&
-        n.x >= 0 &&
-        n.x < grid[0].length &&
-        grid[n.y][n.x] === TileType.FLOOR &&
-        Math.random() < 0.5
-      ) {
-        grid[n.y][n.x] = waterType;
+      // Expand to adjacent floor tiles
+      const neighbors = [
+        { x: waterCenter.x, y: waterCenter.y - 1 },
+        { x: waterCenter.x, y: waterCenter.y + 1 },
+        { x: waterCenter.x - 1, y: waterCenter.y },
+        { x: waterCenter.x + 1, y: waterCenter.y },
+      ];
+
+      for (const n of neighbors) {
+        if (
+          n.y >= 0 &&
+          n.y < grid.length &&
+          n.x >= 0 &&
+          n.x < grid[0].length &&
+          grid[n.y][n.x] === TileType.FLOOR &&
+          Math.random() < 0.5
+        ) {
+          grid[n.y][n.x] = waterType;
+          placedByCategory.water.push(n);
+        }
       }
     }
   }

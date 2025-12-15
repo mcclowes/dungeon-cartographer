@@ -483,6 +483,43 @@ function drawTileIcon(
       break;
     }
 
+    case TileType.SECRET_DOOR: {
+      // Secret door - dotted line with 'S' marker
+      const secretAbove = y > 0 && grid[y - 1][x] === TileType.SECRET_DOOR;
+      const secretBelow = y < grid.length - 1 && grid[y + 1][x] === TileType.SECRET_DOOR;
+      const secretHorizontal =
+        (x > 0 && grid[y][x - 1] === TileType.SECRET_DOOR) ||
+        (x < grid[0].length - 1 && grid[y][x + 1] === TileType.SECRET_DOOR);
+      const isSecretVertical = secretAbove || secretBelow || (!secretHorizontal && edges[0] && edges[2]);
+
+      ctx.setLineDash([3, 3]);
+      ctx.lineWidth = 1.5;
+
+      if (isSecretVertical) {
+        // Vertical secret door - dotted line from top to bottom
+        ctx.beginPath();
+        ctx.moveTo(cx, yCo + height * 0.1);
+        ctx.lineTo(cx, yCo + height * 0.9);
+        ctx.stroke();
+      } else {
+        // Horizontal secret door - dotted line from left to right
+        ctx.beginPath();
+        ctx.moveTo(xCo + width * 0.1, cy);
+        ctx.lineTo(xCo + width * 0.9, cy);
+        ctx.stroke();
+      }
+
+      ctx.setLineDash([]);
+
+      // Draw 'S' marker
+      ctx.font = `bold ${size * 0.35}px serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = colors.border;
+      ctx.fillText("S", cx, cy);
+      break;
+    }
+
     case TileType.STAIRS_UP: {
       // Stairs going up - lines getting smaller toward top
       ctx.beginPath();
@@ -758,4 +795,263 @@ export function addVignette(
 
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, height);
+}
+
+export type CompassPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+
+export interface CompassRoseOptions {
+  /** Position of the compass rose (default: "bottom-right") */
+  position?: CompassPosition;
+  /** Size of the compass rose in pixels (default: 60) */
+  size?: number;
+  /** Margin from edges in pixels (default: 15) */
+  margin?: number;
+  /** Main color for the compass (default: brownish ink) */
+  color?: string;
+  /** Secondary color for accents (default: lighter brown) */
+  accentColor?: string;
+}
+
+/**
+ * Draw a classic compass rose decoration on the map
+ */
+export function drawCompassRose(
+  ctx: CanvasRenderingContext2D,
+  canvasWidth: number,
+  canvasHeight: number,
+  options: CompassRoseOptions = {}
+): void {
+  const {
+    position = "bottom-right",
+    size = 60,
+    margin = 15,
+    color = "rgba(70, 45, 20, 0.85)",
+    accentColor = "rgba(120, 80, 40, 0.6)",
+  } = options;
+
+  // Calculate center position
+  let cx: number;
+  let cy: number;
+
+  switch (position) {
+    case "top-left":
+      cx = margin + size / 2;
+      cy = margin + size / 2;
+      break;
+    case "top-right":
+      cx = canvasWidth - margin - size / 2;
+      cy = margin + size / 2;
+      break;
+    case "bottom-left":
+      cx = margin + size / 2;
+      cy = canvasHeight - margin - size / 2;
+      break;
+    case "bottom-right":
+    default:
+      cx = canvasWidth - margin - size / 2;
+      cy = canvasHeight - margin - size / 2;
+      break;
+  }
+
+  const r = size / 2;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Draw outer circle
+  ctx.strokeStyle = accentColor;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.95, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Draw inner decorative circle
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.35, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Draw main cardinal direction points (N, S, E, W)
+  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+
+  // North point (main, larger)
+  const mainPointLen = r * 0.9;
+  const mainPointWidth = r * 0.2;
+
+  // Draw the 4 main points
+  for (let i = 0; i < 4; i++) {
+    ctx.save();
+    ctx.rotate((i * Math.PI) / 2);
+
+    // Main point - filled triangle
+    ctx.beginPath();
+    ctx.moveTo(0, -mainPointLen);
+    ctx.lineTo(-mainPointWidth, -r * 0.2);
+    ctx.lineTo(0, -r * 0.35);
+    ctx.lineTo(mainPointWidth, -r * 0.2);
+    ctx.closePath();
+
+    // North is filled solid, others are outlined
+    if (i === 0) {
+      ctx.fill();
+    } else {
+      ctx.stroke();
+      // Fill with lighter color for other directions
+      ctx.fillStyle = accentColor;
+      ctx.fill();
+      ctx.fillStyle = color;
+    }
+
+    ctx.restore();
+  }
+
+  // Draw secondary diagonal points (NE, SE, SW, NW)
+  const secondaryLen = r * 0.55;
+  const secondaryWidth = r * 0.1;
+
+  for (let i = 0; i < 4; i++) {
+    ctx.save();
+    ctx.rotate((i * Math.PI) / 2 + Math.PI / 4);
+
+    ctx.beginPath();
+    ctx.moveTo(0, -secondaryLen);
+    ctx.lineTo(-secondaryWidth, -r * 0.25);
+    ctx.lineTo(0, -r * 0.35);
+    ctx.lineTo(secondaryWidth, -r * 0.25);
+    ctx.closePath();
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // Draw direction labels
+  ctx.fillStyle = color;
+  ctx.font = `bold ${r * 0.28}px serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  // N label (outside the point)
+  ctx.fillText("N", 0, -r * 0.7);
+  // S label
+  ctx.fillText("S", 0, r * 0.7);
+  // E label
+  ctx.fillText("E", r * 0.7, 0);
+  // W label
+  ctx.fillText("W", -r * 0.7, 0);
+
+  // Draw center decoration
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.08, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/**
+ * Draw fold lines/creases across the parchment for weathered look
+ */
+export function addFoldLines(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  options: {
+    /** Number of horizontal folds (default: 2) */
+    horizontalFolds?: number;
+    /** Number of vertical folds (default: 2) */
+    verticalFolds?: number;
+    /** Opacity of fold lines (default: 0.08) */
+    opacity?: number;
+    /** Seed for consistent random variation */
+    seed?: number;
+  } = {}
+): void {
+  const {
+    horizontalFolds = 2,
+    verticalFolds = 2,
+    opacity = 0.08,
+    seed = 54321,
+  } = options;
+
+  const rand = seededRandom(seed);
+
+  ctx.save();
+
+  // Draw horizontal fold lines
+  for (let i = 1; i <= horizontalFolds; i++) {
+    const baseY = (height / (horizontalFolds + 1)) * i;
+    const wobble = rand() * 10 - 5;
+
+    // Shadow line (darker, slightly offset)
+    ctx.strokeStyle = `rgba(40, 25, 10, ${opacity * 1.2})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, baseY + wobble + 1);
+
+    // Create slight waviness
+    for (let x = 0; x <= width; x += width / 8) {
+      const y = baseY + wobble + Math.sin(x * 0.02 + rand() * Math.PI) * 2;
+      ctx.lineTo(x, y + 1);
+    }
+    ctx.stroke();
+
+    // Highlight line (lighter, above shadow)
+    ctx.strokeStyle = `rgba(255, 250, 240, ${opacity * 0.8})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, baseY + wobble - 1);
+
+    for (let x = 0; x <= width; x += width / 8) {
+      const y = baseY + wobble + Math.sin(x * 0.02 + rand() * Math.PI) * 2;
+      ctx.lineTo(x, y - 1);
+    }
+    ctx.stroke();
+  }
+
+  // Draw vertical fold lines
+  for (let i = 1; i <= verticalFolds; i++) {
+    const baseX = (width / (verticalFolds + 1)) * i;
+    const wobble = rand() * 10 - 5;
+
+    // Shadow line
+    ctx.strokeStyle = `rgba(40, 25, 10, ${opacity * 1.2})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(baseX + wobble + 1, 0);
+
+    for (let y = 0; y <= height; y += height / 8) {
+      const x = baseX + wobble + Math.sin(y * 0.02 + rand() * Math.PI) * 2;
+      ctx.lineTo(x + 1, y);
+    }
+    ctx.stroke();
+
+    // Highlight line
+    ctx.strokeStyle = `rgba(255, 250, 240, ${opacity * 0.8})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(baseX + wobble - 1, 0);
+
+    for (let y = 0; y <= height; y += height / 8) {
+      const x = baseX + wobble + Math.sin(y * 0.02 + rand() * Math.PI) * 2;
+      ctx.lineTo(x - 1, y);
+    }
+    ctx.stroke();
+  }
+
+  // Add subtle darkening along fold intersections
+  for (let hi = 1; hi <= horizontalFolds; hi++) {
+    for (let vi = 1; vi <= verticalFolds; vi++) {
+      const fx = (width / (verticalFolds + 1)) * vi;
+      const fy = (height / (horizontalFolds + 1)) * hi;
+
+      const gradient = ctx.createRadialGradient(fx, fy, 0, fx, fy, 20);
+      gradient.addColorStop(0, `rgba(60, 40, 20, ${opacity * 0.5})`);
+      gradient.addColorStop(1, "rgba(60, 40, 20, 0)");
+
+      ctx.fillStyle = gradient;
+      ctx.fillRect(fx - 20, fy - 20, 40, 40);
+    }
+  }
+
+  ctx.restore();
 }
