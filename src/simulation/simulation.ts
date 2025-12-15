@@ -64,14 +64,14 @@ function calculateCentroid(units: Unit[]): Point | null {
 
 /**
  * Find destination that balances attacking target with staying near allies
- * Swarming cohesion: don't stray too far from the pack
+ * Swarming cohesion: prefer to stay grouped but always make progress
  */
 function getSwarmDestination(
   unit: Unit,
   target: Point,
   allies: Unit[]
 ): Point {
-  // If no allies or unit is ranged, just go to target
+  // If no allies, just go to target
   if (allies.length === 0) {
     return target;
   }
@@ -84,31 +84,39 @@ function getSwarmDestination(
   // Calculate distances
   const distToTarget = distance(unit.position, target);
   const distToCentroid = distance(unit.position, centroid);
-  const centroidToTarget = distance(centroid, target);
 
-  // If already close to allies or allies are close to target, go to target
-  if (distToCentroid <= 3 || centroidToTarget <= 5) {
+  // If already at the target or very close, go directly
+  if (distToTarget <= 2) {
     return target;
   }
 
-  // If too far from allies (more than 6 tiles), move toward centroid first
-  // This creates a "wait for the pack" behavior
-  if (distToCentroid > 6 && distToTarget > distToCentroid) {
-    // Move toward a point between centroid and target
-    // Weighted more toward centroid to regroup
-    const weight = 0.7; // 70% toward centroid
+  // If close to allies (within 4 tiles), go straight to target
+  if (distToCentroid <= 4) {
+    return target;
+  }
+
+  // If far from allies but they're between us and target, go to target
+  // (we'll naturally group up as we converge)
+  const centroidToTarget = distance(centroid, target);
+  if (centroidToTarget < distToTarget) {
+    return target;
+  }
+
+  // Only apply grouping if we're really scattered (>8 tiles from allies)
+  // and allies are behind us - move toward a point that's still forward
+  // but angled toward the group
+  if (distToCentroid > 8) {
+    // Blend: 70% toward target, 30% toward centroid
+    // This keeps forward momentum while drifting toward group
+    const weight = 0.3;
     return {
       x: Math.round(centroid.x * weight + target.x * (1 - weight)),
       y: Math.round(centroid.y * weight + target.y * (1 - weight)),
     };
   }
 
-  // Otherwise, move toward target but bias slightly toward staying grouped
-  const weight = 0.2; // 20% toward centroid
-  return {
-    x: Math.round(centroid.x * weight + target.x * (1 - weight)),
-    y: Math.round(centroid.y * weight + target.y * (1 - weight)),
-  };
+  // Default: go to target
+  return target;
 }
 
 /**
