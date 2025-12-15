@@ -138,10 +138,15 @@ const STYLE_LABELS: Record<RenderStyle, string> = {
 
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [generatorType, setGeneratorType] = useState<GeneratorType>("bsp");
   const [size, setSize] = useState(32);
   const [style, setStyle] = useState<RenderStyle>("classic");
   const [currentGrid, setCurrentGrid] = useState<Grid | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
 
   const currentConfig = GENERATORS[generatorType];
 
@@ -186,6 +191,34 @@ export default function Home() {
     const grid = generateGrid();
     draw(grid);
   };
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    setZoom((z) => Math.min(Math.max(0.5, z * delta), 4));
+  }, []);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button === 0) {
+      setIsPanning(true);
+      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    }
+  }, [pan]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (isPanning) {
+      setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
+    }
+  }, [isPanning, panStart]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsPanning(false);
+  }, []);
+
+  const resetView = useCallback(() => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }, []);
 
   return (
     <div style={{ padding: 20 }}>
@@ -306,19 +339,72 @@ export default function Home() {
         </div>
       </div>
 
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+        <button
+          onClick={() => setZoom((z) => Math.min(4, z * 1.2))}
+          style={{
+            padding: "6px 12px",
+            border: "1px solid #ccc",
+            borderRadius: 4,
+            background: "#fff",
+            cursor: "pointer",
+          }}
+        >
+          + Zoom In
+        </button>
+        <button
+          onClick={() => setZoom((z) => Math.max(0.5, z / 1.2))}
+          style={{
+            padding: "6px 12px",
+            border: "1px solid #ccc",
+            borderRadius: 4,
+            background: "#fff",
+            cursor: "pointer",
+          }}
+        >
+          - Zoom Out
+        </button>
+        <button
+          onClick={resetView}
+          style={{
+            padding: "6px 12px",
+            border: "1px solid #ccc",
+            borderRadius: 4,
+            background: "#fff",
+            cursor: "pointer",
+          }}
+        >
+          Reset View
+        </button>
+        <span style={{ fontSize: 13, color: "#666" }}>
+          {Math.round(zoom * 100)}% — Scroll to zoom, drag to pan
+        </span>
+      </div>
+
       <div
+        ref={containerRef}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
         style={{
           display: "inline-block",
           borderRadius: 8,
           overflow: "hidden",
           boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+          cursor: isPanning ? "grabbing" : "grab",
         }}
       >
         <canvas
           ref={canvasRef}
           width={700}
           height={700}
-          style={{ display: "block" }}
+          style={{
+            display: "block",
+            transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+            transformOrigin: "center center",
+          }}
         />
       </div>
     </div>
