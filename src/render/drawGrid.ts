@@ -3,7 +3,7 @@ import { TileType, TerrainTile, MazeTile } from "../types";
 import type { Palette } from "./palettes";
 import { dungeonPalette, terrainPalette, mazePalette } from "./palettes";
 import { drawClassicTile } from "./classicTile";
-import { drawParchmentTile, addParchmentTexture, addVignette } from "./parchmentTile";
+import { drawParchmentTile, addParchmentTexture, addParchmentScuffs, addVignette } from "./parchmentTile";
 
 export type RenderStyle = "dungeon" | "classic" | "parchment" | "terrain" | "maze" | "simple";
 
@@ -20,6 +20,8 @@ export interface RenderOptions {
   shadows?: boolean;
   /** Add texture noise for parchment style (default: true) */
   texture?: boolean;
+  /** Add scuffs/stains for parchment style (default: true) */
+  scuffs?: boolean;
   /** Add vignette effect for parchment style (default: true) */
   vignette?: boolean;
 }
@@ -206,6 +208,7 @@ export function drawGrid(
     gridColor = "rgba(0, 0, 0, 0.1)",
     shadows = style === "dungeon",
     texture = style === "parchment",
+    scuffs = style === "parchment",
     vignette = style === "parchment",
   } = options;
 
@@ -273,6 +276,9 @@ export function drawGrid(
 
   // Parchment post-processing effects
   if (style === "parchment") {
+    if (scuffs) {
+      addParchmentScuffs(ctx, width, height);
+    }
     if (texture) {
       addParchmentTexture(ctx, width, height);
     }

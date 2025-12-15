@@ -129,7 +129,63 @@ function drawMarginHatching(
 }
 
 /**
- * Draw a sketchy, hand-drawn style border with rounded corners
+ * Draw a line segment with optional gaps for a hand-drawn look
+ */
+function drawLineWithGaps(
+  ctx: CanvasRenderingContext2D,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  rand: () => number,
+  gapChance = 0.15
+): void {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const length = Math.sqrt(dx * dx + dy * dy);
+
+  if (length < 8) {
+    // Short lines - draw without gaps
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    return;
+  }
+
+  // Break line into segments with potential gaps
+  const segmentLength = 6 + rand() * 8;
+  const segments = Math.ceil(length / segmentLength);
+
+  let currentPos = 0;
+  let drawing = true;
+
+  for (let i = 0; i < segments; i++) {
+    const segStart = currentPos / length;
+    const segEnd = Math.min((currentPos + segmentLength) / length, 1);
+
+    if (drawing) {
+      ctx.beginPath();
+      ctx.moveTo(x1 + dx * segStart, y1 + dy * segStart);
+      ctx.lineTo(x1 + dx * segEnd, y1 + dy * segEnd);
+      ctx.stroke();
+    }
+
+    // Randomly decide to create a gap (more likely in the middle of lines)
+    const midFactor = 1 - Math.abs(segStart - 0.5) * 2; // Higher in middle
+    if (rand() < gapChance * midFactor && i < segments - 1 && i > 0) {
+      drawing = false;
+      currentPos += segmentLength * (0.3 + rand() * 0.4); // Gap size
+    } else {
+      drawing = true;
+    }
+
+    currentPos += segmentLength;
+  }
+}
+
+/**
+ * Draw a sketchy, hand-drawn style border with rounded corners and occasional gaps
  */
 function drawSketchyBorder(
   ctx: CanvasRenderingContext2D,
@@ -145,7 +201,8 @@ function drawSketchyBorder(
   ctx.lineJoin = "round";
 
   // Seed for consistent variation per tile position
-  const seed = (xCo * 7 + yCo * 13) % 100;
+  const seed = Math.floor(xCo * 7 + yCo * 13);
+  const rand = seededRandom(seed);
   const r = Math.min(width, height) * 0.2; // corner radius
 
   // Check for corners (where two adjacent edges meet)
@@ -159,52 +216,43 @@ function drawSketchyBorder(
     const off = (s - 0.5) * 0.6;
     ctx.lineWidth = s === 0 ? 1.5 : 0.8;
 
-    // Draw each edge separately
+    // Gap chance is lower for the main stroke, higher for the secondary
+    const gapChance = s === 0 ? 0.12 : 0.18;
+
+    // Draw each edge separately with gaps
     if (edges[0]) {
       // Top edge
-      ctx.beginPath();
-      const y = yCo + 1 + off;
+      const y = yCo + 1 + off + Math.sin(seed + s) * 0.4;
       const x1 = topLeft ? xCo + r : xCo - 1;
       const x2 = topRight ? xCo + width - r : xCo + width + 1;
-      ctx.moveTo(x1, y + Math.sin(seed + s) * 0.4);
-      ctx.lineTo(x2, y + Math.sin(seed + s + 1) * 0.4);
-      ctx.stroke();
+      drawLineWithGaps(ctx, x1, y, x2, y + Math.sin(seed + s + 1) * 0.4, rand, gapChance);
     }
 
     if (edges[1]) {
       // Right edge
-      ctx.beginPath();
-      const x = xCo + width - 1 - off;
+      const x = xCo + width - 1 - off + Math.sin(seed + s + 2) * 0.4;
       const y1 = topRight ? yCo + r : yCo - 1;
       const y2 = bottomRight ? yCo + height - r : yCo + height + 1;
-      ctx.moveTo(x + Math.sin(seed + s + 2) * 0.4, y1);
-      ctx.lineTo(x + Math.sin(seed + s + 3) * 0.4, y2);
-      ctx.stroke();
+      drawLineWithGaps(ctx, x, y1, x + Math.sin(seed + s + 3) * 0.4, y2, rand, gapChance);
     }
 
     if (edges[2]) {
       // Bottom edge
-      ctx.beginPath();
-      const y = yCo + height - 1 - off;
+      const y = yCo + height - 1 - off + Math.sin(seed + s + 4) * 0.4;
       const x1 = bottomLeft ? xCo + r : xCo - 1;
       const x2 = bottomRight ? xCo + width - r : xCo + width + 1;
-      ctx.moveTo(x1, y + Math.sin(seed + s + 4) * 0.4);
-      ctx.lineTo(x2, y + Math.sin(seed + s + 5) * 0.4);
-      ctx.stroke();
+      drawLineWithGaps(ctx, x1, y, x2, y + Math.sin(seed + s + 5) * 0.4, rand, gapChance);
     }
 
     if (edges[3]) {
       // Left edge
-      ctx.beginPath();
-      const x = xCo + 1 + off;
+      const x = xCo + 1 + off + Math.sin(seed + s + 6) * 0.4;
       const y1 = topLeft ? yCo + r : yCo - 1;
       const y2 = bottomLeft ? yCo + height - r : yCo + height + 1;
-      ctx.moveTo(x + Math.sin(seed + s + 6) * 0.4, y1);
-      ctx.lineTo(x + Math.sin(seed + s + 7) * 0.4, y2);
-      ctx.stroke();
+      drawLineWithGaps(ctx, x, y1, x + Math.sin(seed + s + 7) * 0.4, y2, rand, gapChance);
     }
 
-    // Draw corner arcs
+    // Draw corner arcs (no gaps on corners - they're short)
     if (topLeft) {
       ctx.beginPath();
       ctx.arc(xCo + r, yCo + r, r - 1 - off, Math.PI, Math.PI * 1.5);
@@ -363,6 +411,78 @@ export function addParchmentTexture(
   }
 
   ctx.putImageData(imageData, 0, 0);
+}
+
+/**
+ * Add random scuffs and stains to the parchment for a weathered look
+ */
+export function addParchmentScuffs(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  scuffCount = 15,
+  seed = 12345
+): void {
+  const rand = seededRandom(seed);
+
+  ctx.save();
+
+  for (let i = 0; i < scuffCount; i++) {
+    const x = rand() * width;
+    const y = rand() * height;
+    const size = 10 + rand() * 40;
+    const opacity = 0.03 + rand() * 0.06;
+
+    // Random scuff shape - irregular blob
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+
+    const points = 5 + Math.floor(rand() * 4);
+    for (let p = 0; p < points; p++) {
+      const angle = (p / points) * Math.PI * 2;
+      const radius = size * (0.5 + rand() * 0.5);
+      const px = x + Math.cos(angle) * radius;
+      const py = y + Math.sin(angle) * radius;
+
+      if (p === 0) {
+        ctx.moveTo(px, py);
+      } else {
+        // Use quadratic curves for organic shapes
+        const cpAngle = ((p - 0.5) / points) * Math.PI * 2;
+        const cpRadius = size * (0.3 + rand() * 0.7);
+        const cpx = x + Math.cos(cpAngle) * cpRadius;
+        const cpy = y + Math.sin(cpAngle) * cpRadius;
+        ctx.quadraticCurveTo(cpx, cpy, px, py);
+      }
+    }
+    ctx.closePath();
+
+    // Brownish stain color
+    const r = 80 + Math.floor(rand() * 40);
+    const g = 50 + Math.floor(rand() * 30);
+    const b = 20 + Math.floor(rand() * 20);
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    ctx.fill();
+  }
+
+  // Add some smaller scratch marks
+  ctx.strokeStyle = "rgba(90, 60, 30, 0.08)";
+  ctx.lineCap = "round";
+
+  for (let i = 0; i < scuffCount * 2; i++) {
+    const x = rand() * width;
+    const y = rand() * height;
+    const length = 5 + rand() * 25;
+    const angle = rand() * Math.PI * 2;
+
+    ctx.lineWidth = 0.5 + rand() * 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
+    ctx.stroke();
+  }
+
+  ctx.restore();
 }
 
 /**
