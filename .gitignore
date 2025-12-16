@@ -20,3 +20,4 @@ coverage/
 # Demo
 demo/.next/
 demo/node_modules/
+demo/.env.local

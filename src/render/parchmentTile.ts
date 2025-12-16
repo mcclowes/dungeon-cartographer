@@ -889,8 +889,9 @@ function drawTileIcon(
       ctx.moveTo(cx - size * 0.1, cy - size * 0.25);
       ctx.lineTo(cx + size * 0.1, cy - size * 0.25);
       ctx.stroke();
+      break;
     }
-      
+
     case TileType.RUBBLE: {
       // Scattered rocks and debris - irregular stones of varying sizes
       const rubbleRand = seededRandom(x * 1000 + y);

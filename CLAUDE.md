@@ -6,12 +6,13 @@ Procedural map generation library - pure TypeScript, framework-agnostic.
 
 ```
 src/
-├── generators/     # Map generation algorithms
+├── generators/     # Map generation algorithms (BSP, cave, DLA, maze, perlin, voronoi, WFC, etc.)
+├── shapes/         # Room shape generation (cellular, polygon, composite, modifiers)
 ├── render/         # Optional canvas rendering (separate export)
-├── utils/          # Shared utilities (random, grid helpers)
+├── utils/          # Shared utilities (random, grid, postprocess, features)
 ├── types.ts        # Core types and enums
 └── index.ts        # Main exports
-demo/               # Next.js playground
+demo/               # Next.js App Router playground
 ```
 
 ## Key Patterns

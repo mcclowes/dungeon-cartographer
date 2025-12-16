@@ -16,6 +16,7 @@ interface Props {
 }
 
 const API_KEY_STORAGE_KEY = "anthropic-api-key";
+const ENV_API_KEY = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY ?? "";
 
 export function AIMapGenerator({ onMapGenerated, size }: Props) {
   const [apiKey, setApiKey] = useState("");
@@ -25,12 +26,17 @@ export function AIMapGenerator({ onMapGenerated, size }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [lastMetadata, setLastMetadata] = useState<AIMapResponse["metadata"] | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
+  const hasEnvKey = ENV_API_KEY.length > 0;
 
-  // Load API key from localStorage on mount
+  // Load API key: env var takes priority, then localStorage
   useEffect(() => {
-    const saved = localStorage.getItem(API_KEY_STORAGE_KEY);
-    if (saved) {
-      setApiKey(saved);
+    if (ENV_API_KEY) {
+      setApiKey(ENV_API_KEY);
+    } else {
+      const saved = localStorage.getItem(API_KEY_STORAGE_KEY);
+      if (saved) {
+        setApiKey(saved);
+      }
     }
   }, []);
 
@@ -85,39 +91,45 @@ export function AIMapGenerator({ onMapGenerated, size }: Props) {
 
   return (
     <div className={styles.container}>
-      <div className={styles.section}>
-        <label className={styles.label}>
-          Anthropic API Key
-          <div className={styles.apiKeyContainer}>
-            <input
-              type={showApiKey ? "text" : "password"}
-              value={apiKey}
-              onChange={(e) => handleApiKeyChange(e.target.value)}
-              placeholder="sk-ant-..."
-              className={styles.input}
-              disabled={isGenerating}
-            />
-            <button
-              type="button"
-              onClick={() => setShowApiKey(!showApiKey)}
-              className={styles.toggleButton}
-              title={showApiKey ? "Hide API key" : "Show API key"}
+      {hasEnvKey ? (
+        <div className={styles.section}>
+          <p className={styles.hint}>Using API key from environment variable</p>
+        </div>
+      ) : (
+        <div className={styles.section}>
+          <label className={styles.label}>
+            Anthropic API Key
+            <div className={styles.apiKeyContainer}>
+              <input
+                type={showApiKey ? "text" : "password"}
+                value={apiKey}
+                onChange={(e) => handleApiKeyChange(e.target.value)}
+                placeholder="sk-ant-..."
+                className={styles.input}
+                disabled={isGenerating}
+              />
+              <button
+                type="button"
+                onClick={() => setShowApiKey(!showApiKey)}
+                className={styles.toggleButton}
+                title={showApiKey ? "Hide API key" : "Show API key"}
+              >
+                {showApiKey ? "Hide" : "Show"}
+              </button>
+            </div>
+          </label>
+          <p className={styles.hint}>
+            Get your API key from{" "}
+            <a
+              href="https://console.anthropic.com/settings/keys"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              {showApiKey ? "Hide" : "Show"}
-            </button>
-          </div>
-        </label>
-        <p className={styles.hint}>
-          Get your API key from{" "}
-          <a
-            href="https://console.anthropic.com/settings/keys"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            console.anthropic.com
-          </a>
-        </p>
-      </div>
+              console.anthropic.com
+            </a>
+          </p>
+        </div>
+      )}
 
       <div className={styles.section}>
         <label className={styles.label}>
