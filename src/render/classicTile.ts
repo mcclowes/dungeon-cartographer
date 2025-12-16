@@ -232,4 +232,101 @@ export function drawClassicTile(
       ctx.fillRect(xCo, yCo + height / 6, width, (height / 3) * 2);
     }
   }
+
+  // Draw furniture items
+  const cx = xCo + width / 2;
+  const cy = yCo + height / 2;
+  const size = Math.min(width, height);
+
+  ctx.strokeStyle = "rgba(80, 60, 40, 0.8)";
+  ctx.fillStyle = "rgba(139, 119, 101, 0.6)";
+  ctx.lineWidth = 1;
+
+  switch (tileType) {
+    case TileType.CRATE: {
+      const s = size * 0.3;
+      ctx.fillRect(cx - s, cy - s, s * 2, s * 2);
+      ctx.strokeRect(cx - s, cy - s, s * 2, s * 2);
+      ctx.beginPath();
+      ctx.moveTo(cx - s, cy - s);
+      ctx.lineTo(cx + s, cy + s);
+      ctx.moveTo(cx + s, cy - s);
+      ctx.lineTo(cx - s, cy + s);
+      ctx.stroke();
+      break;
+    }
+    case TileType.BARREL: {
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, size * 0.2, size * 0.3, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+    case TileType.BED: {
+      ctx.fillRect(cx - size * 0.35, cy - size * 0.2, size * 0.7, size * 0.4);
+      ctx.strokeRect(cx - size * 0.35, cy - size * 0.2, size * 0.7, size * 0.4);
+      break;
+    }
+    case TileType.TABLE: {
+      ctx.fillRect(cx - size * 0.25, cy - size * 0.15, size * 0.5, size * 0.3);
+      ctx.strokeRect(cx - size * 0.25, cy - size * 0.15, size * 0.5, size * 0.3);
+      break;
+    }
+    case TileType.CHAIR: {
+      ctx.fillRect(cx - size * 0.12, cy - size * 0.08, size * 0.24, size * 0.2);
+      ctx.strokeRect(cx - size * 0.12, cy - size * 0.08, size * 0.24, size * 0.2);
+      break;
+    }
+    case TileType.BOOKSHELF: {
+      ctx.fillRect(cx - size * 0.3, cy - size * 0.35, size * 0.6, size * 0.7);
+      ctx.strokeRect(cx - size * 0.3, cy - size * 0.35, size * 0.6, size * 0.7);
+      ctx.beginPath();
+      for (let i = 1; i < 4; i++) {
+        const shelfY = cy - size * 0.35 + (i * size * 0.7) / 4;
+        ctx.moveTo(cx - size * 0.3, shelfY);
+        ctx.lineTo(cx + size * 0.3, shelfY);
+      }
+      ctx.stroke();
+      break;
+    }
+    case TileType.CARPET: {
+      ctx.fillStyle = "rgba(139, 69, 19, 0.25)";
+      ctx.fillRect(xCo + 2, yCo + 2, width - 4, height - 4);
+      break;
+    }
+    case TileType.FIREPLACE: {
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.25, cy + size * 0.25);
+      ctx.lineTo(cx - size * 0.25, cy - size * 0.15);
+      ctx.quadraticCurveTo(cx, cy - size * 0.3, cx + size * 0.25, cy - size * 0.15);
+      ctx.lineTo(cx + size * 0.25, cy + size * 0.25);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255, 100, 30, 0.5)";
+      ctx.beginPath();
+      ctx.arc(cx, cy + size * 0.05, size * 0.1, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+    case TileType.STATUE: {
+      ctx.beginPath();
+      ctx.arc(cx, cy - size * 0.15, size * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillRect(cx - size * 0.15, cy, size * 0.3, size * 0.2);
+      ctx.strokeRect(cx - size * 0.15, cy, size * 0.3, size * 0.2);
+      break;
+    }
+    case TileType.ALTAR: {
+      ctx.fillRect(cx - size * 0.3, cy - size * 0.1, size * 0.6, size * 0.3);
+      ctx.strokeRect(cx - size * 0.3, cy - size * 0.1, size * 0.6, size * 0.3);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - size * 0.25);
+      ctx.lineTo(cx, cy - size * 0.1);
+      ctx.moveTo(cx - size * 0.1, cy - size * 0.17);
+      ctx.lineTo(cx + size * 0.1, cy - size * 0.17);
+      ctx.stroke();
+      break;
+    }
+  }
 }

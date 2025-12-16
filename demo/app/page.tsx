@@ -11,7 +11,12 @@ import {
   generatePerlin,
   generateVoronoi,
   generateWFC,
+  placeFurniture,
   type Grid,
+  RoomShapeType,
+  ModifierType,
+  type RoomShapeOptions,
+  type ShapeModifier,
 } from "dungeon-cartographer";
 import { drawGrid, type RenderStyle } from "dungeon-cartographer/render";
 import {
@@ -33,6 +38,32 @@ import type {
 } from "./types";
 import { DEFAULT_PARAMS, PRESETS, createSeededRandom, generateSeed } from "./types";
 import styles from "./page.module.scss";
+
+// Helper to build room shape options from params
+function buildRoomShapeOptions(params: GeneratorParams): RoomShapeOptions | undefined {
+  const allowedShapes: RoomShapeType[] = [];
+  if (params.useRectangle) allowedShapes.push(RoomShapeType.RECTANGLE);
+  if (params.useComposite) allowedShapes.push(RoomShapeType.COMPOSITE);
+  if (params.useTemplate) allowedShapes.push(RoomShapeType.TEMPLATE);
+  if (params.useCellular) allowedShapes.push(RoomShapeType.CELLULAR);
+  if (params.usePolygon) allowedShapes.push(RoomShapeType.POLYGON);
+
+  // If no shapes selected, default to rectangle
+  if (allowedShapes.length === 0) {
+    allowedShapes.push(RoomShapeType.RECTANGLE);
+  }
+
+  const modifiers: ShapeModifier[] = [];
+  if (params.useNibbleCorners) modifiers.push({ type: ModifierType.NIBBLE_CORNERS, probability: 0.5 });
+  if (params.useAddAlcoves) modifiers.push({ type: ModifierType.ADD_ALCOVES, probability: 0.4 });
+  if (params.useRoundCorners) modifiers.push({ type: ModifierType.ROUND_CORNERS, probability: 0.4 });
+  if (params.useAddPillars) modifiers.push({ type: ModifierType.ADD_PILLARS, probability: 0.3 });
+
+  return {
+    allowedShapes,
+    modifiers: modifiers.length > 0 ? modifiers : undefined,
+  };
+}
 
 const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
   ai: {
@@ -63,6 +94,12 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
         padding: params.padding,
         addDoors: params.addDoors,
         addFeatures: params.addFeatures,
+        featureOptions: {
+          rubbleChance: params.rubbleChance,
+          collapsedChance: params.collapsedChance,
+          fallenColumnChance: params.fallenColumnChance,
+        },
+        roomShapeOptions: buildRoomShapeOptions(params),
       }),
   },
   cave: {
@@ -76,6 +113,11 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
         iterations: params.iterations,
         initialFillProbability: params.initialFillProbability,
         addFeatures: params.addFeatures,
+        featureOptions: {
+          rubbleChance: params.rubbleChance,
+          collapsedChance: params.collapsedChance,
+          fallenColumnChance: params.fallenColumnChance,
+        },
       }),
   },
   dla: {
@@ -90,6 +132,11 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
         stickiness: params.stickiness,
         spawnMode: params.spawnMode,
         addFeatures: params.addFeatures,
+        featureOptions: {
+          rubbleChance: params.rubbleChance,
+          collapsedChance: params.collapsedChance,
+          fallenColumnChance: params.fallenColumnChance,
+        },
       }),
   },
   voronoi: {
@@ -105,6 +152,11 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
         relaxation: params.relaxation,
         addDoors: params.addDoors,
         addFeatures: params.addFeatures,
+        featureOptions: {
+          rubbleChance: params.rubbleChance,
+          collapsedChance: params.collapsedChance,
+          fallenColumnChance: params.fallenColumnChance,
+        },
       }),
   },
   wfc: {
@@ -131,6 +183,11 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
         blendWidth: params.blendWidth ?? 4,
         connectRegions: params.connectRegions ?? true,
         addFeatures: params.addFeatures,
+        featureOptions: {
+          rubbleChance: params.rubbleChance,
+          collapsedChance: params.collapsedChance,
+          fallenColumnChance: params.fallenColumnChance,
+        },
       }),
   },
   "hybrid-radial": {
@@ -147,6 +204,11 @@ const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
         blendWidth: params.blendWidth ?? 6,
         connectRegions: params.connectRegions ?? true,
         addFeatures: params.addFeatures,
+        featureOptions: {
+          rubbleChance: params.rubbleChance,
+          collapsedChance: params.collapsedChance,
+          fallenColumnChance: params.fallenColumnChance,
+        },
       }),
   },
   drunkard: {
@@ -415,7 +477,15 @@ export default function Home() {
     try {
       const config = GENERATORS[generatorType];
       const startTime = performance.now();
-      const grid = config.generate(size, params);
+      let grid = config.generate(size, params);
+
+      // Add furniture if enabled
+      if (params.addFurniture) {
+        grid = placeFurniture(grid, {
+          furnitureDensity: params.furnitureDensity ?? 0.15,
+        });
+      }
+
       const endTime = performance.now();
       setGenerationTime(endTime - startTime);
       setCurrentGrid(grid);

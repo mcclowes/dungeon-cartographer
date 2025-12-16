@@ -45,7 +45,20 @@ function isFloorLike(tile: number): boolean {
     tile === TileType.TRAP_PIT ||
     tile === TileType.WATER ||
     tile === TileType.DEEP_WATER ||
-    tile === TileType.LAVA
+    tile === TileType.LAVA ||
+    tile === TileType.CRATE ||
+    tile === TileType.BARREL ||
+    tile === TileType.BED ||
+    tile === TileType.TABLE ||
+    tile === TileType.CHAIR ||
+    tile === TileType.BOOKSHELF ||
+    tile === TileType.CARPET ||
+    tile === TileType.FIREPLACE ||
+    tile === TileType.STATUE ||
+    tile === TileType.ALTAR ||
+    tile === TileType.RUBBLE ||
+    tile === TileType.COLLAPSED ||
+    tile === TileType.FALLEN_COLUMN
   );
 }
 
@@ -673,6 +686,389 @@ function drawTileIcon(
       ctx.arc(cx - size * 0.15, cy, size * 0.08, 0, Math.PI * 2);
       ctx.arc(cx + size * 0.2, cy - size * 0.1, size * 0.06, 0, Math.PI * 2);
       ctx.stroke();
+      break;
+    }
+
+    case TileType.CRATE: {
+      // Wooden crate - square with cross bracing
+      const crateSize = size * 0.35;
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(cx - crateSize, cy - crateSize, crateSize * 2, crateSize * 2);
+      // Cross bracing
+      ctx.beginPath();
+      ctx.moveTo(cx - crateSize, cy - crateSize);
+      ctx.lineTo(cx + crateSize, cy + crateSize);
+      ctx.moveTo(cx + crateSize, cy - crateSize);
+      ctx.lineTo(cx - crateSize, cy + crateSize);
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.BARREL: {
+      // Barrel - oval with horizontal bands
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1.5;
+      // Main barrel shape (vertical oval)
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, size * 0.25, size * 0.35, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      // Horizontal bands
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.25, cy - size * 0.15);
+      ctx.lineTo(cx + size * 0.25, cy - size * 0.15);
+      ctx.moveTo(cx - size * 0.25, cy + size * 0.15);
+      ctx.lineTo(cx + size * 0.25, cy + size * 0.15);
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.BED: {
+      // Bed - rectangle with pillow
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1.5;
+      // Bed frame
+      ctx.strokeRect(cx - size * 0.35, cy - size * 0.25, size * 0.7, size * 0.5);
+      // Pillow (smaller rect at top)
+      ctx.fillStyle = "rgba(232, 217, 181, 0.8)";
+      ctx.fillRect(cx - size * 0.3, cy - size * 0.2, size * 0.25, size * 0.15);
+      ctx.strokeRect(cx - size * 0.3, cy - size * 0.2, size * 0.25, size * 0.15);
+      // Blanket line
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.35, cy);
+      ctx.lineTo(cx + size * 0.35, cy);
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.TABLE: {
+      // Table - rectangle with legs at corners
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1.5;
+      // Table top
+      ctx.strokeRect(cx - size * 0.3, cy - size * 0.2, size * 0.6, size * 0.4);
+      // Table legs (small circles at corners)
+      const legSize = size * 0.05;
+      ctx.fillStyle = colors.border;
+      ctx.beginPath();
+      ctx.arc(cx - size * 0.25, cy - size * 0.15, legSize, 0, Math.PI * 2);
+      ctx.arc(cx + size * 0.25, cy - size * 0.15, legSize, 0, Math.PI * 2);
+      ctx.arc(cx - size * 0.25, cy + size * 0.15, legSize, 0, Math.PI * 2);
+      ctx.arc(cx + size * 0.25, cy + size * 0.15, legSize, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+
+    case TileType.CHAIR: {
+      // Chair - small square with back
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1.5;
+      // Seat
+      ctx.strokeRect(cx - size * 0.15, cy - size * 0.1, size * 0.3, size * 0.25);
+      // Back (thick line at top)
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.15, cy - size * 0.1);
+      ctx.lineTo(cx - size * 0.15, cy - size * 0.25);
+      ctx.lineTo(cx + size * 0.15, cy - size * 0.25);
+      ctx.lineTo(cx + size * 0.15, cy - size * 0.1);
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.BOOKSHELF: {
+      // Bookshelf - tall rectangle with horizontal shelves
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1.5;
+      // Outer frame
+      ctx.strokeRect(cx - size * 0.3, cy - size * 0.35, size * 0.6, size * 0.7);
+      // Shelves
+      ctx.beginPath();
+      for (let i = 1; i < 4; i++) {
+        const shelfY = cy - size * 0.35 + (i * size * 0.7) / 4;
+        ctx.moveTo(cx - size * 0.3, shelfY);
+        ctx.lineTo(cx + size * 0.3, shelfY);
+      }
+      ctx.stroke();
+      // Books (vertical lines on shelves)
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let shelf = 0; shelf < 3; shelf++) {
+        const shelfY = cy - size * 0.35 + (shelf * size * 0.7) / 4 + size * 0.02;
+        for (let book = 0; book < 4; book++) {
+          const bookX = cx - size * 0.25 + book * size * 0.13;
+          ctx.moveTo(bookX, shelfY);
+          ctx.lineTo(bookX, shelfY + size * 0.14);
+        }
+      }
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.CARPET: {
+      // Carpet - decorative rug pattern
+      ctx.fillStyle = "rgba(139, 69, 19, 0.3)";
+      ctx.fillRect(xCo + 2, yCo + 2, width - 4, height - 4);
+      ctx.strokeStyle = "rgba(139, 69, 19, 0.5)";
+      ctx.lineWidth = 1;
+      // Border pattern
+      ctx.strokeRect(xCo + 4, yCo + 4, width - 8, height - 8);
+      // Inner decorative lines
+      ctx.setLineDash([2, 2]);
+      ctx.strokeRect(xCo + 7, yCo + 7, width - 14, height - 14);
+      ctx.setLineDash([]);
+      break;
+    }
+
+    case TileType.FIREPLACE: {
+      // Fireplace - arch shape with flames
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1.5;
+      // Fireplace arch
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.3, cy + size * 0.3);
+      ctx.lineTo(cx - size * 0.3, cy - size * 0.1);
+      ctx.quadraticCurveTo(cx - size * 0.3, cy - size * 0.3, cx, cy - size * 0.3);
+      ctx.quadraticCurveTo(cx + size * 0.3, cy - size * 0.3, cx + size * 0.3, cy - size * 0.1);
+      ctx.lineTo(cx + size * 0.3, cy + size * 0.3);
+      ctx.stroke();
+      // Flames
+      ctx.fillStyle = "rgba(200, 100, 30, 0.6)";
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.15, cy + size * 0.2);
+      ctx.quadraticCurveTo(cx - size * 0.1, cy - size * 0.05, cx - size * 0.05, cy + size * 0.1);
+      ctx.quadraticCurveTo(cx, cy - size * 0.15, cx + size * 0.05, cy + size * 0.1);
+      ctx.quadraticCurveTo(cx + size * 0.1, cy - size * 0.05, cx + size * 0.15, cy + size * 0.2);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    }
+
+    case TileType.STATUE: {
+      // Statue - pedestal with figure
+      ctx.strokeStyle = colors.border;
+      ctx.fillStyle = colors.border;
+      ctx.lineWidth = 1.5;
+      // Pedestal base
+      ctx.strokeRect(cx - size * 0.2, cy + size * 0.1, size * 0.4, size * 0.15);
+      // Figure (simplified humanoid)
+      ctx.beginPath();
+      // Head
+      ctx.arc(cx, cy - size * 0.2, size * 0.1, 0, Math.PI * 2);
+      ctx.stroke();
+      // Body
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - size * 0.1);
+      ctx.lineTo(cx, cy + size * 0.1);
+      // Arms
+      ctx.moveTo(cx - size * 0.15, cy - size * 0.02);
+      ctx.lineTo(cx + size * 0.15, cy - size * 0.02);
+      ctx.stroke();
+      break;
+    }
+
+    case TileType.ALTAR: {
+      // Altar - ornate table with symbol
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1.5;
+      // Altar base (wider at bottom)
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.35, cy + size * 0.2);
+      ctx.lineTo(cx - size * 0.25, cy - size * 0.15);
+      ctx.lineTo(cx + size * 0.25, cy - size * 0.15);
+      ctx.lineTo(cx + size * 0.35, cy + size * 0.2);
+      ctx.closePath();
+      ctx.stroke();
+      // Top surface
+      ctx.strokeRect(cx - size * 0.3, cy - size * 0.25, size * 0.6, size * 0.1);
+      // Sacred symbol (star/cross)
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - size * 0.35);
+      ctx.lineTo(cx, cy - size * 0.15);
+      ctx.moveTo(cx - size * 0.1, cy - size * 0.25);
+      ctx.lineTo(cx + size * 0.1, cy - size * 0.25);
+      ctx.stroke();
+    }
+      
+    case TileType.RUBBLE: {
+      // Scattered rocks and debris - irregular stones of varying sizes
+      const rubbleRand = seededRandom(x * 1000 + y);
+      ctx.fillStyle = colors.border;
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 0.8;
+
+      // Draw 5-8 scattered stones
+      const stoneCount = 5 + Math.floor(rubbleRand() * 4);
+      for (let i = 0; i < stoneCount; i++) {
+        const stoneX = xCo + size * 0.15 + rubbleRand() * size * 0.7;
+        const stoneY = yCo + size * 0.15 + rubbleRand() * size * 0.7;
+        const stoneSize = size * (0.08 + rubbleRand() * 0.12);
+        const points = 4 + Math.floor(rubbleRand() * 3); // 4-6 sided stones
+
+        ctx.beginPath();
+        for (let p = 0; p < points; p++) {
+          const angle = (p / points) * Math.PI * 2 + rubbleRand() * 0.5;
+          const radius = stoneSize * (0.6 + rubbleRand() * 0.4);
+          const px = stoneX + Math.cos(angle) * radius;
+          const py = stoneY + Math.sin(angle) * radius;
+          if (p === 0) {
+            ctx.moveTo(px, py);
+          } else {
+            ctx.lineTo(px, py);
+          }
+        }
+        ctx.closePath();
+        // Some stones filled, some just outlined
+        if (rubbleRand() < 0.5) {
+          ctx.fill();
+        } else {
+          ctx.stroke();
+        }
+      }
+
+      // Add a few small dots for gravel
+      for (let i = 0; i < 8; i++) {
+        const dotX = xCo + size * 0.1 + rubbleRand() * size * 0.8;
+        const dotY = yCo + size * 0.1 + rubbleRand() * size * 0.8;
+        const dotSize = size * (0.02 + rubbleRand() * 0.03);
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, dotSize, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+    }
+
+    case TileType.COLLAPSED: {
+      // Cave-in / collapsed area - partial wall with debris spray
+      const collapseRand = seededRandom(x * 1000 + y);
+      ctx.fillStyle = colors.hatching;
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1;
+
+      // Draw irregular collapsed mass (like a pile of rubble from above)
+      ctx.beginPath();
+      const collapsePoints = 8 + Math.floor(collapseRand() * 4);
+      const collapseRadius = size * 0.35;
+
+      for (let p = 0; p < collapsePoints; p++) {
+        const angle = (p / collapsePoints) * Math.PI * 2;
+        const radius = collapseRadius * (0.5 + collapseRand() * 0.5);
+        const px = cx + Math.cos(angle) * radius;
+        const py = cy + Math.sin(angle) * radius;
+        if (p === 0) {
+          ctx.moveTo(px, py);
+        } else {
+          // Use quadratic curves for organic shapes
+          const prevAngle = ((p - 0.5) / collapsePoints) * Math.PI * 2;
+          const cpRadius = collapseRadius * (0.4 + collapseRand() * 0.6);
+          const cpx = cx + Math.cos(prevAngle) * cpRadius;
+          const cpy = cy + Math.sin(prevAngle) * cpRadius;
+          ctx.quadraticCurveTo(cpx, cpy, px, py);
+        }
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Draw hatching lines on the collapsed mass for texture
+      ctx.lineWidth = 0.6;
+      for (let i = 0; i < 6; i++) {
+        const hx = cx - size * 0.2 + collapseRand() * size * 0.4;
+        const hy = cy - size * 0.2 + collapseRand() * size * 0.4;
+        const hlen = size * (0.1 + collapseRand() * 0.15);
+        const hangle = collapseRand() * Math.PI;
+        ctx.beginPath();
+        ctx.moveTo(hx, hy);
+        ctx.lineTo(hx + Math.cos(hangle) * hlen, hy + Math.sin(hangle) * hlen);
+        ctx.stroke();
+      }
+
+      // Spray of debris extending outward
+      ctx.fillStyle = colors.border;
+      for (let i = 0; i < 12; i++) {
+        const angle = collapseRand() * Math.PI * 2;
+        const dist = size * (0.3 + collapseRand() * 0.35);
+        const debrisX = cx + Math.cos(angle) * dist;
+        const debrisY = cy + Math.sin(angle) * dist;
+        const debrisSize = size * (0.03 + collapseRand() * 0.06);
+
+        // Irregular stone shapes
+        const points = 3 + Math.floor(collapseRand() * 3);
+        ctx.beginPath();
+        for (let p = 0; p < points; p++) {
+          const a = (p / points) * Math.PI * 2 + collapseRand() * 0.5;
+          const r = debrisSize * (0.5 + collapseRand() * 0.5);
+          const px = debrisX + Math.cos(a) * r;
+          const py = debrisY + Math.sin(a) * r;
+          if (p === 0) {
+            ctx.moveTo(px, py);
+          } else {
+            ctx.lineTo(px, py);
+          }
+        }
+        ctx.closePath();
+        ctx.fill();
+      }
+      break;
+    }
+
+    case TileType.FALLEN_COLUMN: {
+      // Broken column sections - rectangular segments at angles
+      const columnRand = seededRandom(x * 1000 + y);
+      ctx.fillStyle = colors.parchment;
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 1.2;
+
+      // Draw 2-3 fallen column segments
+      const segmentCount = 2 + Math.floor(columnRand() * 2);
+      for (let i = 0; i < segmentCount; i++) {
+        const segX = xCo + size * 0.2 + columnRand() * size * 0.3;
+        const segY = yCo + size * 0.2 + columnRand() * size * 0.4;
+        const segWidth = size * (0.35 + columnRand() * 0.2);
+        const segHeight = size * (0.12 + columnRand() * 0.08);
+        const angle = columnRand() * Math.PI - Math.PI / 2; // Random rotation
+
+        ctx.save();
+        ctx.translate(segX + segWidth / 2, segY + segHeight / 2);
+        ctx.rotate(angle);
+
+        // Draw column segment with rounded ends (like a drum section)
+        ctx.beginPath();
+        ctx.moveTo(-segWidth / 2, -segHeight / 2);
+        ctx.lineTo(segWidth / 2 - segHeight / 2, -segHeight / 2);
+        ctx.arc(segWidth / 2 - segHeight / 2, 0, segHeight / 2, -Math.PI / 2, Math.PI / 2);
+        ctx.lineTo(-segWidth / 2 + segHeight / 2, segHeight / 2);
+        ctx.arc(-segWidth / 2 + segHeight / 2, 0, segHeight / 2, Math.PI / 2, -Math.PI / 2);
+        ctx.closePath();
+
+        ctx.fill();
+        ctx.stroke();
+
+        // Add fluting lines (vertical grooves typical of classical columns)
+        ctx.lineWidth = 0.4;
+        const flutes = 3 + Math.floor(columnRand() * 2);
+        for (let f = 0; f < flutes; f++) {
+          const fx = -segWidth / 2 + segHeight / 2 + (f + 0.5) * ((segWidth - segHeight) / flutes);
+          ctx.beginPath();
+          ctx.moveTo(fx, -segHeight / 2 + 1);
+          ctx.lineTo(fx, segHeight / 2 - 1);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      // Add some small debris around the columns
+      ctx.fillStyle = colors.border;
+      for (let i = 0; i < 6; i++) {
+        const debrisX = xCo + size * 0.1 + columnRand() * size * 0.8;
+        const debrisY = yCo + size * 0.1 + columnRand() * size * 0.8;
+        const debrisSize = size * (0.02 + columnRand() * 0.04);
+        ctx.beginPath();
+        ctx.arc(debrisX, debrisY, debrisSize, 0, Math.PI * 2);
+        ctx.fill();
+      }
       break;
     }
   }

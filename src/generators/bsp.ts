@@ -1,6 +1,15 @@
 import type { Grid, Rect, Point } from "../types";
 import { TileType } from "../types";
 import { createGrid, randomInt, placeFeatures, validateGridSize, type FeaturePlacementOptions } from "../utils";
+import type { RoomShape, RoomShapeOptions, ShapeModifier } from "../shapes";
+import {
+  generateRoomShape,
+  drawRoomShape,
+  getShapeCenter,
+  getShapeTiles,
+  createRectangleShape,
+  applyModifiers,
+} from "../shapes";
 
 export interface BSPOptions {
   /** Minimum partition size (default: 6) */
@@ -17,6 +26,8 @@ export interface BSPOptions {
   addFeatures?: boolean;
   /** Options for feature placement */
   featureOptions?: FeaturePlacementOptions;
+  /** Options for room shape generation (default: rectangle only) */
+  roomShapeOptions?: RoomShapeOptions;
 }
 
 class BSPNode {
@@ -27,6 +38,7 @@ class BSPNode {
   left: BSPNode | null = null;
   right: BSPNode | null = null;
   room: Rect | null = null;
+  roomShape: RoomShape | null = null;
 
   constructor(x: number, y: number, width: number, height: number) {
     this.x = x;
@@ -36,6 +48,9 @@ class BSPNode {
   }
 
   getCenter(): Point {
+    if (this.roomShape) {
+      return getShapeCenter(this.roomShape);
+    }
     if (this.room) {
       return {
         x: this.room.x + Math.floor(this.room.width / 2),
@@ -57,6 +72,19 @@ class BSPNode {
     if (this.right) {
       const rightRoom = this.right.getRoom();
       if (rightRoom) return rightRoom;
+    }
+    return null;
+  }
+
+  getRoomShape(): RoomShape | null {
+    if (this.roomShape) return this.roomShape;
+    if (this.left) {
+      const leftShape = this.left.getRoomShape();
+      if (leftShape) return leftShape;
+    }
+    if (this.right) {
+      const rightShape = this.right.getRoomShape();
+      if (rightShape) return rightShape;
     }
     return null;
   }
@@ -116,11 +144,12 @@ function buildTree(
 function createRooms(
   node: BSPNode,
   minRoomSize: number,
-  padding: number
+  padding: number,
+  shapeOptions?: RoomShapeOptions
 ): void {
   if (node.left || node.right) {
-    if (node.left) createRooms(node.left, minRoomSize, padding);
-    if (node.right) createRooms(node.right, minRoomSize, padding);
+    if (node.left) createRooms(node.left, minRoomSize, padding, shapeOptions);
+    if (node.right) createRooms(node.right, minRoomSize, padding, shapeOptions);
     return;
   }
 
@@ -138,7 +167,16 @@ function createRooms(
   const roomY =
     node.y + randomInt(node.height - roomHeight - padding, padding);
 
-  node.room = { x: roomX, y: roomY, width: roomWidth, height: roomHeight };
+  const bounds: Rect = { x: roomX, y: roomY, width: roomWidth, height: roomHeight };
+  node.room = bounds;
+
+  // Generate room shape if options are provided
+  if (shapeOptions && shapeOptions.allowedShapes && shapeOptions.allowedShapes.length > 0) {
+    node.roomShape = generateRoomShape(bounds, shapeOptions);
+  } else {
+    // Default to rectangle
+    node.roomShape = createRectangleShape(bounds);
+  }
 }
 
 function drawRoom(grid: Grid, room: Rect): void {
@@ -205,41 +243,112 @@ function drawCorridor(
   }
 }
 
+/**
+ * Find the best connection point from a room shape toward a target point
+ */
+function findConnectionPoint(shape: RoomShape, target: Point): Point {
+  const tiles = getShapeTiles(shape);
+  if (tiles.length === 0) {
+    return getShapeCenter(shape);
+  }
+
+  // Find edge tiles (tiles with at least one wall neighbor)
+  const tileSet = new Set(tiles.map(t => `${t.x},${t.y}`));
+  const edgeTiles = tiles.filter(tile => {
+    const neighbors = [
+      { x: tile.x - 1, y: tile.y },
+      { x: tile.x + 1, y: tile.y },
+      { x: tile.x, y: tile.y - 1 },
+      { x: tile.x, y: tile.y + 1 },
+    ];
+    return neighbors.some(n => !tileSet.has(`${n.x},${n.y}`));
+  });
+
+  if (edgeTiles.length === 0) {
+    return getShapeCenter(shape);
+  }
+
+  // Find the edge tile closest to the target
+  let bestTile = edgeTiles[0];
+  let bestDist = Infinity;
+
+  for (const tile of edgeTiles) {
+    const dist = Math.abs(tile.x - target.x) + Math.abs(tile.y - target.y);
+    if (dist < bestDist) {
+      bestDist = dist;
+      bestTile = tile;
+    }
+  }
+
+  return bestTile;
+}
+
 function connectRooms(grid: Grid, node: BSPNode): void {
   if (!node.left || !node.right) return;
 
   connectRooms(grid, node.left);
   connectRooms(grid, node.right);
 
-  const leftRoom = node.left.getRoom();
-  const rightRoom = node.right.getRoom();
+  const leftShape = node.left.getRoomShape();
+  const rightShape = node.right.getRoomShape();
 
-  if (leftRoom && rightRoom) {
-    const leftCenter = {
-      x: leftRoom.x + Math.floor(leftRoom.width / 2),
-      y: leftRoom.y + Math.floor(leftRoom.height / 2),
-    };
-    const rightCenter = {
-      x: rightRoom.x + Math.floor(rightRoom.width / 2),
-      y: rightRoom.y + Math.floor(rightRoom.height / 2),
-    };
+  if (leftShape && rightShape) {
+    const leftCenter = getShapeCenter(leftShape);
+    const rightCenter = getShapeCenter(rightShape);
+
+    // Find best connection points (edge tiles closest to each other)
+    const leftConnect = findConnectionPoint(leftShape, rightCenter);
+    const rightConnect = findConnectionPoint(rightShape, leftCenter);
 
     drawCorridor(
       grid,
-      leftCenter.x,
-      leftCenter.y,
-      rightCenter.x,
-      rightCenter.y
+      leftConnect.x,
+      leftConnect.y,
+      rightConnect.x,
+      rightConnect.y
     );
+  } else {
+    // Fallback to old Rect-based connection
+    const leftRoom = node.left.getRoom();
+    const rightRoom = node.right.getRoom();
+
+    if (leftRoom && rightRoom) {
+      const leftCenter = {
+        x: leftRoom.x + Math.floor(leftRoom.width / 2),
+        y: leftRoom.y + Math.floor(leftRoom.height / 2),
+      };
+      const rightCenter = {
+        x: rightRoom.x + Math.floor(rightRoom.width / 2),
+        y: rightRoom.y + Math.floor(rightRoom.height / 2),
+      };
+
+      drawCorridor(
+        grid,
+        leftCenter.x,
+        leftCenter.y,
+        rightCenter.x,
+        rightCenter.y
+      );
+    }
   }
 }
 
-function drawAllRooms(grid: Grid, node: BSPNode): void {
-  if (node.room) {
+function drawAllRooms(
+  grid: Grid,
+  node: BSPNode,
+  modifiers?: ShapeModifier[]
+): void {
+  if (node.roomShape) {
+    drawRoomShape(grid, node.roomShape);
+    // Apply modifiers if provided
+    if (modifiers && modifiers.length > 0) {
+      applyModifiers(grid, node.roomShape, modifiers);
+    }
+  } else if (node.room) {
     drawRoom(grid, node.room);
   }
-  if (node.left) drawAllRooms(grid, node.left);
-  if (node.right) drawAllRooms(grid, node.right);
+  if (node.left) drawAllRooms(grid, node.left, modifiers);
+  if (node.right) drawAllRooms(grid, node.right, modifiers);
 }
 
 function isPassable(tile: number): boolean {
@@ -346,7 +455,16 @@ function addDoors(grid: Grid): void {
  *
  * @example
  * ```ts
+ * // Basic rectangular rooms
  * const grid = generateBSP(50, { maxDepth: 5, addDoors: true });
+ *
+ * // With varied room shapes
+ * const gridWithShapes = generateBSP(50, {
+ *   roomShapeOptions: {
+ *     allowedShapes: ['rectangle', 'composite', 'polygon'],
+ *     compositeVariants: ['L', 'T', 'CROSS'],
+ *   }
+ * });
  * ```
  */
 export function generateBSP(size: number, options: BSPOptions = {}): Grid {
@@ -360,14 +478,15 @@ export function generateBSP(size: number, options: BSPOptions = {}): Grid {
     addDoors: addDoorsEnabled = true,
     addFeatures: addFeaturesEnabled = false,
     featureOptions = {},
+    roomShapeOptions,
   } = options;
 
   const grid = createGrid(size, size, TileType.WALL);
   const root = new BSPNode(1, 1, size - 2, size - 2);
 
   buildTree(root, minPartitionSize, maxDepth);
-  createRooms(root, minRoomSize, padding);
-  drawAllRooms(grid, root);
+  createRooms(root, minRoomSize, padding, roomShapeOptions);
+  drawAllRooms(grid, root, roomShapeOptions?.modifiers);
   connectRooms(grid, root);
 
   if (addDoorsEnabled) {
@@ -375,7 +494,7 @@ export function generateBSP(size: number, options: BSPOptions = {}): Grid {
   }
 
   if (addFeaturesEnabled) {
-    placeFeatures(grid, featureOptions);
+    return placeFeatures(grid, featureOptions);
   }
 
   return grid;

@@ -22,6 +22,21 @@ export enum TileType {
   WATER = 12,
   DEEP_WATER = 13,
   LAVA = 14,
+  // Furniture/objects
+  CRATE = 15,
+  BARREL = 16,
+  BED = 17,
+  TABLE = 18,
+  CHAIR = 19,
+  BOOKSHELF = 20,
+  CARPET = 21,
+  FIREPLACE = 22,
+  STATUE = 23,
+  ALTAR = 24,
+  // Debris/destruction
+  RUBBLE = 25,
+  COLLAPSED = 26,
+  FALLEN_COLUMN = 27,
 }
 
 /** Terrain-specific tile types for Perlin generator */

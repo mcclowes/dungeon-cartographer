@@ -21,6 +21,24 @@ const PARAM_CONFIGS: Record<string, ParamConfig> = {
   addDoors: { label: "Add Doors", type: "boolean" },
   addFeatures: { label: "Add Features (stairs, treasure, traps)", type: "boolean" },
 
+  // Room Shapes
+  useRectangle: { label: "Rectangle", type: "boolean" },
+  useComposite: { label: "Composite (L, T, +)", type: "boolean" },
+  useTemplate: { label: "Templates", type: "boolean" },
+  useCellular: { label: "Cellular (organic)", type: "boolean" },
+  usePolygon: { label: "Polygon (hex, oct)", type: "boolean" },
+
+  // Shape Modifiers
+  useNibbleCorners: { label: "Nibble Corners", type: "boolean" },
+  useAddAlcoves: { label: "Add Alcoves", type: "boolean" },
+  useRoundCorners: { label: "Round Corners", type: "boolean" },
+  useAddPillars: { label: "Add Pillars", type: "boolean" },
+
+  // Debris features
+  rubbleChance: { label: "Rubble Chance", type: "range", min: 0, max: 0.5, step: 0.05 },
+  collapsedChance: { label: "Cave-in Chance", type: "range", min: 0, max: 0.3, step: 0.05 },
+  fallenColumnChance: { label: "Fallen Columns", type: "range", min: 0, max: 0.3, step: 0.05 },
+
   // Cave
   iterations: { label: "Iterations", type: "range", min: 1, max: 10, step: 1 },
   initialFillProbability: { label: "Fill Density", type: "range", min: 0.3, max: 0.7, step: 0.05 },
@@ -88,16 +106,21 @@ const PARAM_CONFIGS: Record<string, ParamConfig> = {
   },
   blendWidth: { label: "Blend Width", type: "range", min: 0, max: 12, step: 1 },
   connectRegions: { label: "Connect Regions", type: "boolean" },
+
+  // Furniture
+  addFurniture: { label: "Add Furniture (crates, beds, tables)", type: "boolean" },
+  furnitureDensity: { label: "Furniture Density", type: "range", min: 0.05, max: 0.4, step: 0.05 },
 };
 
 const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
   ai: [], // AI generator has no parameters (configured via AIMapGenerator component)
-  bsp: ["minPartitionSize", "maxDepth", "minRoomSize", "padding", "addDoors", "addFeatures"],
-  cave: ["iterations", "initialFillProbability", "addFeatures"],
-  dla: ["fillPercentage", "stickiness", "spawnMode", "addFeatures"],
+  bsp: ["minPartitionSize", "maxDepth", "minRoomSize", "padding", "addDoors", "useRectangle", "useComposite", "useTemplate", "useCellular", "usePolygon",
+    "useNibbleCorners", "useAddAlcoves", "useRoundCorners", "useAddPillars", "addFeatures", "addFurniture", "furnitureDensity", "rubbleChance", "collapsedChance", "fallenColumnChance"],
+  cave: ["iterations", "initialFillProbability", "addFeatures", "addFurniture", "furnitureDensity", "rubbleChance", "collapsedChance", "fallenColumnChance"],
+  dla: ["fillPercentage", "stickiness", "spawnMode", "addFeatures", "addFurniture", "furnitureDensity", "rubbleChance", "collapsedChance", "fallenColumnChance"],
   wfc: ["seedRadius"],
-  hybrid: ["splitDirection", "blendMode", "blendWidth", "connectRegions", "addFeatures"],
-  "hybrid-radial": ["blendMode", "blendWidth", "connectRegions", "addFeatures"],
+  hybrid: ["splitDirection", "blendMode", "blendWidth", "connectRegions", "addFeatures", "addFurniture", "furnitureDensity", "rubbleChance", "collapsedChance", "fallenColumnChance"],
+  "hybrid-radial": ["blendMode", "blendWidth", "connectRegions", "addFeatures", "addFurniture", "furnitureDensity", "rubbleChance", "collapsedChance", "fallenColumnChance"],
   drunkard: ["fillPercentage"],
   "drunkard-weighted": ["fillPercentage"],
   "drunkard-multi": ["fillPercentage", "numWalkers"],
@@ -106,7 +129,7 @@ const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
   "maze-division": ["addStartEnd", "loopChance", "openness"],
   perlin: ["scale", "octaves", "persistence", "lacunarity", "waterLevel", "sandLevel", "grassLevel", "forestLevel", "islandMode", "islandFalloff", "erosionIterations"],
   "perlin-continent": ["scale", "octaves", "persistence", "lacunarity", "waterLevel", "sandLevel", "grassLevel", "forestLevel", "islandMode", "islandFalloff", "erosionIterations"],
-  voronoi: ["numRooms", "minRoomDistance", "relaxation", "addDoors", "addFeatures"],
+  voronoi: ["numRooms", "minRoomDistance", "relaxation", "addDoors", "addFeatures", "addFurniture", "furnitureDensity", "rubbleChance", "collapsedChance", "fallenColumnChance"],
 };
 
 interface Props {
