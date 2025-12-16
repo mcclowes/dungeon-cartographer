@@ -9,3 +9,6 @@ export * from "./shapes";
 
 // Utilities
 export * from "./utils";
+
+// Prefab rooms
+export * from "./prefabs";
