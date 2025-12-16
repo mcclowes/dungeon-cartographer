@@ -106,20 +106,20 @@ const PARAM_CONFIGS: Record<string, ParamConfig> = {
   },
   blendWidth: { label: "Blend Width", type: "range", min: 0, max: 12, step: 1 },
   connectRegions: { label: "Connect Regions", type: "boolean" },
+
+  // Furniture
+  addFurniture: { label: "Add Furniture (crates, beds, tables)", type: "boolean" },
+  furnitureDensity: { label: "Furniture Density", type: "range", min: 0.05, max: 0.4, step: 0.05 },
 };
 
 const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
-  bsp: [
-    "minPartitionSize", "maxDepth", "minRoomSize", "padding", "addDoors", "addFeatures",
-    "useRectangle", "useComposite", "useTemplate", "useCellular", "usePolygon",
-    "useNibbleCorners", "useAddAlcoves", "useRoundCorners", "useAddPillars",
-    "rubbleChance", "collapsedChance", "fallenColumnChance"
-  ],
-  cave: ["iterations", "initialFillProbability", "addFeatures", "rubbleChance", "collapsedChance", "fallenColumnChance"],
-  dla: ["fillPercentage", "stickiness", "spawnMode", "addFeatures", "rubbleChance", "collapsedChance", "fallenColumnChance"],
+  bsp: ["minPartitionSize", "maxDepth", "minRoomSize", "padding", "addDoors", "useRectangle", "useComposite", "useTemplate", "useCellular", "usePolygon",
+    "useNibbleCorners", "useAddAlcoves", "useRoundCorners", "useAddPillars", "addFeatures", "addFurniture", "furnitureDensity", "rubbleChance", "collapsedChance", "fallenColumnChance"],
+  cave: ["iterations", "initialFillProbability", "addFeatures", "addFurniture", "furnitureDensity", "rubbleChance", "collapsedChance", "fallenColumnChance"],
+  dla: ["fillPercentage", "stickiness", "spawnMode", "addFeatures", "addFurniture", "furnitureDensity", "rubbleChance", "collapsedChance", "fallenColumnChance"],
   wfc: ["seedRadius"],
-  hybrid: ["splitDirection", "blendMode", "blendWidth", "connectRegions", "addFeatures", "rubbleChance", "collapsedChance", "fallenColumnChance"],
-  "hybrid-radial": ["blendMode", "blendWidth", "connectRegions", "addFeatures", "rubbleChance", "collapsedChance", "fallenColumnChance"],
+  hybrid: ["splitDirection", "blendMode", "blendWidth", "connectRegions", "addFeatures", "addFurniture", "furnitureDensity", "rubbleChance", "collapsedChance", "fallenColumnChance"],
+  "hybrid-radial": ["blendMode", "blendWidth", "connectRegions", "addFeatures", "addFurniture", "furnitureDensity", "rubbleChance", "collapsedChance", "fallenColumnChance"],
   drunkard: ["fillPercentage"],
   "drunkard-weighted": ["fillPercentage"],
   "drunkard-multi": ["fillPercentage", "numWalkers"],
@@ -128,7 +128,7 @@ const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
   "maze-division": ["addStartEnd", "loopChance", "openness"],
   perlin: ["scale", "octaves", "persistence", "lacunarity", "waterLevel", "sandLevel", "grassLevel", "forestLevel", "islandMode", "islandFalloff", "erosionIterations"],
   "perlin-continent": ["scale", "octaves", "persistence", "lacunarity", "waterLevel", "sandLevel", "grassLevel", "forestLevel", "islandMode", "islandFalloff", "erosionIterations"],
-  voronoi: ["numRooms", "minRoomDistance", "relaxation", "addDoors", "addFeatures", "rubbleChance", "collapsedChance", "fallenColumnChance"],
+  voronoi: ["numRooms", "minRoomDistance", "relaxation", "addDoors", "addFeatures", "addFurniture", "furnitureDensity", "rubbleChance", "collapsedChance", "fallenColumnChance"],
 };
 
 interface Props {
