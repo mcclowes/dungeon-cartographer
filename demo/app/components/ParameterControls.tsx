@@ -113,6 +113,7 @@ const PARAM_CONFIGS: Record<string, ParamConfig> = {
 };
 
 const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
+  ai: [], // AI generator has no parameters (configured via AIMapGenerator component)
   bsp: ["minPartitionSize", "maxDepth", "minRoomSize", "padding", "addDoors", "useRectangle", "useComposite", "useTemplate", "useCellular", "usePolygon",
     "useNibbleCorners", "useAddAlcoves", "useRoundCorners", "useAddPillars", "addFeatures", "addFurniture", "furnitureDensity", "rubbleChance", "collapsedChance", "fallenColumnChance"],
   cave: ["iterations", "initialFillProbability", "addFeatures", "addFurniture", "furnitureDensity", "rubbleChance", "collapsedChance", "fallenColumnChance"],

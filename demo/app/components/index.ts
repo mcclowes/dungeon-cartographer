@@ -1,3 +1,4 @@
+export { AIMapGenerator } from "./AIMapGenerator";
 export { ErrorBoundary } from "./ErrorBoundary";
 export { GeneratorSelector } from "./GeneratorSelector";
 export { ParameterControls } from "./ParameterControls";
