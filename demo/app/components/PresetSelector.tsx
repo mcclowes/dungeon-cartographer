@@ -9,20 +9,23 @@ interface Props {
 }
 
 export function PresetSelector({ presets, onSelect }: Props) {
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const preset = presets.find((p) => p.name === e.target.value);
+    if (preset) onSelect(preset);
+  };
+
   return (
     <div className={styles.container}>
-      <div className={styles.grid}>
+      <select className={styles.select} onChange={handleChange} defaultValue="">
+        <option value="" disabled>
+          Select a preset...
+        </option>
         {presets.map((preset) => (
-          <button
-            key={preset.name}
-            onClick={() => onSelect(preset)}
-            className={styles.preset}
-          >
-            <span className={styles.name}>{preset.name}</span>
-            <span className={styles.description}>{preset.description}</span>
-          </button>
+          <option key={preset.name} value={preset.name}>
+            {preset.name}
+          </option>
         ))}
-      </div>
+      </select>
     </div>
   );
 }

@@ -18,26 +18,23 @@ export function GeneratorSelector({
 }: Props) {
   return (
     <div className={styles.container}>
-      {categories.map((category) => (
-        <div key={category} className={styles.category}>
-          <h3 className={styles.categoryTitle}>{category}</h3>
-          <div className={styles.buttonGroup}>
+      <select
+        className={styles.select}
+        value={selectedGenerator}
+        onChange={(e) => onSelect(e.target.value as GeneratorType)}
+      >
+        {categories.map((category) => (
+          <optgroup key={category} label={category}>
             {Object.entries(generators)
               .filter(([_, config]) => config.category === category)
               .map(([type, config]) => (
-                <button
-                  key={type}
-                  onClick={() => onSelect(type as GeneratorType)}
-                  className={`${styles.button} ${
-                    selectedGenerator === type ? styles.active : ""
-                  }`}
-                >
+                <option key={type} value={type}>
                   {config.name}
-                </button>
+                </option>
               ))}
-          </div>
-        </div>
-      ))}
+          </optgroup>
+        ))}
+      </select>
     </div>
   );
 }

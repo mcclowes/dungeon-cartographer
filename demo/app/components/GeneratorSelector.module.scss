@@ -1,80 +1,41 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
-.category {
-  background: rgba(255, 255, 255, 0.05);
+.select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
-  padding: 10px;
-}
-
-.categoryTitle {
-  margin: 0 0 8px;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.buttonGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.button {
-  padding: 6px 10px;
-  border: none;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.8);
-  cursor: pointer;
   font-size: 13px;
-  text-align: left;
-  transition: background 0.2s, color 0.2s;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.15);
+  &:focus {
+    outline: none;
+    border-color: #4a90d9;
   }
 
-  &.active {
-    background: #4a90d9;
+  option {
+    background: #2a2a2a;
     color: #fff;
+  }
+
+  optgroup {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    font-style: normal;
   }
 }
 
 // Mobile styles
 @media (max-width: 768px) {
-  .container {
-    gap: 10px;
-  }
-
-  .category {
-    padding: 8px;
-  }
-
-  .categoryTitle {
-    font-size: 10px;
-  }
-
-  .buttonGroup {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-  }
-
-  .button {
-    padding: 10px 12px;
-    font-size: 12px;
-    min-height: 40px;
-    text-align: center;
-  }
-}
-
-@media (max-width: 400px) {
-  .buttonGroup {
-    grid-template-columns: 1fr;
+  .select {
+    padding: 10px 14px;
+    font-size: 14px;
+    min-height: 44px;
   }
 }

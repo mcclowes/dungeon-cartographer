@@ -3,15 +3,7 @@
 import styles from "./RenderControls.module.scss";
 import type { RenderStyle } from "dungeon-cartographer/render";
 import type { GeneratorConfig, RenderParams } from "../types";
-
-const STYLE_LABELS: Record<RenderStyle, string> = {
-  classic: "Classic",
-  parchment: "Parchment",
-  dungeon: "Dungeon",
-  terrain: "Terrain",
-  maze: "Maze",
-  simple: "Simple",
-};
+import { STYLE_LABELS } from "../config";
 
 interface Props {
   config: GeneratorConfig;
