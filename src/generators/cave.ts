@@ -1,6 +1,11 @@
 import type { Grid } from "../types";
 import { TileType } from "../types";
-import { sumInRadius, placeFeatures, validateGridSize, type FeaturePlacementOptions } from "../utils";
+import {
+  sumInRadius,
+  placeFeatures,
+  validateGridSize,
+  type FeaturePlacementOptions,
+} from "../utils";
 
 export interface CaveOptions {
   /** Number of cellular automata iterations (default: 3) */
@@ -72,11 +77,7 @@ export function generateCave(size: number, options: CaveOptions = {}): Grid {
     .map(() =>
       Array(size)
         .fill(0)
-        .map(() =>
-          Math.random() < initialFillProbability
-            ? TileType.FLOOR
-            : TileType.WALL
-        )
+        .map(() => (Math.random() < initialFillProbability ? TileType.FLOOR : TileType.WALL))
     );
 
   // Apply cellular automata rules

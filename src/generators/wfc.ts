@@ -63,12 +63,7 @@ const TILE_WEIGHTS: Record<number, number> = {
   [TileType.CORRIDOR]: 3,
 };
 
-const ALL_TILES = [
-  TileType.WALL,
-  TileType.FLOOR,
-  TileType.DOOR,
-  TileType.CORRIDOR,
-];
+const ALL_TILES = [TileType.WALL, TileType.FLOOR, TileType.DOOR, TileType.CORRIDOR];
 
 function createSuperposition(width: number, height: number): WFCCell[][] {
   const grid: WFCCell[][] = [];
@@ -101,9 +96,7 @@ function getEntropy(cell: WFCCell): number {
   return cell.options.length;
 }
 
-function findLowestEntropyCell(
-  grid: WFCCell[][]
-): { x: number; y: number } | null {
+function findLowestEntropyCell(grid: WFCCell[][]): { x: number; y: number } | null {
   let minEntropy = Infinity;
   let candidates: { x: number; y: number }[] = [];
 
@@ -181,9 +174,7 @@ function propagate(grid: WFCCell[][], startX: number, startY: number): void {
       }
 
       // Intersect
-      const newOptions = neighbor.options.filter(
-        (t) => validTiles.has(t) && reverseValid.has(t)
-      );
+      const newOptions = neighbor.options.filter((t) => validTiles.has(t) && reverseValid.has(t));
 
       if (newOptions.length < neighbor.options.length) {
         neighbor.options = newOptions;

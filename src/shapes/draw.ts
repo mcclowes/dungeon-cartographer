@@ -36,11 +36,7 @@ export function drawRoomShape(
 /**
  * Draw a rectangle onto a grid
  */
-export function drawRectangle(
-  grid: Grid,
-  rect: Rect,
-  tileType: TileType = TileType.FLOOR
-): void {
+export function drawRectangle(grid: Grid, rect: Rect, tileType: TileType = TileType.FLOOR): void {
   const height = grid.length;
   const width = grid[0]?.length ?? 0;
 

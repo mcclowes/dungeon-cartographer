@@ -1,6 +1,12 @@
 import type { Grid, Point } from "../types";
 import { TileType } from "../types";
-import { createGrid, randomInt, placeFeatures, validateGridSize, type FeaturePlacementOptions } from "../utils";
+import {
+  createGrid,
+  randomInt,
+  placeFeatures,
+  validateGridSize,
+  type FeaturePlacementOptions,
+} from "../utils";
 
 export interface VoronoiOptions {
   /** Number of room seeds to place (default: based on size) */
@@ -41,7 +47,7 @@ function generateSeeds(size: number, numRooms: number, minDistance: number): Poi
       y: randomInt(size - 4, 2),
     };
 
-    const tooClose = seeds.some(seed => euclideanDistance(seed, candidate) < minDistance);
+    const tooClose = seeds.some((seed) => euclideanDistance(seed, candidate) < minDistance);
     if (!tooClose) {
       seeds.push(candidate);
     }
@@ -52,7 +58,7 @@ function generateSeeds(size: number, numRooms: number, minDistance: number): Poi
 }
 
 function assignCells(size: number, seeds: Point[]): VoronoiCell[] {
-  const cells: VoronoiCell[] = seeds.map(center => ({ center, tiles: [] }));
+  const cells: VoronoiCell[] = seeds.map((center) => ({ center, tiles: [] }));
 
   // Assign each tile to its nearest seed
   for (let y = 1; y < size - 1; y++) {
@@ -78,9 +84,9 @@ function assignCells(size: number, seeds: Point[]): VoronoiCell[] {
 
 function shrinkCell(cell: VoronoiCell): Point[] {
   // Remove edge tiles to create walls between rooms
-  const tileSet = new Set(cell.tiles.map(t => `${t.x},${t.y}`));
+  const tileSet = new Set(cell.tiles.map((t) => `${t.x},${t.y}`));
 
-  return cell.tiles.filter(tile => {
+  return cell.tiles.filter((tile) => {
     // Keep only tiles where all cardinal neighbors are also in this cell
     const neighbors = [
       { x: tile.x - 1, y: tile.y },
@@ -90,7 +96,7 @@ function shrinkCell(cell: VoronoiCell): Point[] {
     ];
 
     // Keep if at least 3 neighbors are in the cell (allows some edge tiles to remain)
-    const neighborCount = neighbors.filter(n => tileSet.has(`${n.x},${n.y}`)).length;
+    const neighborCount = neighbors.filter((n) => tileSet.has(`${n.x},${n.y}`)).length;
     return neighborCount >= 3;
   });
 }
@@ -99,7 +105,7 @@ function relaxCells(cells: VoronoiCell[], iterations: number): VoronoiCell[] {
   let currentCells = cells;
 
   for (let i = 0; i < iterations; i++) {
-    currentCells = currentCells.map(cell => ({
+    currentCells = currentCells.map((cell) => ({
       ...cell,
       tiles: shrinkCell(cell),
     }));
@@ -115,14 +121,14 @@ function findNeighboringCells(cells: VoronoiCell[]): [number, number][] {
   // Create lookup for which cell owns each tile
   const tileOwner = new Map<string, number>();
   cells.forEach((cell, idx) => {
-    cell.tiles.forEach(tile => {
+    cell.tiles.forEach((tile) => {
       tileOwner.set(`${tile.x},${tile.y}`, idx);
     });
   });
 
   // Find cells that are adjacent (have tiles next to each other)
   cells.forEach((cell, cellIdx) => {
-    cell.tiles.forEach(tile => {
+    cell.tiles.forEach((tile) => {
       const adjacentPoints = [
         { x: tile.x - 1, y: tile.y },
         { x: tile.x + 1, y: tile.y },
@@ -130,12 +136,12 @@ function findNeighboringCells(cells: VoronoiCell[]): [number, number][] {
         { x: tile.x, y: tile.y + 1 },
       ];
 
-      adjacentPoints.forEach(adj => {
+      adjacentPoints.forEach((adj) => {
         const adjKey = `${adj.x},${adj.y}`;
         const adjOwner = tileOwner.get(adjKey);
 
         if (adjOwner !== undefined && adjOwner !== cellIdx) {
-          const pairKey = [Math.min(cellIdx, adjOwner), Math.max(cellIdx, adjOwner)].join('-');
+          const pairKey = [Math.min(cellIdx, adjOwner), Math.max(cellIdx, adjOwner)].join("-");
           if (!checked.has(pairKey)) {
             checked.add(pairKey);
             neighbors.push([cellIdx, adjOwner]);
@@ -206,10 +212,14 @@ function addDoors(grid: Grid): void {
       const hasFloorEast = grid[y][x + 1] === TileType.FLOOR;
       const hasFloorWest = grid[y][x - 1] === TileType.FLOOR;
 
-      const isVerticalDoorway = (hasFloorNorth || hasFloorSouth) &&
-        grid[y][x - 1] === TileType.WALL && grid[y][x + 1] === TileType.WALL;
-      const isHorizontalDoorway = (hasFloorEast || hasFloorWest) &&
-        grid[y - 1][x] === TileType.WALL && grid[y + 1][x] === TileType.WALL;
+      const isVerticalDoorway =
+        (hasFloorNorth || hasFloorSouth) &&
+        grid[y][x - 1] === TileType.WALL &&
+        grid[y][x + 1] === TileType.WALL;
+      const isHorizontalDoorway =
+        (hasFloorEast || hasFloorWest) &&
+        grid[y - 1][x] === TileType.WALL &&
+        grid[y + 1][x] === TileType.WALL;
 
       if ((isVerticalDoorway || isHorizontalDoorway) && Math.random() < 0.4) {
         grid[y][x] = TileType.DOOR;
@@ -252,7 +262,9 @@ export function generateVoronoi(size: number, options: VoronoiOptions = {}): Gri
   const seeds = generateSeeds(size, numRooms, minRoomDistance);
 
   if (seeds.length < 2) {
-    console.warn("generateVoronoi: Grid too small for requested number of rooms, returning empty dungeon");
+    console.warn(
+      "generateVoronoi: Grid too small for requested number of rooms, returning empty dungeon"
+    );
     return grid;
   }
 

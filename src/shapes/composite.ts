@@ -7,14 +7,8 @@ import { randomInt } from "../utils/random";
 /**
  * Create an L-shaped room within the given bounds
  */
-export function createLShape(
-  bounds: Rect,
-  minArmWidth: number = 2
-): CompositeShape {
-  const maxArmWidth = Math.min(
-    Math.floor(bounds.width / 2),
-    Math.floor(bounds.height / 2)
-  );
+export function createLShape(bounds: Rect, minArmWidth: number = 2): CompositeShape {
+  const maxArmWidth = Math.min(Math.floor(bounds.width / 2), Math.floor(bounds.height / 2));
   const armWidth = Math.max(minArmWidth, randomInt(maxArmWidth, minArmWidth));
 
   // Randomly choose L orientation (4 possible)
@@ -109,14 +103,8 @@ export function createLShape(
 /**
  * Create a T-shaped room within the given bounds
  */
-export function createTShape(
-  bounds: Rect,
-  minStemWidth: number = 2
-): CompositeShape {
-  const maxStemWidth = Math.min(
-    Math.floor(bounds.width / 2),
-    Math.floor(bounds.height / 2)
-  );
+export function createTShape(bounds: Rect, minStemWidth: number = 2): CompositeShape {
+  const maxStemWidth = Math.min(Math.floor(bounds.width / 2), Math.floor(bounds.height / 2));
   const stemWidth = Math.max(minStemWidth, randomInt(maxStemWidth, minStemWidth));
 
   // Randomly choose T orientation (4 possible)
@@ -212,14 +200,8 @@ export function createTShape(
 /**
  * Create a cross/plus-shaped room within the given bounds
  */
-export function createCrossShape(
-  bounds: Rect,
-  minArmWidth: number = 2
-): CompositeShape {
-  const maxArmWidth = Math.min(
-    Math.floor(bounds.width / 2),
-    Math.floor(bounds.height / 2)
-  );
+export function createCrossShape(bounds: Rect, minArmWidth: number = 2): CompositeShape {
+  const maxArmWidth = Math.min(Math.floor(bounds.width / 2), Math.floor(bounds.height / 2));
   const armWidth = Math.max(minArmWidth, randomInt(maxArmWidth, minArmWidth));
 
   const rects: Rect[] = [
@@ -250,10 +232,7 @@ export function createCrossShape(
 /**
  * Create a U-shaped room within the given bounds
  */
-export function createUShape(
-  bounds: Rect,
-  minArmWidth: number = 2
-): CompositeShape {
+export function createUShape(bounds: Rect, minArmWidth: number = 2): CompositeShape {
   const maxArmWidth = Math.floor(bounds.width / 3);
   const armWidth = Math.max(minArmWidth, randomInt(maxArmWidth, minArmWidth));
   const baseHeight = Math.max(minArmWidth, randomInt(Math.floor(bounds.height / 3), minArmWidth));
@@ -378,10 +357,7 @@ export function createUShape(
 /**
  * Create a Z-shaped room within the given bounds
  */
-export function createZShape(
-  bounds: Rect,
-  minArmWidth: number = 2
-): CompositeShape {
+export function createZShape(bounds: Rect, minArmWidth: number = 2): CompositeShape {
   const maxArmWidth = Math.floor(Math.min(bounds.width, bounds.height) / 3);
   const armWidth = Math.max(minArmWidth, randomInt(maxArmWidth, minArmWidth));
 

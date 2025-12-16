@@ -99,12 +99,7 @@ interface FractalNoiseOptions {
   scale: number;
 }
 
-function fractalNoise(
-  x: number,
-  y: number,
-  perm: number[],
-  options: FractalNoiseOptions
-): number {
+function fractalNoise(x: number, y: number, perm: number[], options: FractalNoiseOptions): number {
   const { octaves, persistence, lacunarity, scale } = options;
 
   let total = 0;
@@ -122,13 +117,7 @@ function fractalNoise(
   return (total / maxValue + 1) / 2;
 }
 
-function islandMask(
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  falloff: number
-): number {
+function islandMask(x: number, y: number, width: number, height: number, falloff: number): number {
   const centerX = width / 2;
   const centerY = height / 2;
 
@@ -238,9 +227,7 @@ export function generatePerlin(size: number, options: PerlinOptions = {}): Grid 
 
   // Convert to terrain tiles
   const terrain: Grid = heightmap.map((row) =>
-    row.map((value) =>
-      noiseToTerrain(value, { waterLevel, sandLevel, grassLevel, forestLevel })
-    )
+    row.map((value) => noiseToTerrain(value, { waterLevel, sandLevel, grassLevel, forestLevel }))
   );
 
   return terrain;

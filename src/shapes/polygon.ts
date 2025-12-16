@@ -7,16 +7,11 @@ import { randomInt } from "../utils/random";
 /**
  * Generate a polygon-based room shape
  */
-export function generatePolygonShape(
-  bounds: Rect,
-  variant?: PolygonVariant
-): PolygonShape {
+export function generatePolygonShape(bounds: Rect, variant?: PolygonVariant): PolygonShape {
   // Select variant if not specified
   const actualVariant =
     variant ??
-    (["hexagon", "octagon", "circle", "ellipse", "diamond"] as PolygonVariant[])[
-      randomInt(5, 0)
-    ];
+    (["hexagon", "octagon", "circle", "ellipse", "diamond"] as PolygonVariant[])[randomInt(5, 0)];
 
   // Calculate center and radius to fit within bounds with padding
   const padding = 1;
@@ -62,22 +57,14 @@ export function generatePolygonShape(
 /**
  * Create a regular hexagon (6 vertices)
  */
-export function createHexagon(
-  centerX: number,
-  centerY: number,
-  radius: number
-): Point[] {
+export function createHexagon(centerX: number, centerY: number, radius: number): Point[] {
   return createRegularPolygon(centerX, centerY, radius, 6, Math.PI / 6);
 }
 
 /**
  * Create a regular octagon (8 vertices)
  */
-export function createOctagon(
-  centerX: number,
-  centerY: number,
-  radius: number
-): Point[] {
+export function createOctagon(centerX: number, centerY: number, radius: number): Point[] {
   return createRegularPolygon(centerX, centerY, radius, 8, Math.PI / 8);
 }
 

@@ -14,12 +14,7 @@ export function generateCellularShape(
     deathLimit?: number;
   } = {}
 ): CellularShape {
-  const {
-    fillProbability = 0.45,
-    iterations = 4,
-    birthLimit = 4,
-    deathLimit = 3,
-  } = options;
+  const { fillProbability = 0.45, iterations = 4, birthLimit = 4, deathLimit = 3 } = options;
 
   // Initialize cells with random values
   let cells = initializeCells(bounds.width, bounds.height, fillProbability);
@@ -151,9 +146,7 @@ function countAliveNeighbors(cells: boolean[][], x: number, y: number): number {
 export function extractLargestRegion(cells: boolean[][]): Point[] {
   const height = cells.length;
   const width = cells[0]?.length ?? 0;
-  const visited: boolean[][] = Array.from({ length: height }, () =>
-    Array(width).fill(false)
-  );
+  const visited: boolean[][] = Array.from({ length: height }, () => Array(width).fill(false));
 
   let largestRegion: Point[] = [];
 
@@ -219,9 +212,7 @@ export function smoothCellularRegion(tiles: Point[]): Point[] {
       { x: tile.x, y: tile.y + 1 },
     ];
 
-    const neighborCount = neighbors.filter((n) =>
-      tileSet.has(`${n.x},${n.y}`)
-    ).length;
+    const neighborCount = neighbors.filter((n) => tileSet.has(`${n.x},${n.y}`)).length;
 
     // Keep tiles with at least 2 neighbors
     return neighborCount >= 2;
@@ -231,11 +222,7 @@ export function smoothCellularRegion(tiles: Point[]): Point[] {
 /**
  * Ensure the cellular region has a minimum size
  */
-export function ensureMinimumSize(
-  tiles: Point[],
-  minTiles: number,
-  bounds: Rect
-): Point[] {
+export function ensureMinimumSize(tiles: Point[], minTiles: number, bounds: Rect): Point[] {
   if (tiles.length >= minTiles) {
     return tiles;
   }

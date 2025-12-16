@@ -174,10 +174,7 @@ export function scaleTemplate(
  * @param template The template to rotate
  * @param rotation Rotation in degrees (0, 90, 180, 270)
  */
-export function rotateTemplate(
-  template: TemplateMask,
-  rotation: 0 | 90 | 180 | 270
-): TemplateMask {
+export function rotateTemplate(template: TemplateMask, rotation: 0 | 90 | 180 | 270): TemplateMask {
   if (rotation === 0) {
     return template.map((row) => [...row]);
   }
@@ -226,7 +223,10 @@ export function mirrorTemplateHorizontal(template: TemplateMask): TemplateMask {
  * Mirror a template vertically
  */
 export function mirrorTemplateVertical(template: TemplateMask): TemplateMask {
-  return template.slice().reverse().map((row) => [...row]);
+  return template
+    .slice()
+    .reverse()
+    .map((row) => [...row]);
 }
 
 /**
