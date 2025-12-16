@@ -119,6 +119,143 @@ export const ROOM_TEMPLATES: Record<string, TemplateMask> = {
     [true, true, true, true, true, true, true],
     [false, true, true, true, true, true, false],
   ],
+
+  // Throne room (9x7) - rectangular with raised dais area
+  throneRoom: [
+    [false, false, true, true, true, true, true, false, false],
+    [false, true, true, true, true, true, true, true, false],
+    [true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true],
+    [false, true, true, true, true, true, true, true, false],
+    [false, false, true, true, true, true, true, false, false],
+  ],
+
+  // Library (8x6) - rows of shelving space
+  library: [
+    [true, true, true, true, true, true, true, true],
+    [true, true, false, true, true, false, true, true],
+    [true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true],
+    [true, true, false, true, true, false, true, true],
+    [true, true, true, true, true, true, true, true],
+  ],
+
+  // Crypt (7x9) - long with alcoves for tombs
+  crypt: [
+    [false, true, true, true, true, true, false],
+    [true, true, true, true, true, true, true],
+    [true, false, true, true, true, false, true],
+    [true, true, true, true, true, true, true],
+    [true, false, true, true, true, false, true],
+    [true, true, true, true, true, true, true],
+    [true, false, true, true, true, false, true],
+    [true, true, true, true, true, true, true],
+    [false, true, true, true, true, true, false],
+  ],
+
+  // Temple (9x9) - symmetrical with central altar space
+  temple: [
+    [false, false, true, true, true, true, true, false, false],
+    [false, true, true, true, true, true, true, true, false],
+    [true, true, true, true, true, true, true, true, true],
+    [true, true, true, false, false, false, true, true, true],
+    [true, true, true, false, true, false, true, true, true],
+    [true, true, true, false, false, false, true, true, true],
+    [true, true, true, true, true, true, true, true, true],
+    [false, true, true, true, true, true, true, true, false],
+    [false, false, true, true, true, true, true, false, false],
+  ],
+
+  // Barracks (10x6) - rectangular with bed alcoves
+  barracks: [
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, false, true, false, true, true, false, true, false, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, false, true, false, true, true, false, true, false, true],
+    [true, true, true, true, true, true, true, true, true, true],
+  ],
+
+  // Armory (6x8) - weapon storage layout
+  armory: [
+    [true, true, true, true, true, true],
+    [true, true, true, true, true, true],
+    [true, false, true, true, false, true],
+    [true, true, true, true, true, true],
+    [true, true, true, true, true, true],
+    [true, false, true, true, false, true],
+    [true, true, true, true, true, true],
+    [true, true, true, true, true, true],
+  ],
+
+  // Treasury (6x6) - secure room with thick walls
+  treasury: [
+    [false, true, true, true, true, false],
+    [true, true, true, true, true, true],
+    [true, true, true, true, true, true],
+    [true, true, true, true, true, true],
+    [true, true, true, true, true, true],
+    [false, true, true, true, true, false],
+  ],
+
+  // Prison (8x8) - cell block layout
+  prison: [
+    [true, true, true, true, true, true, true, true],
+    [true, false, true, false, true, false, true, true],
+    [true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true],
+    [true, false, true, false, true, false, true, true],
+    [true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true],
+  ],
+
+  // Kitchen (7x6) - workspace with hearth area
+  kitchen: [
+    [true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true],
+    [false, false, true, true, true, false, false],
+    [false, false, true, true, true, false, false],
+  ],
+
+  // Arena (11x11) - circular fighting pit
+  arena: [
+    [false, false, false, true, true, true, true, true, false, false, false],
+    [false, false, true, true, true, true, true, true, true, false, false],
+    [false, true, true, true, true, true, true, true, true, true, false],
+    [true, true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true, true],
+    [false, true, true, true, true, true, true, true, true, true, false],
+    [false, false, true, true, true, true, true, true, true, false, false],
+    [false, false, false, true, true, true, true, true, false, false, false],
+  ],
+
+  // Study (5x6) - small scholarly room
+  study: [
+    [true, true, true, true, true],
+    [true, true, true, true, true],
+    [true, true, true, true, true],
+    [true, true, true, true, true],
+    [true, false, true, false, true],
+    [true, true, true, true, true],
+  ],
+
+  // Dining hall (10x7) - long table layout
+  diningHall: [
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [false, true, true, true, true, true, true, true, true, false],
+  ],
 };
 
 /** List of all available template names */

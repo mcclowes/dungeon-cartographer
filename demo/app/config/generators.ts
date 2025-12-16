@@ -8,6 +8,8 @@ import {
   generatePerlin,
   generateVoronoi,
   generateWFC,
+  generatePoisson,
+  generateAgent,
 } from "dungeon-cartographer";
 import type { GeneratorType, GeneratorConfig } from "../types";
 import { buildRoomShapeOptions, buildFeatureOptions } from "../utils";
@@ -101,6 +103,42 @@ export const GENERATORS: Record<GeneratorType, GeneratorConfig> = {
     generate: (size, params) =>
       generateWFC(size, {
         seedRadius: params.seedRadius,
+      }),
+  },
+  poisson: {
+    name: "Poisson Disk",
+    description: "Well-distributed rooms via Poisson sampling",
+    category: "Dungeon",
+    defaultStyle: "parchment",
+    availableStyles: ["parchment", "classic", "dungeon", "simple"],
+    generate: (size, params) =>
+      generatePoisson(size, {
+        minDistance: params.minDistance,
+        minRoomSize: params.minRoomSize,
+        maxRoomSize: params.maxRoomSize,
+        addDoors: params.addDoors,
+        addFeatures: params.addFeatures,
+        featureOptions: buildFeatureOptions(params),
+        roomShapeOptions: buildRoomShapeOptions(params),
+      }),
+  },
+  agent: {
+    name: "Agent-Based",
+    description: "Digger agents carve organic dungeons",
+    category: "Dungeon",
+    defaultStyle: "parchment",
+    availableStyles: ["parchment", "classic", "dungeon", "simple"],
+    generate: (size, params) =>
+      generateAgent(size, {
+        numAgents: params.numAgents,
+        stepsPerAgent: params.stepsPerAgent,
+        roomChance: params.roomChance,
+        minRoomSize: params.minRoomSize,
+        maxRoomSize: params.maxRoomSize,
+        turnChance: params.turnChance,
+        addDoors: params.addDoors,
+        addFeatures: params.addFeatures,
+        featureOptions: buildFeatureOptions(params),
       }),
   },
   hybrid: {

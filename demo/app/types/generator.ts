@@ -17,7 +17,9 @@ export type GeneratorType =
   | "perlin"
   | "perlin-continent"
   | "voronoi"
-  | "wfc";
+  | "wfc"
+  | "poisson"
+  | "agent";
 
 export interface GeneratorConfig {
   name: string;
@@ -100,4 +102,14 @@ export interface GeneratorParams {
   // Furniture
   addFurniture?: boolean;
   furnitureDensity?: number;
+
+  // Poisson
+  minDistance?: number;
+  maxRoomSize?: number;
+
+  // Agent
+  numAgents?: number;
+  stepsPerAgent?: number;
+  roomChance?: number;
+  turnChance?: number;
 }

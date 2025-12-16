@@ -11,3 +11,15 @@ export { generateMaze, type MazeOptions, type MazeAlgorithm } from "./maze";
 export { generatePerlin, type PerlinOptions, TerrainTile } from "./perlin";
 export { generateVoronoi, type VoronoiOptions } from "./voronoi";
 export { generateWFC, type WFCOptions } from "./wfc";
+export { generatePoisson, type PoissonOptions } from "./poisson";
+export { generateAgent, type AgentOptions } from "./agent";
+export {
+  generateMultiLevel,
+  getLevel,
+  findStairsOnLevel,
+  type MultiLevelOptions,
+  type MultiLevelResult,
+  type LevelConfig,
+  type LevelGenerator,
+  type StairConnection,
+} from "./multilevel";

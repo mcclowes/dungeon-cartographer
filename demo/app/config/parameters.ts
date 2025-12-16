@@ -107,6 +107,16 @@ export const PARAM_CONFIGS: Record<string, ParamConfig> = {
   // Furniture
   addFurniture: { label: "Add Furniture (crates, beds, tables)", type: "boolean" },
   furnitureDensity: { label: "Furniture Density", type: "range", min: 0.05, max: 0.4, step: 0.05 },
+
+  // Poisson
+  minDistance: { label: "Min Distance", type: "range", min: 4, max: 15, step: 1 },
+  maxRoomSize: { label: "Max Room Size", type: "range", min: 4, max: 12, step: 1 },
+
+  // Agent
+  numAgents: { label: "Num Agents", type: "range", min: 1, max: 8, step: 1 },
+  stepsPerAgent: { label: "Steps/Agent", type: "range", min: 50, max: 300, step: 25 },
+  roomChance: { label: "Room Chance", type: "range", min: 0.1, max: 0.5, step: 0.05 },
+  turnChance: { label: "Turn Chance", type: "range", min: 0.1, max: 0.5, step: 0.05 },
 };
 
 export const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
@@ -155,6 +165,18 @@ export const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
   ],
   voronoi: [
     "numRooms", "minRoomDistance", "relaxation", "addDoors",
+    "addFeatures", "addFurniture", "furnitureDensity",
+    "rubbleChance", "collapsedChance", "fallenColumnChance",
+  ],
+  poisson: [
+    "minDistance", "minRoomSize", "maxRoomSize", "addDoors",
+    "useRectangle", "useComposite", "useTemplate", "useCellular", "usePolygon",
+    "addFeatures", "addFurniture", "furnitureDensity",
+    "rubbleChance", "collapsedChance", "fallenColumnChance",
+  ],
+  agent: [
+    "numAgents", "stepsPerAgent", "roomChance", "turnChance",
+    "minRoomSize", "maxRoomSize", "addDoors",
     "addFeatures", "addFurniture", "furnitureDensity",
     "rubbleChance", "collapsedChance", "fallenColumnChance",
   ],
