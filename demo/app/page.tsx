@@ -217,7 +217,7 @@ export default function Home() {
             name: renderParams.mapTitle || "Dungeon Map",
             generator: generatorType,
             seed,
-            params,
+            params: params as Record<string, unknown>,
           },
         });
         filename = `${baseFilename}.json`;

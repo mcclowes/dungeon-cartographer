@@ -248,12 +248,17 @@ export function rotatePolygon(
  * Check if a point is inside a polygon using ray casting
  */
 export function pointInPolygon(point: Point, vertices: Point[]): boolean {
+  if (!vertices || vertices.length < 3) return false;
+
   let inside = false;
   const n = vertices.length;
 
   for (let i = 0, j = n - 1; i < n; j = i++) {
     const vi = vertices[i];
     const vj = vertices[j];
+
+    // Skip if vertices are undefined
+    if (!vi || !vj) continue;
 
     if (
       vi.y > point.y !== vj.y > point.y &&

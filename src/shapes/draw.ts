@@ -122,7 +122,7 @@ export function drawPolygon(
   const height = grid.length;
   const width = grid[0]?.length ?? 0;
 
-  if (vertices.length < 3) return;
+  if (!vertices || vertices.length < 3) return;
 
   // Use scanline fill algorithm
   const minY = Math.max(0, boundingBox.y);
@@ -135,6 +135,9 @@ export function drawPolygon(
     for (let i = 0; i < vertices.length; i++) {
       const v1 = vertices[i];
       const v2 = vertices[(i + 1) % vertices.length];
+
+      // Skip if vertices are undefined
+      if (!v1 || !v2) continue;
 
       // Check if edge crosses this scanline
       if ((v1.y <= y && v2.y > y) || (v2.y <= y && v1.y > y)) {
@@ -216,6 +219,12 @@ export function getShapeTiles(shape: RoomShape): Point[] {
     case RoomShapeType.POLYGON: {
       // Rasterize polygon to get tiles
       const { vertices, boundingBox } = shape;
+
+      // Guard against empty or invalid vertices
+      if (!vertices || vertices.length < 3) {
+        break;
+      }
+
       const minY = 0;
       const maxY = boundingBox.height - 1;
 
@@ -226,6 +235,9 @@ export function getShapeTiles(shape: RoomShape): Point[] {
         for (let i = 0; i < vertices.length; i++) {
           const v1 = vertices[i];
           const v2 = vertices[(i + 1) % vertices.length];
+
+          // Skip if vertices are undefined
+          if (!v1 || !v2) continue;
 
           if ((v1.y <= scanY && v2.y > scanY) || (v2.y <= scanY && v1.y > scanY)) {
             const t = (scanY - v1.y) / (v2.y - v1.y);
