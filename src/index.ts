@@ -12,3 +12,6 @@ export * from "./utils";
 
 // Prefab rooms
 export * from "./prefabs";
+
+// Themed presets
+export * from "./themes";
