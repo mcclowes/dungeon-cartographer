@@ -1,7 +1,10 @@
 import type { Grid } from "../types";
 import { TerrainTile } from "../types";
+import { withSeededRandom } from "../utils";
 
 export interface PerlinOptions {
+  /** Random seed for reproducible generation */
+  seed?: number;
   /** Noise scale - smaller = larger features (default: 0.08) */
   scale?: number;
   /** Number of noise octaves (default: 4) */
@@ -184,6 +187,7 @@ function applyErosion(heightmap: number[][], iterations: number): number[][] {
  */
 export function generatePerlin(size: number, options: PerlinOptions = {}): Grid {
   const {
+    seed,
     scale = 0.08,
     octaves = 4,
     persistence = 0.5,
@@ -197,40 +201,42 @@ export function generatePerlin(size: number, options: PerlinOptions = {}): Grid 
     erosionIterations = 2,
   } = options;
 
-  const perm = createPermutationTable();
+  return withSeededRandom(seed, () => {
+    const perm = createPermutationTable();
 
-  // Generate heightmap
-  let heightmap: number[][] = [];
-  for (let y = 0; y < size; y++) {
-    heightmap[y] = [];
-    for (let x = 0; x < size; x++) {
-      let noise = fractalNoise(x, y, perm, {
-        scale,
-        octaves,
-        persistence,
-        lacunarity,
-      });
+    // Generate heightmap
+    let heightmap: number[][] = [];
+    for (let y = 0; y < size; y++) {
+      heightmap[y] = [];
+      for (let x = 0; x < size; x++) {
+        let noise = fractalNoise(x, y, perm, {
+          scale,
+          octaves,
+          persistence,
+          lacunarity,
+        });
 
-      if (islandMode) {
-        const mask = islandMask(x, y, size, size, islandFalloff);
-        noise = noise * mask;
+        if (islandMode) {
+          const mask = islandMask(x, y, size, size, islandFalloff);
+          noise = noise * mask;
+        }
+
+        heightmap[y][x] = noise;
       }
-
-      heightmap[y][x] = noise;
     }
-  }
 
-  // Apply erosion
-  if (erosionIterations > 0) {
-    heightmap = applyErosion(heightmap, erosionIterations);
-  }
+    // Apply erosion
+    if (erosionIterations > 0) {
+      heightmap = applyErosion(heightmap, erosionIterations);
+    }
 
-  // Convert to terrain tiles
-  const terrain: Grid = heightmap.map((row) =>
-    row.map((value) => noiseToTerrain(value, { waterLevel, sandLevel, grassLevel, forestLevel }))
-  );
+    // Convert to terrain tiles
+    const terrain: Grid = heightmap.map((row) =>
+      row.map((value) => noiseToTerrain(value, { waterLevel, sandLevel, grassLevel, forestLevel }))
+    );
 
-  return terrain;
+    return terrain;
+  });
 }
 
 /** Export terrain tile enum for consumers */

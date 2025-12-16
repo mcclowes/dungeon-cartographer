@@ -4,10 +4,13 @@ import {
   sumInRadius,
   placeFeatures,
   validateGridSize,
+  withSeededRandom,
   type FeaturePlacementOptions,
 } from "../utils";
 
 export interface CaveOptions {
+  /** Random seed for reproducible generation */
+  seed?: number;
   /** Number of cellular automata iterations (default: 3) */
   iterations?: number;
   /** Initial fill probability 0-1 (default: 0.5) */
@@ -65,29 +68,32 @@ export function generateCave(size: number, options: CaveOptions = {}): Grid {
   validateGridSize(size, "generateCave");
 
   const {
+    seed,
     iterations = 3,
     initialFillProbability = 0.5,
     addFeatures: addFeaturesEnabled = false,
     featureOptions = {},
   } = options;
 
-  // Create initial random grid
-  let grid: Grid = Array(size)
-    .fill(0)
-    .map(() =>
-      Array(size)
-        .fill(0)
-        .map(() => (Math.random() < initialFillProbability ? TileType.FLOOR : TileType.WALL))
-    );
+  return withSeededRandom(seed, () => {
+    // Create initial random grid
+    let grid: Grid = Array(size)
+      .fill(0)
+      .map(() =>
+        Array(size)
+          .fill(0)
+          .map(() => (Math.random() < initialFillProbability ? TileType.FLOOR : TileType.WALL))
+      );
 
-  // Apply cellular automata rules
-  for (let i = 0; i < iterations; i++) {
-    grid = applyCellularAutomata(grid);
-  }
+    // Apply cellular automata rules
+    for (let i = 0; i < iterations; i++) {
+      grid = applyCellularAutomata(grid);
+    }
 
-  if (addFeaturesEnabled) {
-    return placeFeatures(grid, featureOptions);
-  }
+    if (addFeaturesEnabled) {
+      return placeFeatures(grid, featureOptions);
+    }
 
-  return grid;
+    return grid;
+  });
 }

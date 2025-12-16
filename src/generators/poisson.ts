@@ -5,12 +5,15 @@ import {
   randomInt,
   placeFeatures,
   validateGridSize,
+  withSeededRandom,
   type FeaturePlacementOptions,
 } from "../utils";
 import type { RoomShapeOptions } from "../shapes";
 import { generateRoomShape, drawRoomShape } from "../shapes";
 
 export interface PoissonOptions {
+  /** Random seed for reproducible generation */
+  seed?: number;
   /** Minimum distance between room centers (default: 6) */
   minDistance?: number;
   /** Maximum attempts to place each room (default: 30) */
@@ -283,6 +286,7 @@ export function generatePoisson(size: number, options: PoissonOptions = {}): Gri
   validateGridSize(size, "generatePoisson");
 
   const {
+    seed,
     minDistance = 6,
     maxAttempts = 30,
     minRoomSize = 3,
@@ -293,46 +297,48 @@ export function generatePoisson(size: number, options: PoissonOptions = {}): Gri
     roomShapeOptions,
   } = options;
 
-  const grid = createGrid(size, size, TileType.WALL);
+  return withSeededRandom(seed, () => {
+    const grid = createGrid(size, size, TileType.WALL);
 
-  // Generate room positions using Poisson disk sampling
-  const rooms = poissonDiskSample(size, minDistance, maxAttempts, minRoomSize, maxRoomSize);
+    // Generate room positions using Poisson disk sampling
+    const rooms = poissonDiskSample(size, minDistance, maxAttempts, minRoomSize, maxRoomSize);
 
-  if (rooms.length < 2) {
-    console.warn("generatePoisson: Could not place enough rooms");
-    return grid;
-  }
+    if (rooms.length < 2) {
+      console.warn("generatePoisson: Could not place enough rooms");
+      return grid;
+    }
 
-  // Draw rooms
-  for (const room of rooms) {
-    if (roomShapeOptions) {
-      const shape = generateRoomShape(room.bounds, roomShapeOptions);
-      drawRoomShape(grid, shape);
-    } else {
-      // Simple rectangle room
-      for (let y = room.bounds.y; y < room.bounds.y + room.bounds.height; y++) {
-        for (let x = room.bounds.x; x < room.bounds.x + room.bounds.width; x++) {
-          if (y > 0 && y < size - 1 && x > 0 && x < size - 1) {
-            grid[y][x] = TileType.FLOOR;
+    // Draw rooms
+    for (const room of rooms) {
+      if (roomShapeOptions) {
+        const shape = generateRoomShape(room.bounds, roomShapeOptions);
+        drawRoomShape(grid, shape);
+      } else {
+        // Simple rectangle room
+        for (let y = room.bounds.y; y < room.bounds.y + room.bounds.height; y++) {
+          for (let x = room.bounds.x; x < room.bounds.x + room.bounds.width; x++) {
+            if (y > 0 && y < size - 1 && x > 0 && x < size - 1) {
+              grid[y][x] = TileType.FLOOR;
+            }
           }
         }
       }
     }
-  }
 
-  // Connect rooms with MST
-  const edges = buildMinimumSpanningTree(rooms);
-  for (const [fromIdx, toIdx] of edges) {
-    drawCorridor(grid, rooms[fromIdx].center, rooms[toIdx].center);
-  }
+    // Connect rooms with MST
+    const edges = buildMinimumSpanningTree(rooms);
+    for (const [fromIdx, toIdx] of edges) {
+      drawCorridor(grid, rooms[fromIdx].center, rooms[toIdx].center);
+    }
 
-  if (addDoorsEnabled) {
-    addDoors(grid);
-  }
+    if (addDoorsEnabled) {
+      addDoors(grid);
+    }
 
-  if (addFeaturesEnabled) {
-    return placeFeatures(grid, featureOptions);
-  }
+    if (addFeaturesEnabled) {
+      return placeFeatures(grid, featureOptions);
+    }
 
-  return grid;
+    return grid;
+  });
 }

@@ -1,8 +1,10 @@
 import type { Grid } from "../types";
 import { TileType } from "../types";
-import { randomItem, weightedRandom } from "../utils";
+import { randomItem, weightedRandom, withSeededRandom } from "../utils";
 
 export interface WFCOptions {
+  /** Random seed for reproducible generation */
+  seed?: number;
   /** Seed radius for initial floor tiles (default: size/6) */
   seedRadius?: number;
 }
@@ -199,45 +201,47 @@ function propagate(grid: WFCCell[][], startX: number, startY: number): void {
  * based on adjacency rules.
  */
 export function generateWFC(size: number, options: WFCOptions = {}): Grid {
-  const { seedRadius = Math.floor(size / 6) } = options;
+  const { seed, seedRadius = Math.floor(size / 6) } = options;
 
-  const grid = createSuperposition(size, size);
-  let iterations = 0;
-  const maxIterations = size * size * 2;
+  return withSeededRandom(seed, () => {
+    const grid = createSuperposition(size, size);
+    let iterations = 0;
+    const maxIterations = size * size * 2;
 
-  // Seed center area with floor tiles
-  const centerX = Math.floor(size / 2);
-  const centerY = Math.floor(size / 2);
+    // Seed center area with floor tiles
+    const centerX = Math.floor(size / 2);
+    const centerY = Math.floor(size / 2);
 
-  for (let dy = -seedRadius; dy <= seedRadius; dy++) {
-    for (let dx = -seedRadius; dx <= seedRadius; dx++) {
-      const x = centerX + dx;
-      const y = centerY + dy;
-      if (x > 0 && x < size - 1 && y > 0 && y < size - 1) {
-        if (Math.abs(dx) + Math.abs(dy) <= seedRadius) {
-          grid[y][x].options = [TileType.FLOOR, TileType.CORRIDOR];
+    for (let dy = -seedRadius; dy <= seedRadius; dy++) {
+      for (let dx = -seedRadius; dx <= seedRadius; dx++) {
+        const x = centerX + dx;
+        const y = centerY + dy;
+        if (x > 0 && x < size - 1 && y > 0 && y < size - 1) {
+          if (Math.abs(dx) + Math.abs(dy) <= seedRadius) {
+            grid[y][x].options = [TileType.FLOOR, TileType.CORRIDOR];
+          }
         }
       }
     }
-  }
 
-  while (iterations < maxIterations) {
-    iterations++;
+    while (iterations < maxIterations) {
+      iterations++;
 
-    const cell = findLowestEntropyCell(grid);
-    if (!cell) break;
+      const cell = findLowestEntropyCell(grid);
+      if (!cell) break;
 
-    collapseCell(grid[cell.y][cell.x]);
-    propagate(grid, cell.x, cell.y);
-  }
+      collapseCell(grid[cell.y][cell.x]);
+      propagate(grid, cell.x, cell.y);
+    }
 
-  // Convert to simple number grid
-  return grid.map((row) =>
-    row.map((cell) => {
-      if (!cell.collapsed) {
-        return cell.options.length > 0 ? cell.options[0] : TileType.WALL;
-      }
-      return cell.tile ?? TileType.WALL;
-    })
-  );
+    // Convert to simple number grid
+    return grid.map((row) =>
+      row.map((cell) => {
+        if (!cell.collapsed) {
+          return cell.options.length > 0 ? cell.options[0] : TileType.WALL;
+        }
+        return cell.tile ?? TileType.WALL;
+      })
+    );
+  });
 }

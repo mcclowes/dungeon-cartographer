@@ -1,6 +1,6 @@
 import type { Grid, Point } from "../types";
 import { TileType } from "../types";
-import { createGrid, randomInt, validateGridSize, cloneGrid } from "../utils";
+import { createGrid, randomInt, validateGridSize, cloneGrid, withSeededRandom } from "../utils";
 import { generateBSP, type BSPOptions } from "./bsp";
 import { generateCave, type CaveOptions } from "./cave";
 import { generateVoronoi, type VoronoiOptions } from "./voronoi";
@@ -19,6 +19,8 @@ export interface LevelConfig {
 }
 
 export interface MultiLevelOptions {
+  /** Random seed for reproducible generation */
+  seed?: number;
   /** Configuration for each level (default: 3 BSP levels) */
   levels?: LevelConfig[];
   /** Number of levels if not specifying individual configs (default: 3) */
@@ -186,77 +188,80 @@ export function generateMultiLevel(
   validateGridSize(size, "generateMultiLevel");
 
   const {
+    seed,
     numLevels = 3,
     stairsPerConnection = 2,
     minStairDistance = 8,
     ensureConnectivity = true,
   } = options;
 
-  // Build level configurations
-  const levelConfigs: LevelConfig[] = options.levels ?? [];
+  return withSeededRandom(seed, () => {
+    // Build level configurations
+    const levelConfigs: LevelConfig[] = options.levels ? [...options.levels] : [];
 
-  if (levelConfigs.length === 0) {
-    // Default: BSP for first level, mix of others for deeper levels
-    const generators: LevelGenerator[] = ["bsp", "cave", "voronoi", "poisson"];
-    for (let i = 0; i < numLevels; i++) {
-      levelConfigs.push({
-        generator: generators[i % generators.length],
-        name: `Level ${i + 1}`,
-        options: { addFeatures: true },
-      });
-    }
-  }
-
-  // Generate each level
-  const levels: Grid[] = [];
-  const levelNames: string[] = [];
-  const maxAttempts = 5;
-
-  for (let i = 0; i < levelConfigs.length; i++) {
-    const config = levelConfigs[i];
-    let grid: Grid | null = null;
-
-    // Try to generate a connected level
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      grid = generateLevel(size, config);
-
-      if (!ensureConnectivity || isFullyConnected(grid)) {
-        break;
+    if (levelConfigs.length === 0) {
+      // Default: BSP for first level, mix of others for deeper levels
+      const generators: LevelGenerator[] = ["bsp", "cave", "voronoi", "poisson"];
+      for (let i = 0; i < numLevels; i++) {
+        levelConfigs.push({
+          generator: generators[i % generators.length],
+          name: `Level ${i + 1}`,
+          options: { addFeatures: true },
+        });
       }
     }
 
-    if (!grid) {
-      grid = createGrid(size, size, TileType.WALL);
+    // Generate each level
+    const levels: Grid[] = [];
+    const levelNames: string[] = [];
+    const maxAttempts = 5;
+
+    for (let i = 0; i < levelConfigs.length; i++) {
+      const config = levelConfigs[i];
+      let grid: Grid | null = null;
+
+      // Try to generate a connected level
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        grid = generateLevel(size, config);
+
+        if (!ensureConnectivity || isFullyConnected(grid)) {
+          break;
+        }
+      }
+
+      if (!grid) {
+        grid = createGrid(size, size, TileType.WALL);
+      }
+
+      levels.push(grid);
+      levelNames.push(config.name ?? `Level ${i + 1}`);
     }
 
-    levels.push(grid);
-    levelNames.push(config.name ?? `Level ${i + 1}`);
-  }
+    // Connect levels with stairs
+    const allConnections: StairConnection[] = [];
 
-  // Connect levels with stairs
-  const allConnections: StairConnection[] = [];
+    for (let i = 0; i < levels.length - 1; i++) {
+      const connections = placeStairs(
+        levels[i],
+        levels[i + 1],
+        stairsPerConnection,
+        minStairDistance
+      );
 
-  for (let i = 0; i < levels.length - 1; i++) {
-    const connections = placeStairs(
-      levels[i],
-      levels[i + 1],
-      stairsPerConnection,
-      minStairDistance
-    );
-
-    // Set correct level indices
-    for (const conn of connections) {
-      conn.upperLevel = i;
-      conn.lowerLevel = i + 1;
-      allConnections.push(conn);
+      // Set correct level indices
+      for (const conn of connections) {
+        conn.upperLevel = i;
+        conn.lowerLevel = i + 1;
+        allConnections.push(conn);
+      }
     }
-  }
 
-  return {
-    levels,
-    connections: allConnections,
-    levelNames,
-  };
+    return {
+      levels,
+      connections: allConnections,
+      levelNames,
+    };
+  });
 }
 
 /**

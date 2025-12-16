@@ -2,8 +2,9 @@ import type { Grid, Rect, Point } from "../types";
 import { TileType } from "../types";
 import {
   createGrid,
-  randomInt,
+  createSeededRandom,
   placeFeatures,
+  randomInt,
   validateGridSize,
   type FeaturePlacementOptions,
 } from "../utils";
@@ -18,6 +19,8 @@ import {
 } from "../shapes";
 
 export interface BSPOptions {
+  /** Random seed for reproducible generation */
+  seed?: number;
   /** Minimum partition size (default: 6) */
   minPartitionSize?: number;
   /** Maximum BSP tree depth (default: 4) */
@@ -428,6 +431,7 @@ export function generateBSP(size: number, options: BSPOptions = {}): Grid {
   validateGridSize(size, "generateBSP");
 
   const {
+    seed,
     minPartitionSize = 6,
     maxDepth = 4,
     minRoomSize = 3,
@@ -438,21 +442,33 @@ export function generateBSP(size: number, options: BSPOptions = {}): Grid {
     roomShapeOptions,
   } = options;
 
-  const grid = createGrid(size, size, TileType.WALL);
-  const root = new BSPNode(1, 1, size - 2, size - 2);
-
-  buildTree(root, minPartitionSize, maxDepth);
-  createRooms(root, minRoomSize, padding, roomShapeOptions);
-  drawAllRooms(grid, root, roomShapeOptions?.modifiers);
-  connectRooms(grid, root);
-
-  if (addDoorsEnabled) {
-    addDoors(grid);
+  // Apply seeded random if provided
+  const originalRandom = Math.random;
+  if (seed !== undefined) {
+    Math.random = createSeededRandom(seed);
   }
 
-  if (addFeaturesEnabled) {
-    return placeFeatures(grid, featureOptions);
-  }
+  try {
+    const grid = createGrid(size, size, TileType.WALL);
+    const root = new BSPNode(1, 1, size - 2, size - 2);
 
-  return grid;
+    buildTree(root, minPartitionSize, maxDepth);
+    createRooms(root, minRoomSize, padding, roomShapeOptions);
+    drawAllRooms(grid, root, roomShapeOptions?.modifiers);
+    connectRooms(grid, root);
+
+    if (addDoorsEnabled) {
+      addDoors(grid);
+    }
+
+    if (addFeaturesEnabled) {
+      return placeFeatures(grid, featureOptions);
+    }
+
+    return grid;
+  } finally {
+    if (seed !== undefined) {
+      Math.random = originalRandom;
+    }
+  }
 }

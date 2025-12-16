@@ -1,6 +1,11 @@
 import type { Grid, Point } from "../types";
 import { TileType } from "../types";
-import { createGrid, placeFeatures, type FeaturePlacementOptions } from "../utils";
+import {
+  createGrid,
+  placeFeatures,
+  withSeededRandom,
+  type FeaturePlacementOptions,
+} from "../utils";
 import { generateBSP } from "./bsp";
 import { generateCave } from "./cave";
 
@@ -8,6 +13,8 @@ export type SplitDirection = "horizontal" | "vertical" | "diagonal" | "radial";
 export type BlendMode = "hard" | "soft" | "scattered";
 
 export interface HybridOptions {
+  /** Random seed for reproducible generation */
+  seed?: number;
   /** Direction to split the map (default: "diagonal") */
   splitDirection?: SplitDirection;
   /** Position of split 0-1 (default: 0.5) */
@@ -177,6 +184,7 @@ function connectRegions(
  */
 export function generateHybrid(size: number, options: HybridOptions = {}): Grid {
   const {
+    seed,
     splitDirection = "diagonal",
     splitPosition = 0.5,
     blendMode = "soft",
@@ -188,44 +196,46 @@ export function generateHybrid(size: number, options: HybridOptions = {}): Grid 
     featureOptions = {},
   } = options;
 
-  // Generate both base grids
-  const bspGrid = generateBSP(size, {
-    ...bspOptions,
-    addDoors: bspOptions.addDoors ?? true,
-    addFeatures: false,
-  });
+  return withSeededRandom(seed, () => {
+    // Generate both base grids
+    const bspGrid = generateBSP(size, {
+      ...bspOptions,
+      addDoors: bspOptions.addDoors ?? true,
+      addFeatures: false,
+    });
 
-  const caveGrid = generateCave(size, {
-    ...caveOptions,
-    addFeatures: false,
-  });
+    const caveGrid = generateCave(size, {
+      ...caveOptions,
+      addFeatures: false,
+    });
 
-  // Combine grids based on split
-  const grid = createGrid(size, size, TileType.WALL);
+    // Combine grids based on split
+    const grid = createGrid(size, size, TileType.WALL);
 
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const splitValue = getSplitValue(x, y, size, splitDirection);
-      const blendFactor = getBlendFactor(splitValue, splitPosition, blendWidth, size, blendMode);
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const splitValue = getSplitValue(x, y, size, splitDirection);
+        const blendFactor = getBlendFactor(splitValue, splitPosition, blendWidth, size, blendMode);
 
-      if (blendFactor < 0.5) {
-        // Use BSP tile
-        grid[y][x] = bspGrid[y][x];
-      } else {
-        // Use Cave tile
-        grid[y][x] = caveGrid[y][x];
+        if (blendFactor < 0.5) {
+          // Use BSP tile
+          grid[y][x] = bspGrid[y][x];
+        } else {
+          // Use Cave tile
+          grid[y][x] = caveGrid[y][x];
+        }
       }
     }
-  }
 
-  // Connect the two regions
-  if (shouldConnect) {
-    connectRegions(grid, splitDirection, splitPosition, size);
-  }
+    // Connect the two regions
+    if (shouldConnect) {
+      connectRegions(grid, splitDirection, splitPosition, size);
+    }
 
-  if (addFeaturesEnabled) {
-    return placeFeatures(grid, featureOptions);
-  }
+    if (addFeaturesEnabled) {
+      return placeFeatures(grid, featureOptions);
+    }
 
-  return grid;
+    return grid;
+  });
 }

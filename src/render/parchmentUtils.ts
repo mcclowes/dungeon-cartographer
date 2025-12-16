@@ -1,5 +1,6 @@
 import type { Grid } from "../types";
 import { TileType } from "../types";
+import { createSeededRandom } from "../utils/random";
 
 export interface ParchmentColors {
   /** Parchment/floor color */
@@ -73,11 +74,6 @@ export function findEdges(grid: Grid, x: number, y: number): Edges {
 
 /**
  * Simple seeded random for consistent hatching per tile
+ * @deprecated Use createSeededRandom from utils/random instead
  */
-export function seededRandom(seed: number): () => number {
-  let s = seed;
-  return () => {
-    s = (s * 9301 + 49297) % 233280;
-    return s / 233280;
-  };
-}
+export const seededRandom = createSeededRandom;

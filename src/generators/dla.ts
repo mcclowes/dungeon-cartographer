@@ -6,10 +6,13 @@ import {
   randomItem,
   placeFeatures,
   validateGridSize,
+  withSeededRandom,
   type FeaturePlacementOptions,
 } from "../utils";
 
 export interface DLAOptions {
+  /** Random seed for reproducible generation */
+  seed?: number;
   /** Target percentage of floor tiles (default: 0.35) */
   fillPercentage?: number;
   /** Number of seed points to start from (default: 1) */
@@ -90,6 +93,7 @@ export function generateDLA(size: number, options: DLAOptions = {}): Grid {
   validateGridSize(size, "generateDLA");
 
   const {
+    seed,
     fillPercentage = 0.35,
     numSeeds = 1,
     stickiness = 0.8,
@@ -98,66 +102,68 @@ export function generateDLA(size: number, options: DLAOptions = {}): Grid {
     featureOptions = {},
   } = options;
 
-  const grid = createGrid(size, size, TileType.WALL);
-  const totalTiles = (size - 2) * (size - 2);
-  const targetFloors = Math.floor(totalTiles * fillPercentage);
-  let currentFloors = 0;
+  return withSeededRandom(seed, () => {
+    const grid = createGrid(size, size, TileType.WALL);
+    const totalTiles = (size - 2) * (size - 2);
+    const targetFloors = Math.floor(totalTiles * fillPercentage);
+    let currentFloors = 0;
 
-  // Place initial seeds
-  const seedSpacing = Math.floor(size / (numSeeds + 1));
-  for (let i = 0; i < numSeeds; i++) {
-    const seedX = numSeeds === 1 ? Math.floor(size / 2) : seedSpacing * (i + 1);
-    const seedY = Math.floor(size / 2);
+    // Place initial seeds
+    const seedSpacing = Math.floor(size / (numSeeds + 1));
+    for (let i = 0; i < numSeeds; i++) {
+      const seedX = numSeeds === 1 ? Math.floor(size / 2) : seedSpacing * (i + 1);
+      const seedY = Math.floor(size / 2);
 
-    if (isInBoundsInner(seedX, seedY, size, size)) {
-      grid[seedY][seedX] = TileType.FLOOR;
-      currentFloors++;
+      if (isInBoundsInner(seedX, seedY, size, size)) {
+        grid[seedY][seedX] = TileType.FLOOR;
+        currentFloors++;
+      }
     }
-  }
 
-  const maxIterations = targetFloors * 1000; // Safety limit
-  let iterations = 0;
+    const maxIterations = targetFloors * 1000; // Safety limit
+    let iterations = 0;
 
-  while (currentFloors < targetFloors && iterations < maxIterations) {
-    // Spawn a new particle
-    let particle = spawnMode === "edge" ? getEdgeSpawnPoint(size) : getRandomSpawnPoint(size);
+    while (currentFloors < targetFloors && iterations < maxIterations) {
+      // Spawn a new particle
+      let particle = spawnMode === "edge" ? getEdgeSpawnPoint(size) : getRandomSpawnPoint(size);
 
-    // Walk until it sticks or escapes
-    let stuck = false;
-    let walkSteps = 0;
-    const maxWalkSteps = size * size;
+      // Walk until it sticks or escapes
+      let stuck = false;
+      let walkSteps = 0;
+      const maxWalkSteps = size * size;
 
-    while (!stuck && walkSteps < maxWalkSteps) {
-      walkSteps++;
+      while (!stuck && walkSteps < maxWalkSteps) {
+        walkSteps++;
 
-      // Check if adjacent to existing structure
-      if (hasFloorNeighbor(grid, particle.x, particle.y)) {
-        // Chance to stick
-        if (Math.random() < stickiness) {
-          if (grid[particle.y][particle.x] === TileType.WALL) {
-            grid[particle.y][particle.x] = TileType.FLOOR;
-            currentFloors++;
-            stuck = true;
+        // Check if adjacent to existing structure
+        if (hasFloorNeighbor(grid, particle.x, particle.y)) {
+          // Chance to stick
+          if (Math.random() < stickiness) {
+            if (grid[particle.y][particle.x] === TileType.WALL) {
+              grid[particle.y][particle.x] = TileType.FLOOR;
+              currentFloors++;
+              stuck = true;
+            }
+          }
+        }
+
+        if (!stuck) {
+          particle = randomWalk(particle, size);
+
+          // If particle is on a floor tile, push it away
+          if (grid[particle.y][particle.x] === TileType.FLOOR) {
+            particle = randomWalk(particle, size);
           }
         }
       }
 
-      if (!stuck) {
-        particle = randomWalk(particle, size);
-
-        // If particle is on a floor tile, push it away
-        if (grid[particle.y][particle.x] === TileType.FLOOR) {
-          particle = randomWalk(particle, size);
-        }
-      }
+      iterations++;
     }
 
-    iterations++;
-  }
+    if (addFeaturesEnabled) {
+      return placeFeatures(grid, featureOptions);
+    }
 
-  if (addFeaturesEnabled) {
-    return placeFeatures(grid, featureOptions);
-  }
-
-  return grid;
+    return grid;
+  });
 }

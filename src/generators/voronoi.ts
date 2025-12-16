@@ -5,10 +5,13 @@ import {
   randomInt,
   placeFeatures,
   validateGridSize,
+  withSeededRandom,
   type FeaturePlacementOptions,
 } from "../utils";
 
 export interface VoronoiOptions {
+  /** Random seed for reproducible generation */
+  seed?: number;
   /** Number of room seeds to place (default: based on size) */
   numRooms?: number;
   /** Minimum distance between room centers (default: 4) */
@@ -248,6 +251,7 @@ export function generateVoronoi(size: number, options: VoronoiOptions = {}): Gri
   validateGridSize(size, "generateVoronoi");
 
   const {
+    seed,
     numRooms = Math.floor(size / 6),
     minRoomDistance = 4,
     relaxation = 2,
@@ -256,42 +260,44 @@ export function generateVoronoi(size: number, options: VoronoiOptions = {}): Gri
     featureOptions = {},
   } = options;
 
-  const grid = createGrid(size, size, TileType.WALL);
+  return withSeededRandom(seed, () => {
+    const grid = createGrid(size, size, TileType.WALL);
 
-  // Generate room seeds
-  const seeds = generateSeeds(size, numRooms, minRoomDistance);
+    // Generate room seeds
+    const seeds = generateSeeds(size, numRooms, minRoomDistance);
 
-  if (seeds.length < 2) {
-    console.warn(
-      "generateVoronoi: Grid too small for requested number of rooms, returning empty dungeon"
-    );
-    return grid;
-  }
-
-  // Create Voronoi cells
-  let cells = assignCells(size, seeds);
-
-  // Relax/shrink cells to create walls
-  cells = relaxCells(cells, relaxation);
-
-  // Draw rooms
-  for (const cell of cells) {
-    for (const tile of cell.tiles) {
-      grid[tile.y][tile.x] = TileType.FLOOR;
+    if (seeds.length < 2) {
+      console.warn(
+        "generateVoronoi: Grid too small for requested number of rooms, returning empty dungeon"
+      );
+      return grid;
     }
-  }
 
-  // Find neighboring cells and connect them
-  const neighborPairs = findNeighboringCells(cells);
-  connectCells(grid, cells, neighborPairs);
+    // Create Voronoi cells
+    let cells = assignCells(size, seeds);
 
-  if (addDoorsEnabled) {
-    addDoors(grid);
-  }
+    // Relax/shrink cells to create walls
+    cells = relaxCells(cells, relaxation);
 
-  if (addFeaturesEnabled) {
-    return placeFeatures(grid, featureOptions);
-  }
+    // Draw rooms
+    for (const cell of cells) {
+      for (const tile of cell.tiles) {
+        grid[tile.y][tile.x] = TileType.FLOOR;
+      }
+    }
 
-  return grid;
+    // Find neighboring cells and connect them
+    const neighborPairs = findNeighboringCells(cells);
+    connectCells(grid, cells, neighborPairs);
+
+    if (addDoorsEnabled) {
+      addDoors(grid);
+    }
+
+    if (addFeaturesEnabled) {
+      return placeFeatures(grid, featureOptions);
+    }
+
+    return grid;
+  });
 }

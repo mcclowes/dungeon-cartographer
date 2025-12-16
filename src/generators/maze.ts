@@ -1,10 +1,12 @@
 import type { Grid } from "../types";
 import { MazeTile } from "../types";
-import { createGrid, isInBounds, shuffle } from "../utils";
+import { createGrid, isInBounds, shuffle, withSeededRandom } from "../utils";
 
 export type MazeAlgorithm = "backtracking" | "prims" | "division";
 
 export interface MazeOptions {
+  /** Random seed for reproducible generation */
+  seed?: number;
   /** Algorithm to use (default: "backtracking") */
   algorithm?: MazeAlgorithm;
   /** Add start/end markers (default: true) */
@@ -218,60 +220,63 @@ function addLoops(grid: Grid, loopChance: number): void {
  */
 export function generateMaze(size: number, options: MazeOptions = {}): Grid {
   const {
+    seed,
     algorithm = "backtracking",
     addStartEnd: addMarkers = true,
     loopChance = 0,
     openness = 0,
   } = options;
 
-  // Ensure odd dimensions for proper maze algorithms
-  const mazeSize = size % 2 === 0 ? size - 1 : size;
-  let grid: Grid;
+  return withSeededRandom(seed, () => {
+    // Ensure odd dimensions for proper maze algorithms
+    const mazeSize = size % 2 === 0 ? size - 1 : size;
+    let grid: Grid;
 
-  if (algorithm === "division") {
-    // Start with open space for recursive division
-    grid = Array(mazeSize)
-      .fill(0)
-      .map((_, y) =>
-        Array(mazeSize)
-          .fill(0)
-          .map((_, x) => {
-            if (x === 0 || y === 0 || x === mazeSize - 1 || y === mazeSize - 1) {
-              return MazeTile.WALL;
-            }
-            return MazeTile.PASSAGE;
-          })
-      );
+    if (algorithm === "division") {
+      // Start with open space for recursive division
+      grid = Array(mazeSize)
+        .fill(0)
+        .map((_, y) =>
+          Array(mazeSize)
+            .fill(0)
+            .map((_, x) => {
+              if (x === 0 || y === 0 || x === mazeSize - 1 || y === mazeSize - 1) {
+                return MazeTile.WALL;
+              }
+              return MazeTile.PASSAGE;
+            })
+        );
 
-    const orientation = mazeSize > mazeSize ? "vertical" : "horizontal";
-    recursiveDivision(grid, 1, 1, mazeSize - 2, mazeSize - 2, orientation);
-  } else {
-    grid = createGrid(mazeSize, mazeSize, MazeTile.WALL);
-
-    if (algorithm === "prims") {
-      primsAlgorithm(grid, 1, 1);
+      const orientation = mazeSize > mazeSize ? "vertical" : "horizontal";
+      recursiveDivision(grid, 1, 1, mazeSize - 2, mazeSize - 2, orientation);
     } else {
-      recursiveBacktracking(grid, 1, 1);
+      grid = createGrid(mazeSize, mazeSize, MazeTile.WALL);
+
+      if (algorithm === "prims") {
+        primsAlgorithm(grid, 1, 1);
+      } else {
+        recursiveBacktracking(grid, 1, 1);
+      }
     }
-  }
 
-  if (loopChance > 0) {
-    addLoops(grid, loopChance);
-  }
+    if (loopChance > 0) {
+      addLoops(grid, loopChance);
+    }
 
-  if (openness > 0) {
-    for (let y = 1; y < mazeSize - 1; y++) {
-      for (let x = 1; x < mazeSize - 1; x++) {
-        if (grid[y][x] === MazeTile.WALL && Math.random() < openness) {
-          grid[y][x] = MazeTile.PASSAGE;
+    if (openness > 0) {
+      for (let y = 1; y < mazeSize - 1; y++) {
+        for (let x = 1; x < mazeSize - 1; x++) {
+          if (grid[y][x] === MazeTile.WALL && Math.random() < openness) {
+            grid[y][x] = MazeTile.PASSAGE;
+          }
         }
       }
     }
-  }
 
-  if (addMarkers) {
-    addStartEnd(grid);
-  }
+    if (addMarkers) {
+      addStartEnd(grid);
+    }
 
-  return grid;
+    return grid;
+  });
 }

@@ -1,10 +1,12 @@
 import type { Grid, Point } from "../types";
 import { TileType, CARDINAL_DIRECTIONS } from "../types";
-import { createGrid, countTiles, isInBoundsInner, randomItem } from "../utils";
+import { createGrid, countTiles, isInBoundsInner, randomItem, withSeededRandom } from "../utils";
 
 export type DrunkardWalkVariant = "simple" | "weighted" | "multiple";
 
 export interface DrunkardWalkOptions {
+  /** Random seed for reproducible generation */
+  seed?: number;
   /** Target percentage of floor tiles (default: 0.45) */
   fillPercentage?: number;
   /** Algorithm variant (default: "weighted") */
@@ -164,25 +166,27 @@ function walkMultiple(
  * - "multiple": Multiple simultaneous walkers
  */
 export function generateDrunkardWalk(size: number, options: DrunkardWalkOptions = {}): Grid {
-  const { fillPercentage = 0.45, variant = "weighted", numWalkers = 4 } = options;
+  const { seed, fillPercentage = 0.45, variant = "weighted", numWalkers = 4 } = options;
 
-  const grid = createGrid(size, size, TileType.WALL);
-  const targetFloors = Math.floor(size * size * fillPercentage);
-  const startX = Math.floor(size / 2);
-  const startY = Math.floor(size / 2);
+  return withSeededRandom(seed, () => {
+    const grid = createGrid(size, size, TileType.WALL);
+    const targetFloors = Math.floor(size * size * fillPercentage);
+    const startX = Math.floor(size / 2);
+    const startY = Math.floor(size / 2);
 
-  switch (variant) {
-    case "simple":
-      walkSimple(grid, startX, startY, targetFloors, size, size);
-      break;
-    case "multiple":
-      walkMultiple(grid, numWalkers, targetFloors, size, size);
-      break;
-    case "weighted":
-    default:
-      walkWeighted(grid, startX, startY, targetFloors, size, size);
-      break;
-  }
+    switch (variant) {
+      case "simple":
+        walkSimple(grid, startX, startY, targetFloors, size, size);
+        break;
+      case "multiple":
+        walkMultiple(grid, numWalkers, targetFloors, size, size);
+        break;
+      case "weighted":
+      default:
+        walkWeighted(grid, startX, startY, targetFloors, size, size);
+        break;
+    }
 
-  return grid;
+    return grid;
+  });
 }

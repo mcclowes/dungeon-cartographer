@@ -46,3 +46,21 @@ export function weightedRandom<T>(items: T[], weights: number[]): T {
 
   return items[items.length - 1];
 }
+
+/**
+ * Execute a function with seeded random, restoring Math.random after
+ */
+export function withSeededRandom<T>(seed: number | undefined, fn: () => T): T {
+  if (seed === undefined) {
+    return fn();
+  }
+
+  const originalRandom = Math.random;
+  Math.random = createSeededRandom(seed);
+
+  try {
+    return fn();
+  } finally {
+    Math.random = originalRandom;
+  }
+}

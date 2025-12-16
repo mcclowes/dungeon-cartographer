@@ -6,10 +6,13 @@ import {
   placeFeatures,
   validateGridSize,
   shuffle,
+  withSeededRandom,
   type FeaturePlacementOptions,
 } from "../utils";
 
 export interface AgentOptions {
+  /** Random seed for reproducible generation */
+  seed?: number;
   /** Number of digger agents (default: based on size) */
   numAgents?: number;
   /** Steps each agent takes (default: based on size) */
@@ -144,6 +147,7 @@ export function generateAgent(size: number, options: AgentOptions = {}): Grid {
   validateGridSize(size, "generateAgent");
 
   const {
+    seed,
     numAgents = Math.max(2, Math.floor(size / 15)),
     stepsPerAgent = size * 4,
     roomChance = 0.3,
@@ -155,63 +159,65 @@ export function generateAgent(size: number, options: AgentOptions = {}): Grid {
     featureOptions = {},
   } = options;
 
-  const grid = createGrid(size, size, TileType.WALL);
+  return withSeededRandom(seed, () => {
+    const grid = createGrid(size, size, TileType.WALL);
 
-  // Create agents at random starting positions
-  const agents: Agent[] = [];
-  for (let i = 0; i < numAgents; i++) {
-    const startPos: Point = {
-      x: randomInt(size - 4, 2),
-      y: randomInt(size - 4, 2),
-    };
-    const startDir = CARDINAL_DIRECTIONS[randomInt(3, 0)];
-    agents.push({
-      position: startPos,
-      direction: startDir,
-      stepsTaken: 0,
-    });
+    // Create agents at random starting positions
+    const agents: Agent[] = [];
+    for (let i = 0; i < numAgents; i++) {
+      const startPos: Point = {
+        x: randomInt(size - 4, 2),
+        y: randomInt(size - 4, 2),
+      };
+      const startDir = CARDINAL_DIRECTIONS[randomInt(3, 0)];
+      agents.push({
+        position: startPos,
+        direction: startDir,
+        stepsTaken: 0,
+      });
 
-    // Carve starting room
-    const roomW = randomInt(maxRoomSize, minRoomSize);
-    const roomH = randomInt(maxRoomSize, minRoomSize);
-    carveRoom(grid, startPos, roomW, roomH, size);
-  }
-
-  // Run agents
-  let totalSteps = 0;
-  const maxSteps = numAgents * stepsPerAgent;
-
-  while (totalSteps < maxSteps) {
-    for (const agent of agents) {
-      if (agent.stepsTaken >= stepsPerAgent) continue;
-
-      // Move agent
-      if (moveAgent(agent, size, turnChance)) {
-        // Carve corridor
-        grid[agent.position.y][agent.position.x] = TileType.FLOOR;
-
-        // Possibly create a room
-        if (Math.random() < roomChance) {
-          const roomW = randomInt(maxRoomSize, minRoomSize);
-          const roomH = randomInt(maxRoomSize, minRoomSize);
-          carveRoom(grid, agent.position, roomW, roomH, size);
-        }
-      }
-
-      totalSteps++;
+      // Carve starting room
+      const roomW = randomInt(maxRoomSize, minRoomSize);
+      const roomH = randomInt(maxRoomSize, minRoomSize);
+      carveRoom(grid, startPos, roomW, roomH, size);
     }
 
-    // Check if all agents are done
-    if (agents.every((a) => a.stepsTaken >= stepsPerAgent)) break;
-  }
+    // Run agents
+    let totalSteps = 0;
+    const maxSteps = numAgents * stepsPerAgent;
 
-  if (addDoorsEnabled) {
-    addDoors(grid);
-  }
+    while (totalSteps < maxSteps) {
+      for (const agent of agents) {
+        if (agent.stepsTaken >= stepsPerAgent) continue;
 
-  if (addFeaturesEnabled) {
-    return placeFeatures(grid, featureOptions);
-  }
+        // Move agent
+        if (moveAgent(agent, size, turnChance)) {
+          // Carve corridor
+          grid[agent.position.y][agent.position.x] = TileType.FLOOR;
 
-  return grid;
+          // Possibly create a room
+          if (Math.random() < roomChance) {
+            const roomW = randomInt(maxRoomSize, minRoomSize);
+            const roomH = randomInt(maxRoomSize, minRoomSize);
+            carveRoom(grid, agent.position, roomW, roomH, size);
+          }
+        }
+
+        totalSteps++;
+      }
+
+      // Check if all agents are done
+      if (agents.every((a) => a.stepsTaken >= stepsPerAgent)) break;
+    }
+
+    if (addDoorsEnabled) {
+      addDoors(grid);
+    }
+
+    if (addFeaturesEnabled) {
+      return placeFeatures(grid, featureOptions);
+    }
+
+    return grid;
+  });
 }
