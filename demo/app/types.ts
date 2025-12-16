@@ -36,6 +36,17 @@ export interface GeneratorParams {
   addDoors?: boolean;
   addFeatures?: boolean;
 
+  // Room Shapes (BSP)
+  useRectangle?: boolean;
+  useComposite?: boolean;
+  useTemplate?: boolean;
+  useCellular?: boolean;
+  usePolygon?: boolean;
+  useNibbleCorners?: boolean;
+  useAddAlcoves?: boolean;
+  useRoundCorners?: boolean;
+  useAddPillars?: boolean;
+
   // Debris features
   rubbleChance?: number;
   collapsedChance?: number;
@@ -124,6 +135,17 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     rubbleChance: 0,
     collapsedChance: 0,
     fallenColumnChance: 0,
+    // Room shapes - default to rectangle only
+    useRectangle: true,
+    useComposite: false,
+    useTemplate: false,
+    useCellular: false,
+    usePolygon: false,
+    // Modifiers
+    useNibbleCorners: false,
+    useAddAlcoves: false,
+    useRoundCorners: false,
+    useAddPillars: false,
   },
   cave: {
     iterations: 3,

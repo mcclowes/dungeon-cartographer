@@ -21,6 +21,19 @@ const PARAM_CONFIGS: Record<string, ParamConfig> = {
   addDoors: { label: "Add Doors", type: "boolean" },
   addFeatures: { label: "Add Features (stairs, treasure, traps)", type: "boolean" },
 
+  // Room Shapes
+  useRectangle: { label: "Rectangle", type: "boolean" },
+  useComposite: { label: "Composite (L, T, +)", type: "boolean" },
+  useTemplate: { label: "Templates", type: "boolean" },
+  useCellular: { label: "Cellular (organic)", type: "boolean" },
+  usePolygon: { label: "Polygon (hex, oct)", type: "boolean" },
+
+  // Shape Modifiers
+  useNibbleCorners: { label: "Nibble Corners", type: "boolean" },
+  useAddAlcoves: { label: "Add Alcoves", type: "boolean" },
+  useRoundCorners: { label: "Round Corners", type: "boolean" },
+  useAddPillars: { label: "Add Pillars", type: "boolean" },
+
   // Debris features
   rubbleChance: { label: "Rubble Chance", type: "range", min: 0, max: 0.5, step: 0.05 },
   collapsedChance: { label: "Cave-in Chance", type: "range", min: 0, max: 0.3, step: 0.05 },
@@ -100,7 +113,8 @@ const PARAM_CONFIGS: Record<string, ParamConfig> = {
 };
 
 const GENERATOR_PARAMS: Record<GeneratorType, string[]> = {
-  bsp: ["minPartitionSize", "maxDepth", "minRoomSize", "padding", "addDoors", "addFeatures", "addFurniture", "furnitureDensity", "rubbleChance", "collapsedChance", "fallenColumnChance"],
+  bsp: ["minPartitionSize", "maxDepth", "minRoomSize", "padding", "addDoors", "useRectangle", "useComposite", "useTemplate", "useCellular", "usePolygon",
+    "useNibbleCorners", "useAddAlcoves", "useRoundCorners", "useAddPillars", "addFeatures", "addFurniture", "furnitureDensity", "rubbleChance", "collapsedChance", "fallenColumnChance"],
   cave: ["iterations", "initialFillProbability", "addFeatures", "addFurniture", "furnitureDensity", "rubbleChance", "collapsedChance", "fallenColumnChance"],
   dla: ["fillPercentage", "stickiness", "spawnMode", "addFeatures", "addFurniture", "furnitureDensity", "rubbleChance", "collapsedChance", "fallenColumnChance"],
   wfc: ["seedRadius"],
