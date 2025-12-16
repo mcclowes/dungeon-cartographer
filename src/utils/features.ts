@@ -60,18 +60,10 @@ export function findInteriorFloors(grid: Grid): Point[] {
       if (grid[y][x] !== TileType.FLOOR) continue;
 
       // Check all 4 neighbors are also floor-like
-      const neighbors = [
-        grid[y - 1][x],
-        grid[y + 1][x],
-        grid[y][x - 1],
-        grid[y][x + 1],
-      ];
+      const neighbors = [grid[y - 1][x], grid[y + 1][x], grid[y][x - 1], grid[y][x + 1]];
 
       const allFloorLike = neighbors.every(
-        (n) =>
-          n === TileType.FLOOR ||
-          n === TileType.CORRIDOR ||
-          n === TileType.DOOR
+        (n) => n === TileType.FLOOR || n === TileType.CORRIDOR || n === TileType.DOOR
       );
 
       if (allFloorLike) {
@@ -97,12 +89,7 @@ export function findCornerTiles(grid: Grid): Point[] {
       const right = grid[y][x + 1] === TileType.WALL;
 
       // Check for L-shaped wall patterns
-      if (
-        (top && left) ||
-        (top && right) ||
-        (bottom && left) ||
-        (bottom && right)
-      ) {
+      if ((top && left) || (top && right) || (bottom && left) || (bottom && right)) {
         corners.push({ x, y });
       }
     }
@@ -213,7 +200,15 @@ function hasMinDistance(point: Point, placed: Point[], minDistance: number): boo
 /**
  * Feature types for tracking placed features
  */
-type FeatureCategory = "stairs" | "treasure" | "trap" | "water" | "furniture" | "rubble" | "collapsed" | "fallenColumn";
+type FeatureCategory =
+  | "stairs"
+  | "treasure"
+  | "trap"
+  | "water"
+  | "furniture"
+  | "rubble"
+  | "collapsed"
+  | "fallenColumn";
 
 /**
  * Place dungeon features (stairs, treasures, traps, water) on a grid
@@ -221,10 +216,7 @@ type FeatureCategory = "stairs" | "treasure" | "trap" | "water" | "furniture" | 
  *
  * Note: This function creates a copy of the grid and does not mutate the original.
  */
-export function placeFeatures(
-  inputGrid: Grid,
-  options: FeaturePlacementOptions = {}
-): Grid {
+export function placeFeatures(inputGrid: Grid, options: FeaturePlacementOptions = {}): Grid {
   const {
     stairsChance = 0.3,
     treasureChance = 0.2,
@@ -354,8 +346,12 @@ export function placeFeatures(
     }
 
     if (waterCenter) {
-      const waterType = Math.random() < 0.7 ? TileType.WATER :
-                        Math.random() < 0.5 ? TileType.DEEP_WATER : TileType.LAVA;
+      const waterType =
+        Math.random() < 0.7
+          ? TileType.WATER
+          : Math.random() < 0.5
+            ? TileType.DEEP_WATER
+            : TileType.LAVA;
 
       grid[waterCenter.y][waterCenter.x] = waterType;
       placedByCategory.water.push(waterCenter);
@@ -412,7 +408,7 @@ export function placeFeatures(
       grid[loc.y + 1]?.[loc.x],
       grid[loc.y]?.[loc.x - 1],
       grid[loc.y]?.[loc.x + 1],
-    ].some(t => t === TileType.WALL);
+    ].some((t) => t === TileType.WALL);
     if (hasAdjacentWall) {
       wallAdjacentFloors.push(loc);
     }
@@ -482,25 +478,13 @@ export interface FurniturePlacementOptions {
 }
 
 /** Furniture types that go against walls */
-const WALL_FURNITURE = [
-  TileType.BOOKSHELF,
-  TileType.FIREPLACE,
-  TileType.BED,
-];
+const WALL_FURNITURE = [TileType.BOOKSHELF, TileType.FIREPLACE, TileType.BED];
 
 /** Furniture types that go in corners */
-const CORNER_FURNITURE = [
-  TileType.BARREL,
-  TileType.CRATE,
-  TileType.STATUE,
-];
+const CORNER_FURNITURE = [TileType.BARREL, TileType.CRATE, TileType.STATUE];
 
 /** Furniture types that go in center/open areas */
-const CENTER_FURNITURE = [
-  TileType.TABLE,
-  TileType.ALTAR,
-  TileType.CARPET,
-];
+const CENTER_FURNITURE = [TileType.TABLE, TileType.ALTAR, TileType.CARPET];
 
 /** All furniture types */
 const ALL_FURNITURE = [
@@ -571,10 +555,7 @@ export function findOpenFloors(grid: Grid): Point[] {
  *
  * Note: This function creates a copy of the grid and does not mutate the original.
  */
-export function placeFurniture(
-  inputGrid: Grid,
-  options: FurniturePlacementOptions = {}
-): Grid {
+export function placeFurniture(inputGrid: Grid, options: FurniturePlacementOptions = {}): Grid {
   const {
     furnitureChance = 0.4,
     furnitureDensity = 0.15,
@@ -598,9 +579,9 @@ export function placeFurniture(
   let furnitureCount = 0;
 
   // Filter allowed types by category
-  const allowedCorner = CORNER_FURNITURE.filter(t => allowedTypes.includes(t));
-  const allowedWall = WALL_FURNITURE.filter(t => allowedTypes.includes(t));
-  const allowedCenter = CENTER_FURNITURE.filter(t => allowedTypes.includes(t));
+  const allowedCorner = CORNER_FURNITURE.filter((t) => allowedTypes.includes(t));
+  const allowedWall = WALL_FURNITURE.filter((t) => allowedTypes.includes(t));
+  const allowedCenter = CENTER_FURNITURE.filter((t) => allowedTypes.includes(t));
   const allowedChair = allowedTypes.includes(TileType.CHAIR);
 
   // Place corner furniture (crates, barrels, statues)
@@ -717,9 +698,7 @@ export function placeFurniture(
   }
 
   // Fill remaining spaces with random small furniture
-  const smallFurniture = [TileType.CRATE, TileType.BARREL].filter(t =>
-    allowedTypes.includes(t)
-  );
+  const smallFurniture = [TileType.CRATE, TileType.BARREL].filter((t) => allowedTypes.includes(t));
   if (smallFurniture.length > 0) {
     for (const loc of interiors) {
       if (furnitureCount >= maxFurniture) break;

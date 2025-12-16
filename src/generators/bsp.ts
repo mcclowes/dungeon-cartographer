@@ -1,6 +1,12 @@
 import type { Grid, Rect, Point } from "../types";
 import { TileType } from "../types";
-import { createGrid, randomInt, placeFeatures, validateGridSize, type FeaturePlacementOptions } from "../utils";
+import {
+  createGrid,
+  randomInt,
+  placeFeatures,
+  validateGridSize,
+  type FeaturePlacementOptions,
+} from "../utils";
 import type { RoomShape, RoomShapeOptions, ShapeModifier } from "../shapes";
 import {
   generateRoomShape,
@@ -108,31 +114,16 @@ function splitNode(node: BSPNode, minSize: number): boolean {
 
   if (splitHorizontally) {
     node.left = new BSPNode(node.x, node.y, node.width, split);
-    node.right = new BSPNode(
-      node.x,
-      node.y + split,
-      node.width,
-      node.height - split
-    );
+    node.right = new BSPNode(node.x, node.y + split, node.width, node.height - split);
   } else {
     node.left = new BSPNode(node.x, node.y, split, node.height);
-    node.right = new BSPNode(
-      node.x + split,
-      node.y,
-      node.width - split,
-      node.height
-    );
+    node.right = new BSPNode(node.x + split, node.y, node.width - split, node.height);
   }
 
   return true;
 }
 
-function buildTree(
-  node: BSPNode,
-  minSize: number,
-  maxDepth: number,
-  currentDepth = 0
-): void {
+function buildTree(node: BSPNode, minSize: number, maxDepth: number, currentDepth = 0): void {
   if (currentDepth >= maxDepth) return;
 
   if (splitNode(node, minSize)) {
@@ -162,10 +153,8 @@ function createRooms(
     Math.min(minRoomSize, node.height - padding * 2)
   );
 
-  const roomX =
-    node.x + randomInt(node.width - roomWidth - padding, padding);
-  const roomY =
-    node.y + randomInt(node.height - roomHeight - padding, padding);
+  const roomX = node.x + randomInt(node.width - roomWidth - padding, padding);
+  const roomY = node.y + randomInt(node.height - roomHeight - padding, padding);
 
   const bounds: Rect = { x: roomX, y: roomY, width: roomWidth, height: roomHeight };
   node.room = bounds;
@@ -189,12 +178,7 @@ function drawRoom(grid: Grid, room: Rect): void {
   }
 }
 
-function drawHorizontalCorridor(
-  grid: Grid,
-  x1: number,
-  x2: number,
-  y: number
-): void {
+function drawHorizontalCorridor(grid: Grid, x1: number, x2: number, y: number): void {
   const startX = Math.min(x1, x2);
   const endX = Math.max(x1, x2);
 
@@ -207,12 +191,7 @@ function drawHorizontalCorridor(
   }
 }
 
-function drawVerticalCorridor(
-  grid: Grid,
-  y1: number,
-  y2: number,
-  x: number
-): void {
+function drawVerticalCorridor(grid: Grid, y1: number, y2: number, x: number): void {
   const startY = Math.min(y1, y2);
   const endY = Math.max(y1, y2);
 
@@ -225,13 +204,7 @@ function drawVerticalCorridor(
   }
 }
 
-function drawCorridor(
-  grid: Grid,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number
-): void {
+function drawCorridor(grid: Grid, x1: number, y1: number, x2: number, y2: number): void {
   const horizontal = Math.random() > 0.5;
 
   if (horizontal) {
@@ -253,15 +226,15 @@ function findConnectionPoint(shape: RoomShape, target: Point): Point {
   }
 
   // Find edge tiles (tiles with at least one wall neighbor)
-  const tileSet = new Set(tiles.map(t => `${t.x},${t.y}`));
-  const edgeTiles = tiles.filter(tile => {
+  const tileSet = new Set(tiles.map((t) => `${t.x},${t.y}`));
+  const edgeTiles = tiles.filter((tile) => {
     const neighbors = [
       { x: tile.x - 1, y: tile.y },
       { x: tile.x + 1, y: tile.y },
       { x: tile.x, y: tile.y - 1 },
       { x: tile.x, y: tile.y + 1 },
     ];
-    return neighbors.some(n => !tileSet.has(`${n.x},${n.y}`));
+    return neighbors.some((n) => !tileSet.has(`${n.x},${n.y}`));
   });
 
   if (edgeTiles.length === 0) {
@@ -300,13 +273,7 @@ function connectRooms(grid: Grid, node: BSPNode): void {
     const leftConnect = findConnectionPoint(leftShape, rightCenter);
     const rightConnect = findConnectionPoint(rightShape, leftCenter);
 
-    drawCorridor(
-      grid,
-      leftConnect.x,
-      leftConnect.y,
-      rightConnect.x,
-      rightConnect.y
-    );
+    drawCorridor(grid, leftConnect.x, leftConnect.y, rightConnect.x, rightConnect.y);
   } else {
     // Fallback to old Rect-based connection
     const leftRoom = node.left.getRoom();
@@ -322,22 +289,12 @@ function connectRooms(grid: Grid, node: BSPNode): void {
         y: rightRoom.y + Math.floor(rightRoom.height / 2),
       };
 
-      drawCorridor(
-        grid,
-        leftCenter.x,
-        leftCenter.y,
-        rightCenter.x,
-        rightCenter.y
-      );
+      drawCorridor(grid, leftCenter.x, leftCenter.y, rightCenter.x, rightCenter.y);
     }
   }
 }
 
-function drawAllRooms(
-  grid: Grid,
-  node: BSPNode,
-  modifiers?: ShapeModifier[]
-): void {
+function drawAllRooms(grid: Grid, node: BSPNode, modifiers?: ShapeModifier[]): void {
   if (node.roomShape) {
     drawRoomShape(grid, node.roomShape);
     // Apply modifiers if provided
@@ -378,7 +335,7 @@ function addDoors(grid: Grid): void {
       }
 
       // Determine doorway orientation and find the full span wall-to-wall
-      let doorTiles: Point[] = [];
+      const doorTiles: Point[] = [];
 
       if (hasFloorAbove || hasFloorBelow) {
         // Horizontal doorway (door tiles run left-right between walls)

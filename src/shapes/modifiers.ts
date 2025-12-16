@@ -8,11 +8,7 @@ import { randomInt } from "../utils/random";
 /**
  * Apply a list of modifiers to a room on the grid
  */
-export function applyModifiers(
-  grid: Grid,
-  shape: RoomShape,
-  modifiers: ShapeModifier[]
-): void {
+export function applyModifiers(grid: Grid, shape: RoomShape, modifiers: ShapeModifier[]): void {
   for (const modifier of modifiers) {
     // Check probability
     const probability = modifier.probability ?? 1;
@@ -43,11 +39,7 @@ export function applyModifiers(
 /**
  * Remove random corners from a room to create irregular edges
  */
-export function nibbleCorners(
-  grid: Grid,
-  shape: RoomShape,
-  params?: Record<string, number>
-): void {
+export function nibbleCorners(grid: Grid, shape: RoomShape, params?: Record<string, number>): void {
   const probability = params?.probability ?? 0.3;
   const maxNibbleSize = params?.maxSize ?? 2;
 
@@ -87,11 +79,7 @@ export function nibbleCorners(
 /**
  * Add small rectangular alcoves extending from the room
  */
-export function addAlcoves(
-  grid: Grid,
-  shape: RoomShape,
-  params?: Record<string, number>
-): void {
+export function addAlcoves(grid: Grid, shape: RoomShape, params?: Record<string, number>): void {
   const count = params?.count ?? randomInt(4, 1);
   const minSize = params?.minSize ?? 1;
   const maxSize = params?.maxSize ?? 2;
@@ -150,7 +138,11 @@ export function addAlcoves(
       const alcoveTiles: Point[] = [];
 
       for (let d = 1; d <= alcoveDepth && alcoveOk; d++) {
-        for (let w = -Math.floor(alcoveWidth / 2); w <= Math.floor(alcoveWidth / 2) && alcoveOk; w++) {
+        for (
+          let w = -Math.floor(alcoveWidth / 2);
+          w <= Math.floor(alcoveWidth / 2) && alcoveOk;
+          w++
+        ) {
           let ax: number, ay: number;
 
           if (dir.dx !== 0) {
@@ -193,11 +185,7 @@ export function addAlcoves(
 /**
  * Round the corners of a room by replacing corner tiles with diagonal walls
  */
-export function roundCorners(
-  grid: Grid,
-  shape: RoomShape,
-  params?: Record<string, number>
-): void {
+export function roundCorners(grid: Grid, shape: RoomShape, params?: Record<string, number>): void {
   const radius = params?.radius ?? 1;
 
   const bb = shape.boundingBox;
@@ -239,11 +227,7 @@ export function roundCorners(
 /**
  * Add interior pillars to a room
  */
-export function addPillars(
-  grid: Grid,
-  shape: RoomShape,
-  params?: Record<string, number>
-): void {
+export function addPillars(grid: Grid, shape: RoomShape, params?: Record<string, number>): void {
   const count = params?.count ?? randomInt(5, 2);
   const minSpacing = params?.minSpacing ?? 2;
 
@@ -351,7 +335,13 @@ export function irregularEdges(
         { x: tile.x, y: tile.y + 1 },
       ].filter((n) => tileSet.has(`${n.x},${n.y}`));
 
-      if (adjacentFloors.length >= 2 && tile.y >= 0 && tile.y < height && tile.x >= 0 && tile.x < width) {
+      if (
+        adjacentFloors.length >= 2 &&
+        tile.y >= 0 &&
+        tile.y < height &&
+        tile.x >= 0 &&
+        tile.x < width
+      ) {
         grid[tile.y][tile.x] = TileType.WALL;
         tileSet.delete(`${tile.x},${tile.y}`);
       }

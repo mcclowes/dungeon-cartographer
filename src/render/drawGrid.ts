@@ -276,14 +276,7 @@ export function drawGrid(
           drawMazeTile(ctx, x, y, tileWidth, tileHeight, grid, palette);
           break;
         case "simple":
-          drawSimpleTile(
-            ctx,
-            x,
-            y,
-            tileWidth,
-            tileHeight,
-            palette[grid[y][x]] || "#ff00ff"
-          );
+          drawSimpleTile(ctx, x, y, tileWidth, tileHeight, palette[grid[y][x]] || "#ff00ff");
           break;
         case "dungeon":
         default:

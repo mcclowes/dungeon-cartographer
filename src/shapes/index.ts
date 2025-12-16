@@ -1,24 +1,9 @@
 import type { Rect } from "../types";
-import type {
-  RoomShape,
-  RoomShapeOptions,
-  CompositeVariant,
-  PolygonVariant,
-} from "./types";
-import {
-  RoomShapeType,
-  DEFAULT_ROOM_SHAPE_OPTIONS,
-} from "./types";
+import type { RoomShape, RoomShapeOptions, CompositeVariant, PolygonVariant } from "./types";
+import { RoomShapeType, DEFAULT_ROOM_SHAPE_OPTIONS } from "./types";
 import { createRectangleShape } from "./draw";
-import {
-  generateCompositeShape,
-  canFitCompositeShape,
-} from "./composite";
-import {
-  generateTemplateShape,
-  canFitTemplateShape,
-  TEMPLATE_NAMES,
-} from "./templates";
+import { generateCompositeShape, canFitCompositeShape } from "./composite";
+import { generateTemplateShape, canFitTemplateShape, TEMPLATE_NAMES } from "./templates";
 import { generateCellularShape, canFitCellularShape } from "./cellular";
 import { generatePolygonShape, canFitPolygonShape } from "./polygon";
 import { randomInt } from "../utils/random";
@@ -116,10 +101,7 @@ export {
  * @param options Configuration for shape generation
  * @returns A RoomShape that fits within the bounds
  */
-export function generateRoomShape(
-  bounds: Rect,
-  options: RoomShapeOptions = {}
-): RoomShape {
+export function generateRoomShape(bounds: Rect, options: RoomShapeOptions = {}): RoomShape {
   const {
     allowedShapes = DEFAULT_ROOM_SHAPE_OPTIONS.allowedShapes,
     shapeWeights = DEFAULT_ROOM_SHAPE_OPTIONS.shapeWeights,
@@ -168,8 +150,7 @@ export function generateRoomShape(
     }
 
     case RoomShapeType.TEMPLATE: {
-      const templates =
-        allowedTemplates.length > 0 ? allowedTemplates : TEMPLATE_NAMES;
+      const templates = allowedTemplates.length > 0 ? allowedTemplates : TEMPLATE_NAMES;
       const templateName = templates[randomInt(templates.length, 0)];
       return generateTemplateShape(bounds, templateName, templates);
     }
@@ -238,9 +219,7 @@ export function createAllShapesOptions(
 /**
  * Create options for only composite shapes
  */
-export function createCompositeOnlyOptions(
-  variants?: CompositeVariant[]
-): RoomShapeOptions {
+export function createCompositeOnlyOptions(variants?: CompositeVariant[]): RoomShapeOptions {
   return {
     allowedShapes: [RoomShapeType.COMPOSITE],
     compositeVariants: variants,
@@ -259,9 +238,7 @@ export function createOrganicShapesOptions(): RoomShapeOptions {
 /**
  * Create options for geometric shapes (template + polygon)
  */
-export function createGeometricShapesOptions(
-  polygonVariants?: PolygonVariant[]
-): RoomShapeOptions {
+export function createGeometricShapesOptions(polygonVariants?: PolygonVariant[]): RoomShapeOptions {
   return {
     allowedShapes: [RoomShapeType.TEMPLATE, RoomShapeType.POLYGON],
     polygonVariants,

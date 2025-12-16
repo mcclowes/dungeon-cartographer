@@ -37,12 +37,7 @@ export interface HybridOptions {
   featureOptions?: FeaturePlacementOptions;
 }
 
-function getSplitValue(
-  x: number,
-  y: number,
-  size: number,
-  direction: SplitDirection
-): number {
+function getSplitValue(x: number, y: number, size: number, direction: SplitDirection): number {
   // Returns 0-1 where 0 = fully region A, 1 = fully region B
   switch (direction) {
     case "horizontal":
@@ -52,13 +47,14 @@ function getSplitValue(
     case "diagonal":
       // Diagonal from top-left to bottom-right
       return (x + y) / (size * 2);
-    case "radial":
+    case "radial": {
       // Distance from center
       const centerX = size / 2;
       const centerY = size / 2;
       const maxDist = Math.sqrt(centerX * centerX + centerY * centerY);
       const dist = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
       return dist / maxDist;
+    }
   }
 }
 
@@ -131,12 +127,14 @@ function connectRegions(
   let bestB: Point | null = null;
 
   // Sample to avoid O(n^2) for large grids
-  const sampleA = regionAFloors.length > 50
-    ? regionAFloors.filter((_, i) => i % Math.ceil(regionAFloors.length / 50) === 0)
-    : regionAFloors;
-  const sampleB = regionBFloors.length > 50
-    ? regionBFloors.filter((_, i) => i % Math.ceil(regionBFloors.length / 50) === 0)
-    : regionBFloors;
+  const sampleA =
+    regionAFloors.length > 50
+      ? regionAFloors.filter((_, i) => i % Math.ceil(regionAFloors.length / 50) === 0)
+      : regionAFloors;
+  const sampleB =
+    regionBFloors.length > 50
+      ? regionBFloors.filter((_, i) => i % Math.ceil(regionBFloors.length / 50) === 0)
+      : regionBFloors;
 
   for (const a of sampleA) {
     for (const b of sampleB) {

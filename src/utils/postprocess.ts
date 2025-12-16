@@ -46,12 +46,7 @@ export function removeIsolatedFloors(grid: Grid): Grid {
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
       if (grid[y][x] === TileType.FLOOR) {
-        const neighbors = [
-          grid[y - 1][x],
-          grid[y + 1][x],
-          grid[y][x - 1],
-          grid[y][x + 1],
-        ];
+        const neighbors = [grid[y - 1][x], grid[y + 1][x], grid[y][x - 1], grid[y][x + 1]];
 
         const allWalls = neighbors.every((n) => n === TileType.WALL);
         if (allWalls) {
@@ -81,12 +76,7 @@ export function removeDeadEndCorridors(grid: Grid): Grid {
     for (let y = 1; y < height - 1; y++) {
       for (let x = 1; x < width - 1; x++) {
         if (grid[y][x] === TileType.CORRIDOR) {
-          const neighbors = [
-            grid[y - 1][x],
-            grid[y + 1][x],
-            grid[y][x - 1],
-            grid[y][x + 1],
-          ];
+          const neighbors = [grid[y - 1][x], grid[y + 1][x], grid[y][x - 1], grid[y][x + 1]];
 
           const wallCount = neighbors.filter((n) => n === TileType.WALL).length;
 

@@ -48,13 +48,7 @@ export interface CellularShape extends BaseRoomShape {
 }
 
 /** Polygon variant types */
-export type PolygonVariant =
-  | "hexagon"
-  | "octagon"
-  | "circle"
-  | "ellipse"
-  | "diamond"
-  | "custom";
+export type PolygonVariant = "hexagon" | "octagon" | "circle" | "ellipse" | "diamond" | "custom";
 
 /** Polygon: defined by vertices, rasterized to grid */
 export interface PolygonShape extends BaseRoomShape {

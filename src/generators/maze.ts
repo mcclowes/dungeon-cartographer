@@ -29,11 +29,7 @@ const MAZE_DIRECTIONS: MazeDirection[] = [
   { dx: -2, dy: 0, wx: -1, wy: 0 }, // West
 ];
 
-function recursiveBacktracking(
-  grid: Grid,
-  startX: number,
-  startY: number
-): void {
+function recursiveBacktracking(grid: Grid, startX: number, startY: number): void {
   const width = grid[0].length;
   const height = grid.length;
   const stack = [{ x: startX, y: startY }];
@@ -140,25 +136,13 @@ function recursiveDivision(
 
   if (horizontal) {
     for (let i = x; i < x + width; i++) {
-      if (
-        i !== px &&
-        wy >= 0 &&
-        wy < grid.length &&
-        i >= 0 &&
-        i < grid[0].length
-      ) {
+      if (i !== px && wy >= 0 && wy < grid.length && i >= 0 && i < grid[0].length) {
         grid[wy][i] = MazeTile.WALL;
       }
     }
   } else {
     for (let i = y; i < y + height; i++) {
-      if (
-        i !== py &&
-        i >= 0 &&
-        i < grid.length &&
-        wx >= 0 &&
-        wx < grid[0].length
-      ) {
+      if (i !== py && i >= 0 && i < grid.length && wx >= 0 && wx < grid[0].length) {
         grid[i][wx] = MazeTile.WALL;
       }
     }
@@ -168,23 +152,19 @@ function recursiveDivision(
     const topHeight = wy - y;
     const bottomHeight = height - topHeight - 1;
 
-    const nextOrientation =
-      width > topHeight * 1.5 ? "vertical" : "horizontal";
+    const nextOrientation = width > topHeight * 1.5 ? "vertical" : "horizontal";
     recursiveDivision(grid, x, y, width, topHeight, nextOrientation);
 
-    const nextOrientation2 =
-      width > bottomHeight * 1.5 ? "vertical" : "horizontal";
+    const nextOrientation2 = width > bottomHeight * 1.5 ? "vertical" : "horizontal";
     recursiveDivision(grid, x, wy + 1, width, bottomHeight, nextOrientation2);
   } else {
     const leftWidth = wx - x;
     const rightWidth = width - leftWidth - 1;
 
-    const nextOrientation =
-      height > leftWidth * 1.5 ? "horizontal" : "vertical";
+    const nextOrientation = height > leftWidth * 1.5 ? "horizontal" : "vertical";
     recursiveDivision(grid, x, y, leftWidth, height, nextOrientation);
 
-    const nextOrientation2 =
-      height > rightWidth * 1.5 ? "horizontal" : "vertical";
+    const nextOrientation2 = height > rightWidth * 1.5 ? "horizontal" : "vertical";
     recursiveDivision(grid, wx + 1, y, rightWidth, height, nextOrientation2);
   }
 }

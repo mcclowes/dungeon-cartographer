@@ -148,14 +148,7 @@ function walkMultiple(
       startY = start.y;
     }
 
-    walkSimple(
-      grid,
-      startX,
-      startY,
-      countTiles(grid, TileType.FLOOR) + walkerSteps,
-      width,
-      height
-    );
+    walkSimple(grid, startX, startY, countTiles(grid, TileType.FLOOR) + walkerSteps, width, height);
   }
 }
 
@@ -170,15 +163,8 @@ function walkMultiple(
  * - "weighted": Biased towards unexplored areas
  * - "multiple": Multiple simultaneous walkers
  */
-export function generateDrunkardWalk(
-  size: number,
-  options: DrunkardWalkOptions = {}
-): Grid {
-  const {
-    fillPercentage = 0.45,
-    variant = "weighted",
-    numWalkers = 4,
-  } = options;
+export function generateDrunkardWalk(size: number, options: DrunkardWalkOptions = {}): Grid {
+  const { fillPercentage = 0.45, variant = "weighted", numWalkers = 4 } = options;
 
   const grid = createGrid(size, size, TileType.WALL);
   const targetFloors = Math.floor(size * size * fillPercentage);

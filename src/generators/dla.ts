@@ -1,6 +1,13 @@
 import type { Grid, Point } from "../types";
 import { TileType, CARDINAL_DIRECTIONS } from "../types";
-import { createGrid, isInBoundsInner, randomItem, placeFeatures, validateGridSize, type FeaturePlacementOptions } from "../utils";
+import {
+  createGrid,
+  isInBoundsInner,
+  randomItem,
+  placeFeatures,
+  validateGridSize,
+  type FeaturePlacementOptions,
+} from "../utils";
 
 export interface DLAOptions {
   /** Target percentage of floor tiles (default: 0.35) */
@@ -99,9 +106,7 @@ export function generateDLA(size: number, options: DLAOptions = {}): Grid {
   // Place initial seeds
   const seedSpacing = Math.floor(size / (numSeeds + 1));
   for (let i = 0; i < numSeeds; i++) {
-    const seedX = numSeeds === 1
-      ? Math.floor(size / 2)
-      : seedSpacing * (i + 1);
+    const seedX = numSeeds === 1 ? Math.floor(size / 2) : seedSpacing * (i + 1);
     const seedY = Math.floor(size / 2);
 
     if (isInBoundsInner(seedX, seedY, size, size)) {
@@ -115,9 +120,7 @@ export function generateDLA(size: number, options: DLAOptions = {}): Grid {
 
   while (currentFloors < targetFloors && iterations < maxIterations) {
     // Spawn a new particle
-    let particle = spawnMode === "edge"
-      ? getEdgeSpawnPoint(size)
-      : getRandomSpawnPoint(size);
+    let particle = spawnMode === "edge" ? getEdgeSpawnPoint(size) : getRandomSpawnPoint(size);
 
     // Walk until it sticks or escapes
     let stuck = false;

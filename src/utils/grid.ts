@@ -33,22 +33,12 @@ export function createGrid(width: number, height: number, fill = 0): Grid {
 }
 
 /** Check if coordinates are within grid bounds */
-export function isInBounds(
-  x: number,
-  y: number,
-  width: number,
-  height: number
-): boolean {
+export function isInBounds(x: number, y: number, width: number, height: number): boolean {
   return x >= 0 && x < width && y >= 0 && y < height;
 }
 
 /** Check if coordinates are within grid bounds (excluding border) */
-export function isInBoundsInner(
-  x: number,
-  y: number,
-  width: number,
-  height: number
-): boolean {
+export function isInBoundsInner(x: number, y: number, width: number, height: number): boolean {
   return x > 0 && x < width - 1 && y > 0 && y < height - 1;
 }
 
@@ -67,12 +57,7 @@ export function countTiles(grid: Grid, value: number): number {
 }
 
 /** Sum values in a radius around a point */
-export function sumInRadius(
-  grid: Grid,
-  x: number,
-  y: number,
-  radius: number
-): number {
+export function sumInRadius(grid: Grid, x: number, y: number, radius: number): number {
   if (!grid || grid.length === 0 || !grid[0]) return 0;
 
   let total = 0;
