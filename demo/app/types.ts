@@ -36,6 +36,11 @@ export interface GeneratorParams {
   addDoors?: boolean;
   addFeatures?: boolean;
 
+  // Debris features
+  rubbleChance?: number;
+  collapsedChance?: number;
+  fallenColumnChance?: number;
+
   // Cave
   iterations?: number;
   initialFillProbability?: number;
@@ -116,6 +121,9 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     addFeatures: true,
     addFurniture: false,
     furnitureDensity: 0.15,
+    rubbleChance: 0,
+    collapsedChance: 0,
+    fallenColumnChance: 0,
   },
   cave: {
     iterations: 3,
@@ -123,6 +131,9 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     addFeatures: true,
     addFurniture: false,
     furnitureDensity: 0.15,
+    rubbleChance: 0,
+    collapsedChance: 0,
+    fallenColumnChance: 0,
   },
   dla: {
     fillPercentage: 0.35,
@@ -131,6 +142,9 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     addFeatures: false,
     addFurniture: false,
     furnitureDensity: 0.15,
+    rubbleChance: 0,
+    collapsedChance: 0,
+    fallenColumnChance: 0,
   },
   wfc: {
     seedRadius: 5,
@@ -194,6 +208,9 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     addFeatures: false,
     addFurniture: false,
     furnitureDensity: 0.15,
+    rubbleChance: 0,
+    collapsedChance: 0,
+    fallenColumnChance: 0,
   },
   hybrid: {
     splitDirection: "diagonal",
@@ -203,6 +220,9 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     addFeatures: false,
     addFurniture: false,
     furnitureDensity: 0.15,
+    rubbleChance: 0,
+    collapsedChance: 0,
+    fallenColumnChance: 0,
   },
   "hybrid-radial": {
     splitDirection: "radial",
@@ -212,6 +232,9 @@ export const DEFAULT_PARAMS: Record<GeneratorType, GeneratorParams> = {
     addFeatures: false,
     addFurniture: false,
     furnitureDensity: 0.15,
+    rubbleChance: 0,
+    collapsedChance: 0,
+    fallenColumnChance: 0,
   },
 };
 

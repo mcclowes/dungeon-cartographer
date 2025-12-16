@@ -33,6 +33,10 @@ export enum TileType {
   FIREPLACE = 22,
   STATUE = 23,
   ALTAR = 24,
+  // Debris/destruction
+  RUBBLE = 25,
+  COLLAPSED = 26,
+  FALLEN_COLUMN = 27,
 }
 
 /** Terrain-specific tile types for Perlin generator */

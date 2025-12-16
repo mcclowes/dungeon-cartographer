@@ -21,6 +21,18 @@ export interface FeaturePlacementOptions {
   minFeatureDistance?: number;
   /** Minimum distance between any features (default: 2) */
   minAnyFeatureDistance?: number;
+  /** Chance to place rubble/debris (0-1, default: 0) */
+  rubbleChance?: number;
+  /** Chance to place collapsed/cave-in areas (0-1, default: 0) */
+  collapsedChance?: number;
+  /** Chance to place fallen columns (0-1, default: 0) */
+  fallenColumnChance?: number;
+  /** Max rubble tiles per dungeon (default: 8) */
+  maxRubble?: number;
+  /** Max collapsed areas per dungeon (default: 3) */
+  maxCollapsed?: number;
+  /** Max fallen column tiles per dungeon (default: 4) */
+  maxFallenColumns?: number;
 }
 
 /**
@@ -201,7 +213,7 @@ function hasMinDistance(point: Point, placed: Point[], minDistance: number): boo
 /**
  * Feature types for tracking placed features
  */
-type FeatureCategory = "stairs" | "treasure" | "trap" | "water" | "furniture";
+type FeatureCategory = "stairs" | "treasure" | "trap" | "water" | "furniture" | "rubble" | "collapsed" | "fallenColumn";
 
 /**
  * Place dungeon features (stairs, treasures, traps, water) on a grid
@@ -223,6 +235,12 @@ export function placeFeatures(
     guaranteeStairs = true,
     minFeatureDistance = 3,
     minAnyFeatureDistance = 2,
+    rubbleChance = 0,
+    collapsedChance = 0,
+    fallenColumnChance = 0,
+    maxRubble = 8,
+    maxCollapsed = 3,
+    maxFallenColumns = 4,
   } = options;
 
   // Clone the grid to avoid mutating the original
@@ -241,6 +259,9 @@ export function placeFeatures(
     trap: [],
     water: [],
     furniture: [],
+    rubble: [],
+    collapsed: [],
+    fallenColumn: [],
   };
 
   // Get all placed features as a flat array
@@ -250,6 +271,9 @@ export function placeFeatures(
     ...placedByCategory.trap,
     ...placedByCategory.water,
     ...placedByCategory.furniture,
+    ...placedByCategory.rubble,
+    ...placedByCategory.collapsed,
+    ...placedByCategory.fallenColumn,
   ];
 
   let treasuresPlaced = 0;
@@ -357,6 +381,71 @@ export function placeFeatures(
           placedByCategory.water.push(n);
         }
       }
+    }
+  }
+
+  // Place rubble - scattered debris, prefers edges and corners
+  let rubblePlaced = 0;
+  const rubbleLocations = [...corners, ...floors];
+  for (const loc of rubbleLocations) {
+    if (rubblePlaced >= maxRubble) break;
+    if (grid[loc.y][loc.x] !== TileType.FLOOR) continue;
+
+    if (!hasMinDistance(loc, placedByCategory.rubble, minFeatureDistance)) continue;
+    if (!hasMinDistance(loc, getAllPlaced(), minAnyFeatureDistance)) continue;
+
+    if (Math.random() < rubbleChance) {
+      grid[loc.y][loc.x] = TileType.RUBBLE;
+      placedByCategory.rubble.push(loc);
+      rubblePlaced++;
+    }
+  }
+
+  // Place collapsed areas - cave-ins near walls
+  let collapsedPlaced = 0;
+  // Find tiles adjacent to walls (good places for cave-ins)
+  const wallAdjacentFloors: Point[] = [];
+  for (const loc of floors) {
+    if (grid[loc.y][loc.x] !== TileType.FLOOR) continue;
+    const hasAdjacentWall = [
+      grid[loc.y - 1]?.[loc.x],
+      grid[loc.y + 1]?.[loc.x],
+      grid[loc.y]?.[loc.x - 1],
+      grid[loc.y]?.[loc.x + 1],
+    ].some(t => t === TileType.WALL);
+    if (hasAdjacentWall) {
+      wallAdjacentFloors.push(loc);
+    }
+  }
+  shuffleArray(wallAdjacentFloors);
+
+  for (const loc of wallAdjacentFloors) {
+    if (collapsedPlaced >= maxCollapsed) break;
+    if (grid[loc.y][loc.x] !== TileType.FLOOR) continue;
+
+    if (!hasMinDistance(loc, placedByCategory.collapsed, minFeatureDistance + 2)) continue;
+    if (!hasMinDistance(loc, getAllPlaced(), minAnyFeatureDistance)) continue;
+
+    if (Math.random() < collapsedChance) {
+      grid[loc.y][loc.x] = TileType.COLLAPSED;
+      placedByCategory.collapsed.push(loc);
+      collapsedPlaced++;
+    }
+  }
+
+  // Place fallen columns - prefer interior spaces (like ruined halls)
+  let fallenColumnsPlaced = 0;
+  for (const loc of interiors) {
+    if (fallenColumnsPlaced >= maxFallenColumns) break;
+    if (grid[loc.y][loc.x] !== TileType.FLOOR) continue;
+
+    if (!hasMinDistance(loc, placedByCategory.fallenColumn, minFeatureDistance)) continue;
+    if (!hasMinDistance(loc, getAllPlaced(), minAnyFeatureDistance)) continue;
+
+    if (Math.random() < fallenColumnChance) {
+      grid[loc.y][loc.x] = TileType.FALLEN_COLUMN;
+      placedByCategory.fallenColumn.push(loc);
+      fallenColumnsPlaced++;
     }
   }
 

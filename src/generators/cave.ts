@@ -85,7 +85,7 @@ export function generateCave(size: number, options: CaveOptions = {}): Grid {
   }
 
   if (addFeaturesEnabled) {
-    placeFeatures(grid, featureOptions);
+    return placeFeatures(grid, featureOptions);
   }
 
   return grid;

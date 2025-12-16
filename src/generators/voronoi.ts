@@ -278,7 +278,7 @@ export function generateVoronoi(size: number, options: VoronoiOptions = {}): Gri
   }
 
   if (addFeaturesEnabled) {
-    placeFeatures(grid, featureOptions);
+    return placeFeatures(grid, featureOptions);
   }
 
   return grid;
