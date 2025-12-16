@@ -119,7 +119,7 @@ function poissonDiskSample(
 
   // Process active list
   while (activeList.length > 0) {
-    const idx = randomInt(activeList.length, 0);
+    const idx = randomInt(activeList.length - 1, 0);
     const current = activeList[idx];
     let found = false;
 
@@ -198,11 +198,11 @@ function buildMinimumSpanningTree(rooms: Room[]): [number, number][] {
 
   // Add some extra edges for loops (makes dungeon more interesting)
   const extraEdges = Math.floor(rooms.length / 4);
-  for (let i = 0; i < extraEdges; i++) {
-    const from = randomInt(rooms.length, 0);
-    let to = randomInt(rooms.length, 0);
+  for (let i = 0; i < extraEdges && rooms.length >= 2; i++) {
+    const from = randomInt(rooms.length - 1, 0);
+    let to = randomInt(rooms.length - 1, 0);
     while (to === from) {
-      to = randomInt(rooms.length, 0);
+      to = randomInt(rooms.length - 1, 0);
     }
     const exists = edges.some(([a, b]) => (a === from && b === to) || (a === to && b === from));
     if (!exists && euclideanDistance(rooms[from].center, rooms[to].center) < 20) {

@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import styles from "./RenderControls.module.scss";
 import type { RenderStyle } from "dungeon-cartographer/render";
 import type { GeneratorConfig, RenderParams } from "../types";
 import { STYLE_LABELS } from "../config";
+
+export type ExportFormat = "png" | "json" | "tmx" | "csv";
 
 interface Props {
   config: GeneratorConfig;
@@ -14,7 +17,7 @@ interface Props {
   onStyleChange: (style: RenderStyle) => void;
   onRenderParamsChange: (params: RenderParams) => void;
   onRegenerate: () => void;
-  onExport: () => void;
+  onExport: (format: ExportFormat) => void;
 }
 
 export function RenderControls({
@@ -108,10 +111,36 @@ export function RenderControls({
         <button onClick={onRegenerate} className={styles.primaryButton}>
           Regenerate
         </button>
-        <button onClick={onExport} className={styles.secondaryButton}>
-          Export PNG
-        </button>
+        <ExportDropdown onExport={onExport} />
       </div>
+    </div>
+  );
+}
+
+function ExportDropdown({ onExport }: { onExport: (format: ExportFormat) => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleExport = (format: ExportFormat) => {
+    onExport(format);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className={styles.exportDropdown}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={styles.secondaryButton}
+      >
+        Export ▾
+      </button>
+      {isOpen && (
+        <div className={styles.exportMenu}>
+          <button onClick={() => handleExport("png")}>PNG Image</button>
+          <button onClick={() => handleExport("json")}>JSON Data</button>
+          <button onClick={() => handleExport("tmx")}>TMX (Tiled)</button>
+          <button onClick={() => handleExport("csv")}>CSV</button>
+        </div>
+      )}
     </div>
   );
 }

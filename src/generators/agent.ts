@@ -164,7 +164,7 @@ export function generateAgent(size: number, options: AgentOptions = {}): Grid {
       x: randomInt(size - 4, 2),
       y: randomInt(size - 4, 2),
     };
-    const startDir = CARDINAL_DIRECTIONS[randomInt(4, 0)];
+    const startDir = CARDINAL_DIRECTIONS[randomInt(3, 0)];
     agents.push({
       position: startPos,
       direction: startDir,

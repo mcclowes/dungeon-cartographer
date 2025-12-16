@@ -4,3 +4,5 @@ export * from "./postprocess";
 export * from "./features";
 export * from "./pathfinding";
 export * from "./export";
+export * from "./connectivity";
+export * from "./symmetry";

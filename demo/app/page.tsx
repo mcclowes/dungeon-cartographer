@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect, useCallback } from "react";
-import { placeFurniture, type Grid } from "dungeon-cartographer";
+import { placeFurniture, exportToJSON, exportToTMX, exportToCSV, type Grid } from "dungeon-cartographer";
 import { drawGrid, type RenderStyle } from "dungeon-cartographer/render";
 import {
   AIMapGenerator,
@@ -13,8 +13,10 @@ import {
   MapCanvas,
   SeedControl,
   StatsDisplay,
+  Toast,
 } from "./components";
 import type { GeneratorType, GeneratorParams, RenderParams, Preset } from "./types";
+import type { ExportFormat } from "./components/RenderControls";
 import { GENERATORS, CATEGORIES, DEFAULT_PARAMS, PRESETS } from "./config";
 import { createSeededRandom, generateSeed } from "./utils";
 import { parseUrlState, useUrlSync } from "./hooks";
@@ -38,6 +40,7 @@ export default function Home() {
   });
   const [generationTime, setGenerationTime] = useState<number | undefined>();
   const [showControls, setShowControls] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const currentConfig = GENERATORS[generatorType];
 
@@ -188,15 +191,102 @@ export default function Home() {
     setSeed(generateSeed());
   };
 
-  const handleExport = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const handleExport = useCallback((format: ExportFormat) => {
+    const baseFilename = `${generatorType}-${size}x${size}-${seed}`;
 
+    if (format === "png") {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const link = document.createElement("a");
+      link.download = `${baseFilename}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      return;
+    }
+
+    if (!currentGrid) return;
+
+    let content: string;
+    let filename: string;
+    let mimeType: string;
+
+    switch (format) {
+      case "json":
+        content = exportToJSON(currentGrid, {
+          metadata: {
+            name: renderParams.mapTitle || "Dungeon Map",
+            generator: generatorType,
+            seed,
+            params,
+          },
+        });
+        filename = `${baseFilename}.json`;
+        mimeType = "application/json";
+        break;
+      case "tmx":
+        content = exportToTMX(currentGrid, {
+          tileWidth: 32,
+          tileHeight: 32,
+        });
+        filename = `${baseFilename}.tmx`;
+        mimeType = "application/xml";
+        break;
+      case "csv":
+        content = exportToCSV(currentGrid);
+        filename = `${baseFilename}.csv`;
+        mimeType = "text/csv";
+        break;
+      default:
+        return;
+    }
+
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.download = `${generatorType}-${size}x${size}-${seed}.png`;
-    link.href = canvas.toDataURL("image/png");
+    link.download = filename;
+    link.href = url;
     link.click();
-  };
+    URL.revokeObjectURL(url);
+  }, [generatorType, size, seed, currentGrid, renderParams.mapTitle, params]);
+
+  const handleCopyUrl = useCallback(async () => {
+    const success = await copyUrl();
+    setToastMessage(success ? "Link copied to clipboard!" : "Failed to copy link");
+  }, [copyUrl]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in input fields
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      switch (e.key.toLowerCase()) {
+        case "r":
+          e.preventDefault();
+          setSeed(generateSeed());
+          break;
+        case "e":
+          e.preventDefault();
+          handleExport("png");
+          break;
+        case "j":
+          e.preventDefault();
+          handleExport("json");
+          break;
+        case "c":
+          if (!e.metaKey && !e.ctrlKey) {
+            e.preventDefault();
+            handleCopyUrl();
+          }
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleExport, handleCopyUrl]);
 
   const handleAIMapGenerated = useCallback(
     (grid: Grid) => {
@@ -265,7 +355,7 @@ export default function Home() {
                   seed={seed}
                   onSeedChange={setSeed}
                   onRandomize={handleRegenerate}
-                  onCopyUrl={copyUrl}
+                  onCopyUrl={handleCopyUrl}
                 />
               </div>
 
@@ -298,6 +388,10 @@ export default function Home() {
             <StatsDisplay grid={currentGrid} generationTime={generationTime} />
           </div>
         </div>
+
+        {toastMessage && (
+          <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
+        )}
       </ErrorBoundary>
     </div>
   );

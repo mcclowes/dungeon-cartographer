@@ -7,3 +7,4 @@ export { RenderControls } from "./RenderControls";
 export { MapCanvas } from "./MapCanvas";
 export { SeedControl } from "./SeedControl";
 export { StatsDisplay } from "./StatsDisplay";
+export { Toast } from "./Toast";

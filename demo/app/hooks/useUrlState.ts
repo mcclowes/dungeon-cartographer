@@ -109,9 +109,14 @@ export function useUrlSync({
     window.history.replaceState({}, "", url);
   }, [generator, size, style, seed, params, isInitialized]);
 
-  const copyUrl = useCallback(() => {
+  const copyUrl = useCallback(async (): Promise<boolean> => {
     const url = buildUrl(generator, size, style, seed, params);
-    navigator.clipboard.writeText(url);
+    try {
+      await navigator.clipboard.writeText(url);
+      return true;
+    } catch {
+      return false;
+    }
   }, [generator, size, style, seed, params]);
 
   return { copyUrl };

@@ -120,7 +120,7 @@ function placeStairs(
     if (lowerCandidates.length === 0) continue;
 
     // Try to place stairs at similar positions if possible
-    const upperPos = upperCandidates[randomInt(upperCandidates.length, 0)];
+    const upperPos = upperCandidates[randomInt(upperCandidates.length - 1, 0)];
 
     // Find closest candidate on lower level
     let bestLower = lowerCandidates[0];
@@ -136,7 +136,7 @@ function placeStairs(
 
     // If no close match, pick a random one
     const lowerPos =
-      bestDist < 15 ? bestLower : lowerCandidates[randomInt(lowerCandidates.length, 0)];
+      bestDist < 15 ? bestLower : lowerCandidates[randomInt(lowerCandidates.length - 1, 0)];
 
     // Place the stairs
     upperLevel[upperPos.y][upperPos.x] = TileType.STAIRS_DOWN;
