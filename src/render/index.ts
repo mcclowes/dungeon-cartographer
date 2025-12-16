@@ -32,3 +32,10 @@ export {
   type CartouchePosition,
   type TitleCartoucheOptions,
 } from "./parchmentTile";
+
+export {
+  drawUnits,
+  drawCombatEffect,
+  drawDeathEffect,
+  type UnitRenderOptions,
+} from "./drawUnits";

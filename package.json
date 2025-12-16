@@ -31,7 +31,7 @@
     "prepare": "husky || true"
   },
   "lint-staged": {
-    "src/**/*.ts": [
+    "src/**/!(*.test).ts": [
       "npm run typecheck",
       "npm run build"
     ]

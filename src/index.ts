@@ -9,3 +9,6 @@ export * from "./shapes";
 
 // Utilities
 export * from "./utils";
+
+// Simulation
+export * from "./simulation";
