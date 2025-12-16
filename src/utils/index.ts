@@ -6,3 +6,4 @@ export * from "./pathfinding";
 export * from "./export";
 export * from "./connectivity";
 export * from "./symmetry";
+export * from "./validation";
