@@ -12,7 +12,7 @@ export function createLShape(bounds: Rect, minArmWidth: number = 2): CompositeSh
   const armWidth = Math.max(minArmWidth, randomInt(maxArmWidth, minArmWidth));
 
   // Randomly choose L orientation (4 possible)
-  const orientation = randomInt(4, 0);
+  const orientation = randomInt(3, 0);
 
   let rects: Rect[];
 
@@ -108,7 +108,7 @@ export function createTShape(bounds: Rect, minStemWidth: number = 2): CompositeS
   const stemWidth = Math.max(minStemWidth, randomInt(maxStemWidth, minStemWidth));
 
   // Randomly choose T orientation (4 possible)
-  const orientation = randomInt(4, 0);
+  const orientation = randomInt(3, 0);
 
   let rects: Rect[];
   const crossbarHeight = stemWidth;
@@ -238,7 +238,7 @@ export function createUShape(bounds: Rect, minArmWidth: number = 2): CompositeSh
   const baseHeight = Math.max(minArmWidth, randomInt(Math.floor(bounds.height / 3), minArmWidth));
 
   // Randomly choose U orientation (4 possible)
-  const orientation = randomInt(4, 0);
+  const orientation = randomInt(3, 0);
 
   let rects: Rect[];
 
@@ -494,7 +494,7 @@ export function generateCompositeShape(
 ): CompositeShape {
   // If no variant specified, pick randomly
   const actualVariant =
-    variant ?? (["L", "T", "CROSS", "U", "Z", "RANDOM"] as CompositeVariant[])[randomInt(6, 0)];
+    variant ?? (["L", "T", "CROSS", "U", "Z", "RANDOM"] as CompositeVariant[])[randomInt(5, 0)];
 
   switch (actualVariant) {
     case "L":

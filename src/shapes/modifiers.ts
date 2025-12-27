@@ -358,7 +358,7 @@ export function irregularEdges(
         { dx: 0, dy: 1 },
       ];
 
-      const dir = directions[randomInt(4, 0)];
+      const dir = directions[randomInt(3, 0)];
       for (let d = 1; d <= variance; d++) {
         const nx = tile.x + dir.dx * d;
         const ny = tile.y + dir.dy * d;

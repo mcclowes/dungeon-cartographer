@@ -11,7 +11,7 @@ export function generatePolygonShape(bounds: Rect, variant?: PolygonVariant): Po
   // Select variant if not specified
   const actualVariant =
     variant ??
-    (["hexagon", "octagon", "circle", "ellipse", "diamond"] as PolygonVariant[])[randomInt(5, 0)];
+    (["hexagon", "octagon", "circle", "ellipse", "diamond"] as PolygonVariant[])[randomInt(4, 0)];
 
   // Calculate center and radius to fit within bounds with padding
   const padding = 1;
