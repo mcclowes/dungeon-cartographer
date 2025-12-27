@@ -109,7 +109,7 @@ export function addAlcoves(grid: Grid, shape: RoomShape, params?: Record<string,
   if (edgeTiles.length === 0) return;
 
   for (let i = 0; i < count; i++) {
-    const edgeTile = edgeTiles[randomInt(edgeTiles.length, 0)];
+    const edgeTile = edgeTiles[randomInt(edgeTiles.length - 1, 0)];
 
     // Find which direction the wall is
     const directions = [
@@ -261,7 +261,7 @@ export function addPillars(grid: Grid, shape: RoomShape, params?: Record<string,
     // Find a tile that's far enough from existing pillars
     let attempts = 0;
     while (attempts < 50) {
-      const idx = randomInt(interiorTiles.length, 0);
+      const idx = randomInt(interiorTiles.length - 1, 0);
       const candidate = interiorTiles[idx];
 
       // Check distance from existing pillars

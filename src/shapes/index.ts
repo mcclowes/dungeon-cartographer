@@ -145,13 +145,13 @@ export function generateRoomShape(bounds: Rect, options: RoomShapeOptions = {}):
       return createRectangleShape(bounds);
 
     case RoomShapeType.COMPOSITE: {
-      const variant = compositeVariants[randomInt(compositeVariants.length, 0)];
+      const variant = compositeVariants[randomInt(compositeVariants.length - 1, 0)];
       return generateCompositeShape(bounds, variant);
     }
 
     case RoomShapeType.TEMPLATE: {
       const templates = allowedTemplates.length > 0 ? allowedTemplates : TEMPLATE_NAMES;
-      const templateName = templates[randomInt(templates.length, 0)];
+      const templateName = templates[randomInt(templates.length - 1, 0)];
       return generateTemplateShape(bounds, templateName, templates);
     }
 
@@ -162,7 +162,7 @@ export function generateRoomShape(bounds: Rect, options: RoomShapeOptions = {}):
       });
 
     case RoomShapeType.POLYGON: {
-      const variant = polygonVariants[randomInt(polygonVariants.length, 0)];
+      const variant = polygonVariants[randomInt(polygonVariants.length - 1, 0)];
       return generatePolygonShape(bounds, variant);
     }
 

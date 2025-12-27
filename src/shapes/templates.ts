@@ -403,7 +403,7 @@ export function generateTemplateShape(
     name = templateName;
   } else {
     const available = allowedTemplates?.filter((t) => ROOM_TEMPLATES[t]) ?? TEMPLATE_NAMES;
-    name = available[randomInt(available.length, 0)];
+    name = available[randomInt(available.length - 1, 0)];
   }
 
   const baseTemplate = ROOM_TEMPLATES[name];
@@ -416,7 +416,7 @@ export function generateTemplateShape(
 
   // Optionally rotate the template
   const rotations: (0 | 90 | 180 | 270)[] = [0, 90, 180, 270];
-  const rotation = rotations[randomInt(4, 0)];
+  const rotation = rotations[randomInt(3, 0)];
   let rotatedTemplate = rotateTemplate(template, rotation);
 
   // Optionally mirror
